@@ -1,0 +1,13 @@
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Bloqueia acesso direto a arquivos de configuração e utilitários internos
+<FilesMatch "^(config\.php|gerar_hash\.php|retiradas_core\.php)$">
+    Require all denied
+</FilesMatch>

@@ -1,0 +1,25 @@
+# ===== Credenciais e segredos =====
+config.php
+
+# ===== Dados reais (alunos, hashes de senha) — nunca versionar =====
+seed_db.sql
+backup_*.sql
+*.sql.bak
+
+# ===== Ferramentas temporárias/perigosas (não devem existir em produção nem no repo) =====
+gerar_hash.php
+_bootstrap_init.php
+
+# ===== Sistema operacional =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Editores/IDE =====
+.vscode/
+.idea/
+*.swp
+
+# ===== Logs e arquivos temporários =====
+*.log
+*.tmp

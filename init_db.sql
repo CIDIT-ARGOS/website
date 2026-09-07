@@ -1,0 +1,287 @@
+-- =====================================================================
+-- ARGOS — Script de inicialização completo do banco de dados
+-- Consolida schema_alunos.sql + schema_painel.sql + schema_permissoes.sql
+--   + schema_retiradas_v2.sql num único arquivo, já com as correções
+--   (ENC_ESQUADRAO em vez de ENG_ESQUADRAO, sem a CHECK problemática).
+--
+-- ATENÇÃO: este script APAGA e recria as tabelas listadas abaixo.
+-- Faça backup completo do banco antes de rodar (hPanel/phpMyAdmin → Exportar).
+-- Depois de rodar, será necessário:
+--   1. Recriar as contas em admin_usuarios e painel_usuarios (gerar_hash.php)
+--   2. Reimportar o efetivo (CSV de alunos) via ikarus37/importar.php
+-- =====================================================================
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS api_logs;
+DROP TABLE IF EXISTS api_chaves;
+DROP TABLE IF EXISTS grupo_membros;
+DROP TABLE IF EXISTS grupos;
+DROP TABLE IF EXISTS cargo_permissoes;
+DROP TABLE IF EXISTS permissoes;
+DROP TABLE IF EXISTS retirada_itens;
+DROP TABLE IF EXISTS retiradas;
+DROP TABLE IF EXISTS motivos_falta;
+DROP TABLE IF EXISTS alunos;
+DROP TABLE IF EXISTS postos_graduacao;
+DROP TABLE IF EXISTS painel_usuarios;
+DROP TABLE IF EXISTS admin_usuarios;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ================= ADMIN_USUARIOS (área técnica /ikarus37) =================
+CREATE TABLE admin_usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  usuario VARCHAR(50) NOT NULL UNIQUE,
+  senha_hash VARCHAR(255) NOT NULL,
+  nivel ENUM('super_admin', 'admin', 'suporte') NOT NULL DEFAULT 'admin',
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ultimo_login DATETIME NULL
+);
+
+-- Admin básico pra conseguir entrar no /ikarus37 assim que o init terminar.
+-- Usuário: admin | Senha: Argos@2026
+-- TROQUE ESSA SENHA (Usuários administradores → redefinir senha) assim que logar pela primeira vez.
+INSERT INTO admin_usuarios (nome, usuario, senha_hash, nivel) VALUES
+('Administrador', 'admin', '$2b$10$s8xFb37RiTLh..3YbOEzpuDXgvOwMvF6PAbfl5fNVoizEp/3wq5Sa', 'super_admin');
+
+-- ================= PAINEL_USUARIOS (cadeia de comando /painel) =================
+CREATE TABLE painel_usuarios (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  usuario VARCHAR(50) NOT NULL UNIQUE,
+  senha_hash VARCHAR(255) NOT NULL,
+  cargo ENUM(
+    'CMD_CA', 'SUBCMD_CA', 'ADMIN_TECNICO', 'AUX_CA',
+    'CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'
+  ) NOT NULL,
+  esquadrao VARCHAR(50) NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ultimo_login DATETIME NULL
+);
+-- Regra "esquadrao obrigatório só para cargos de esquadrão" é validada em PHP
+-- (ikarus37/usuarios.php e painel/usuarios.php), não via CHECK — evita
+-- incompatibilidade com versões do MySQL que não suportam CHECK de verdade.
+
+-- ================= POSTOS / GRADUAÇÕES =================
+CREATE TABLE postos_graduacao (
+  codigo VARCHAR(10) PRIMARY KEY,
+  exibicao VARCHAR(30) NOT NULL
+);
+
+INSERT INTO postos_graduacao (codigo, exibicao) VALUES
+('GS', 'AL');
+
+-- ================= ALUNOS =================
+CREATE TABLE alunos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+
+  posto_graduacao VARCHAR(10) NOT NULL,
+  quadro VARCHAR(50) NULL,
+  especialidade VARCHAR(50) NULL,
+  sub_especialidade VARCHAR(50) NULL,
+  nome_guerra VARCHAR(50) NOT NULL,
+  sexo ENUM('M', 'F') NOT NULL,
+  identidade_militar VARCHAR(30) NOT NULL UNIQUE,
+  organizacao_militar VARCHAR(100) NULL,
+  setor VARCHAR(50) NULL,
+  secao VARCHAR(50) NULL,
+  ramal VARCHAR(10) NULL,
+
+  qrcode_hash CHAR(64) NULL UNIQUE,
+
+  milhao VARCHAR(20) NOT NULL UNIQUE,
+  esquadrao VARCHAR(50) NOT NULL,
+  esquadrilha VARCHAR(50) NOT NULL,
+  curso ENUM('CFS', 'EAGS') NOT NULL,
+  serie VARCHAR(10) NOT NULL,
+
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  atualizado_em DATETIME NULL ON UPDATE CURRENT_TIMESTAMP,
+
+  INDEX idx_esquadrilha (esquadrilha),
+  INDEX idx_especialidade (especialidade),
+  INDEX idx_esquadrao (esquadrao),
+  INDEX idx_qrcode_hash (qrcode_hash),
+
+  FOREIGN KEY (posto_graduacao) REFERENCES postos_graduacao(codigo)
+);
+
+-- ================= MOTIVOS DE FALTA =================
+CREATE TABLE motivos_falta (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(50) NOT NULL UNIQUE,
+  requer_observacao TINYINT(1) NOT NULL DEFAULT 0,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  ordem INT NOT NULL DEFAULT 0
+);
+
+INSERT INTO motivos_falta (nome, requer_observacao, ordem) VALUES
+('Serviço', 0, 1),
+('Posto Médico', 0, 2),
+('Hospital', 0, 3),
+('Comissão', 1, 4),
+('Dispensado', 0, 5),
+('LNC', 0, 6),
+('Detenção', 0, 7),
+('Prisão', 0, 8),
+('Outro', 1, 9),
+('Sem Justificativa', 0, 10);
+
+-- ================= GRUPOS (ex: CIDIT) =================
+-- categoria classifica o grupo: 'clube' (CIDIT, UNAEV...), 'servico', 'comissao'.
+-- "Rotina" (Jornadas/EF/Pernoite) NÃO é categoria de grupo — é o campo `tipo` de `retiradas`,
+-- porque não é um conjunto de alunos, é um tipo de formatura.
+CREATE TABLE grupos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(50) NOT NULL UNIQUE,
+  categoria ENUM('clube', 'servico', 'comissao') NOT NULL DEFAULT 'clube',
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO grupos (nome, categoria) VALUES ('CIDIT', 'clube');
+
+-- Todo grupo também vira uma opção de motivo de falta (ex: marcar "CIDIT" na chamada
+-- normal do pernoite, sem precisar de uma retirada de grupo pra isso).
+INSERT INTO motivos_falta (nome, requer_observacao, ordem)
+SELECT g.nome, 0, (SELECT COALESCE(MAX(ordem), 0) FROM motivos_falta) + 1
+FROM grupos g
+WHERE NOT EXISTS (SELECT 1 FROM motivos_falta m WHERE m.nome = g.nome);
+
+CREATE TABLE grupo_membros (
+  grupo_id INT NOT NULL,
+  aluno_id INT NOT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  PRIMARY KEY (grupo_id, aluno_id),
+  FOREIGN KEY (grupo_id) REFERENCES grupos(id),
+  FOREIGN KEY (aluno_id) REFERENCES alunos(id)
+);
+
+-- ================= RETIRADAS (chamadas) =================
+CREATE TABLE retiradas (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  tipo ENUM('1_jornada', '2_jornada', 'educacao_fisica', 'pernoite') NOT NULL,
+  agrupamento_tipo ENUM('esquadrilha', 'especialidade', 'grupo') NOT NULL,
+  agrupamento_valor VARCHAR(50) NOT NULL,
+  esquadrao VARCHAR(50) NULL, -- obrigatório quando agrupamento_tipo = 'esquadrilha'; NULL quando 'grupo'
+  aluno_servico_id INT NOT NULL,
+  status ENUM('pendente', 'enviada') NOT NULL DEFAULT 'pendente',
+  protocolo VARCHAR(40) NULL UNIQUE,
+  data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  enviada_em DATETIME NULL,
+
+  FOREIGN KEY (aluno_servico_id) REFERENCES alunos(id)
+);
+
+CREATE TABLE retirada_itens (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  retirada_id INT NOT NULL,
+  aluno_id INT NOT NULL,
+  presente TINYINT(1) NOT NULL DEFAULT 1,
+  motivo_falta_id INT NULL,
+  observacao TEXT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_retirada_aluno (retirada_id, aluno_id),
+  FOREIGN KEY (retirada_id) REFERENCES retiradas(id),
+  FOREIGN KEY (aluno_id) REFERENCES alunos(id),
+  FOREIGN KEY (motivo_falta_id) REFERENCES motivos_falta(id)
+);
+
+-- ================= PERMISSÕES =================
+CREATE TABLE permissoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  chave VARCHAR(50) NOT NULL UNIQUE,
+  descricao VARCHAR(150) NOT NULL
+);
+
+INSERT INTO permissoes (chave, descricao) VALUES
+('gerenciar_usuarios_admin', 'Criar, editar e excluir usuários administradores técnicos (admin_usuarios)'),
+('gerenciar_usuarios_painel', 'Criar, editar e excluir usuários do painel de comando (painel_usuarios)'),
+('ver_todos_esquadroes', 'Visualizar efetivo e relatórios de todos os esquadrões, não só o próprio'),
+('editar_efetivo', 'Editar dados de alunos no painel'),
+('registrar_retirada', 'Abrir, marcar presença/falta e enviar retiradas de falta (fazer a chamada)'),
+('gerenciar_api', 'Criar, revogar e monitorar chaves de API (apps conectados)');
+
+CREATE TABLE cargo_permissoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sistema ENUM('ikarus37', 'painel') NOT NULL,
+  cargo VARCHAR(30) NOT NULL,
+  permissao_id INT NOT NULL,
+
+  UNIQUE KEY uk_sistema_cargo_permissao (sistema, cargo, permissao_id),
+  FOREIGN KEY (permissao_id) REFERENCES permissoes(id)
+);
+
+-- ---------- Ikarus37 ----------
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'ikarus37', 'super_admin', id FROM permissoes
+WHERE chave IN ('gerenciar_usuarios_admin', 'gerenciar_usuarios_painel', 'gerenciar_api');
+-- admin, suporte: nenhuma permissão de gestão de usuários/API por padrão (só visualizam).
+
+-- ---------- Painel ----------
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'CMD_CA', id FROM permissoes
+WHERE chave IN ('gerenciar_usuarios_painel', 'ver_todos_esquadroes', 'editar_efetivo', 'registrar_retirada');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'SUBCMD_CA', id FROM permissoes
+WHERE chave IN ('gerenciar_usuarios_painel', 'ver_todos_esquadroes', 'editar_efetivo', 'registrar_retirada');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'ADMIN_TECNICO', id FROM permissoes
+WHERE chave IN ('ver_todos_esquadroes', 'editar_efetivo', 'registrar_retirada');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'AUX_CA', id FROM permissoes
+WHERE chave IN ('ver_todos_esquadroes', 'registrar_retirada');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'CMD_ESQUADRAO', id FROM permissoes
+WHERE chave IN ('editar_efetivo', 'registrar_retirada');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'ENC_ESQUADRAO', id FROM permissoes
+WHERE chave IN ('editar_efetivo', 'registrar_retirada');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', 'AUX_ESQUADRAO', id FROM permissoes
+WHERE chave IN ('registrar_retirada');
+-- AUX_ESQUADRAO: só registrar_retirada (faz a chamada), não edita efetivo.
+
+-- ================= CHAVES DE API (Apps conectados) =================
+CREATE TABLE api_chaves (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  chave_hash CHAR(64) NOT NULL UNIQUE,
+  chave_preview VARCHAR(8) NOT NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_por VARCHAR(50) NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ultimo_uso DATETIME NULL
+);
+
+-- Migra a chave fixa que já estava em uso (config.php) pra não quebrar quem já testou a API.
+-- Chave original: d0cf67c0a3b8464aacb2ed36f01b1fbb2af8d7623d804c3aa5eef732c6b3f058
+INSERT INTO api_chaves (nome, chave_hash, chave_preview, criado_por) VALUES
+('Chave inicial (migrada do config.php)', '98d41c1a6c7e80c8b4addcde33b4425c5180b590b34f388e81cfd494bb0638ef', '...f058', 'sistema');
+
+-- ================= LOG DE REQUISIÇÕES DA API =================
+CREATE TABLE api_logs (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  api_chave_id INT NULL,
+  endpoint VARCHAR(100) NOT NULL,
+  metodo VARCHAR(10) NOT NULL,
+  status_code INT NOT NULL,
+  ip VARCHAR(45) NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  INDEX idx_criado_em (criado_em),
+  FOREIGN KEY (api_chave_id) REFERENCES api_chaves(id)
+);

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argos — Sistema de Retirada de Faltas</title>
+<meta name="description" content="Argos: sistema eletrônico de retirada de faltas do Corpo de Alunos da EEAR. Um projeto CIDIT.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ================= NAVBAR ================= -->
+<header class="navbar" id="navbar">
+  <div class="navbar-inner">
+    <a href="#topo" class="brand">
+      <img src="images/logo-eear.png" alt="Brasão EEAR" class="brand-logo">
+      <span class="brand-text">
+        <strong>ARGOS</strong>
+        <small>Sistema de Retirada de Faltas</small>
+      </span>
+    </a>
+
+    <nav class="nav-links" id="navLinks">
+      <a href="#introducao" class="nav-link active">Introdução</a>
+      <a href="#apresentacao" class="nav-link">Apresentação</a>
+      <a href="#funcionamento" class="nav-link">Funcionamento</a>
+      <a href="#proposito" class="nav-link">Propósito</a>
+    </nav>
+
+    <div class="navbar-actions">
+      <a href="https://github.com/CIDIT-ARGOS" class="btn btn-ghost" target="_blank" rel="noopener">GitHub</a>
+      <a href="#proposito" class="btn btn-ghost">Saiba mais</a>
+      <button class="nav-toggle" id="navToggle" aria-label="Abrir menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="topo">
+
+  <!-- ================= INTRODUÇÃO ================= -->
+  <section id="introducao" class="section hero">
+    <div class="hero-bg" aria-hidden="true"></div>
+    <div class="section-inner hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">CIDIT — 2026 · Protótipo funcional</span>
+        <h1 class="display">ARGOS</h1>
+        <p class="hero-subtitle">Sistema de Retirada de Faltas · Corpo de Alunos</p>
+        <p class="hero-text">
+          Vigilância contínua do efetivo: retirada de faltas <strong>digital</strong>,
+          justificativa de faltas em campo e histórico auditável de cada retirada —
+          substituindo o controle manual por papeletas e o Livro do Aluno de Dia.
+        </p>
+        <div class="hero-actions">
+          <a href="#apresentacao" class="btn btn-primary">Conhecer o projeto</a>
+          <a href="#funcionamento" class="btn btn-outline">Ver como funciona</a>
+        </div>
+      </div>
+
+      <div class="hero-media">
+        <div class="img-slot phone-frame" data-caption="images/hero-app.png · print do app">
+          <img src="images/hero-app.png" alt="Tela principal do aplicativo Argos"
+               onerror="this.closest('.img-slot').classList.add('img-missing')">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= APRESENTAÇÃO ================= -->
+  <section id="apresentacao" class="section">
+    <div class="section-inner">
+      <header class="section-head">
+        <span class="tag">01 · Conceito</span>
+        <h2>A origem do nome</h2>
+      </header>
+
+      <div class="split">
+        <div class="split-text">
+          <p>
+            Na mitologia grega, <strong>Argos Panoptes</strong> era o gigante coberto por
+            centenas de olhos. Por nunca fechar todos ao mesmo tempo, exercia uma vigilância
+            contínua, atenta e infalível.
+          </p>
+          <p>
+            O projeto adota o nome como símbolo da <strong>vigia constante</strong> do efetivo:
+            nenhuma alteração ou falta passa sem o devido registro e controle.
+          </p>
+
+          <div class="cards cards-3">
+            <div class="card">
+              <div class="card-icon" aria-hidden="true">⚡</div>
+              <h3>Agilidade</h3>
+              <p>A retirada acontece na formatura, pelo celular do aluno de serviço, em minutos para todo o efetivo.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon" aria-hidden="true">✓</div>
+              <h3>Confiabilidade</h3>
+              <p>O registro individual por aluno elimina erro de cômputo, dupla contagem e presença lançada por terceiros.</p>
+            </div>
+            <div class="card">
+              <div class="card-icon" aria-hidden="true">◎</div>
+              <h3>Transparência</h3>
+              <p>Cada retirada gera protocolo, responsável identificado e histórico consultável.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="split-media">
+          <div class="img-slot phone-frame" data-caption="images/tela-login.png · tela de acesso">
+            <img src="images/tela-login.png" alt="Tela de acesso do aplicativo Argos"
+                 onerror="this.closest('.img-slot').classList.add('img-missing')">
+          </div>
+          <p class="media-caption">Acesso por identidade militar / SARAM. Tema claro, alto contraste, uso ao ar livre.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FUNCIONAMENTO ================= -->
+  <section id="funcionamento" class="section section-alt">
+    <div class="section-inner">
+      <header class="section-head">
+        <span class="tag">02 · Operação</span>
+        <h2>Como o Argos funciona</h2>
+        <p class="section-lead">
+          Um fluxo simples, pensado para o pátio: identificar quem está fazendo a chamada,
+          registrar o efetivo e justificar quem faltou — tudo em poucos minutos.
+        </p>
+      </header>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-number">1</div>
+          <h3>Escolher a retirada</h3>
+          <p>Formatura, 1ª ou 2ª Jornada, Educação Física ou Pernoite — com status pendente ou enviada.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">2</div>
+          <h3>Identificar o aluno de serviço</h3>
+          <p>Login individual do responsável pela chamada. Sem essa identificação, a retirada não abre.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">3</div>
+          <h3>Registrar o efetivo</h3>
+          <p>Lista do esquadrão em tela, com marcação rápida por aluno e retorno imediato de duplicidade.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">4</div>
+          <h3>Registrar o motivo da falta</h3>
+          <p>Alunos de Serviço, Posto Médico, Dispensados, Punição (LNC, Detenção, Prisão) ou Justificativa para apuração dos fatos.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">5</div>
+          <h3>Revisão e envio</h3>
+          <p>Conferência de presentes, faltas e observações antes de assinar a chamada.</p>
+        </div>
+        <div class="step">
+          <div class="step-number">6</div>
+          <h3>Histórico e protocolo</h3>
+          <p>Cada retirada gera protocolo único, responsável identificado e histórico consultável.</p>
+        </div>
+      </div>
+
+      <div class="callout-grid">
+        <div class="callout callout-dark">
+          <h4>Controles do registro</h4>
+          <ul class="plain-list">
+            <li><strong>Anti dupla-contagem</strong> — aluno já registrado volta como “já lançado”.</li>
+            <li><strong>Fora do efetivo</strong> — aluno de outro esquadrão é recusado.</li>
+            <li><strong>Busca por número ou nome</strong> — localização rápida na lista, mesmo em campo.</li>
+          </ul>
+        </div>
+        <div class="callout">
+          <h4>Simples de operar em qualquer condição</h4>
+          <p>A marcação acontece direto na tela, sem depender de hardware extra. O toque abre direto o motivo da falta, com registro claro de exceções.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROPÓSITO ================= -->
+  <section id="proposito" class="section">
+    <div class="section-inner">
+      <header class="section-head">
+        <span class="tag">03 · Propósito</span>
+        <h2>Por que o Argos existe</h2>
+      </header>
+
+      <div class="split split-reverse">
+        <div class="split-media">
+          <div class="stat-card">
+            <span class="stat-number">2</span>
+            <span class="stat-label">registros hoje em uso:<br>Papeletas de Retirada de Faltas e Livro do Aluno de Dia</span>
+          </div>
+        </div>
+        <div class="split-text">
+          <p>
+            Mesmo sendo reconhecida como o maior centro de formação técnica da América Latina,
+            a EEAR ainda controla o efetivo de alunos de forma manual, por meio de
+            <strong>Papeletas de Retirada de Faltas</strong> preenchidas nas entradas em forma
+            e do <strong>Livro do Aluno de Dia</strong> mantido em cada esquadrão.
+          </p>
+          <p>
+            O Argos nasce para digitalizar esse controle: um sistema eletrônico que substitui
+            a chamada em papel por um registro estruturado, com histórico auditável e
+            responsável identificado em cada retirada.
+          </p>
+        </div>
+      </div>
+
+      <div class="cards cards-4">
+        <div class="card card-outline">
+          <h3>Entradas em forma</h3>
+          <p>1ª Jornada, 2ª Jornada, Educação Física e Pernoite.</p>
+        </div>
+        <div class="card card-outline">
+          <h3>Categorias controladas</h3>
+          <p>Alunos de Serviço, Posto Médico, Dispensados e Punição (LNC, Detenção ou Prisão).</p>
+        </div>
+        <div class="card card-outline">
+          <h3>Justificativa</h3>
+          <p>Toda falta fora dessas categorias recebe motivo específico, pronto para apuração dos fatos.</p>
+        </div>
+        <div class="card card-outline">
+          <h3>Próximo passo: DEF</h3>
+          <p>Após consolidado nas entradas em forma, o sistema será estendido à Divisão de Ensino e Formação.</p>
+        </div>
+      </div>
+
+      <div class="roadmap">
+        <h4>Roteiro futuro</h4>
+        <div class="roadmap-items">
+          <div class="roadmap-item"><span>01</span>Modo offline com sincronização</div>
+          <div class="roadmap-item"><span>02</span>Painel do esquadrão e relatórios</div>
+          <div class="roadmap-item"><span>03</span>Integração com escalas de serviço</div>
+          <div class="roadmap-item"><span>04</span>Identificação por QR Code individual (bônus)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+  <div class="section-inner footer-grid">
+
+    <div class="footer-col footer-brand">
+      <div class="footer-logo">
+        <img src="images/logo-eear.png" alt="Brasão EEAR" class="footer-logo-img">
+        <span>ARGOS</span>
+      </div>
+      <p>Sistema de retirada de faltas do Corpo de Alunos, desenvolvido como protótipo funcional (v1) para a Escola de Especialistas de Aeronáutica.</p>
+      <p class="footer-credit">CIDIT — 2026 · Uso interno, gestão dos esquadrões do Corpo de Alunos.</p>
+      <a href="https://github.com/CIDIT-ARGOS" class="footer-github" target="_blank" rel="noopener">github.com/CIDIT-ARGOS</a>
+    </div>
+
+    <div class="footer-col">
+      <div class="footer-cidit">
+        <img src="images/logo-cidit.png" alt="Símbolo do Aluno Especialista / CIDIT" class="footer-cidit-img">
+        <div>
+          <h4>Sobre a CIDIT</h4>
+          <p>Clube de Inovação Digital e Tecnologia, iniciativa do Corpo de Alunos da EEAR voltada ao desenvolvimento de soluções digitais aplicadas à rotina da Escola.</p>
+          <p class="footer-muted">Escola de Especialistas de Aeronáutica · Guaratinguetá/SP</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-col">
+      <h4>Contatos · Equipe do projeto</h4>
+      <ul class="team-list">
+        <li>
+          <span class="team-name">AL 26/3138 SIN Simioni</span>
+          <span class="team-role">Encarregado do projeto</span>
+        </li>
+        <li>
+          <span class="team-name">AL 26/3119 SIN Santana</span>
+          <span class="team-role">Desenvolvedor do projeto</span>
+        </li>
+        <li>
+          <span class="team-name">AL 26/3103 SIN Menezes</span>
+          <span class="team-role">Desenvolvedor do projeto</span>
+        </li>
+        <li>
+          <span class="team-name">AL 26/3118 SIN Gabriel</span>
+          <span class="team-role">Desenvolvedor do projeto</span>
+        </li>
+      </ul>
+      <p class="footer-muted">Contato via CIDIT / Corpo de Alunos.</p>
+    </div>
+
+  </div>
+
+  <div class="footer-bottom">
+    <div class="section-inner footer-bottom-inner">
+      <span>© 2026 Projeto Argos · CIDIT — Corpo de Alunos EEAR</span>
+      <button id="backToTop" class="back-to-top" aria-label="Voltar ao topo">↑ Topo</button>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
