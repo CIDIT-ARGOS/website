@@ -358,8 +358,9 @@ a {
 
 .phone-frame {
   width: 280px;
-  aspect-ratio: 9 / 18;
+  aspect-ratio: 804 / 1748; /* proporção real dos prints (hero-app.png, tela-login.png) */
   box-shadow: var(--sombra);
+  margin: 0 auto;
 }
 
 .img-slot img {
