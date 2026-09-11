@@ -11,3 +11,12 @@ DirectoryIndex index.html
 <FilesMatch "^(config\.php|gerar_hash\.php|retiradas_core\.php)$">
     Require all denied
 </FilesMatch>
+
+# Evita que o navegador guarde CSS/JS/imagens "pra sempre" sem checar se mudou.
+# "no-cache" não significa "não guardar" — significa "sempre pergunte ao servidor
+# antes de usar a cópia guardada" (o servidor responde rápido com 304 se nada mudou).
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|webp)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
