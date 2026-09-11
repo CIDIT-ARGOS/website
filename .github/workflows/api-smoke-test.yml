@@ -1,0 +1,137 @@
+name: API Smoke Test
+
+# Testa a API do Argos DIRETO EM PRODUÇÃO (sigsaeear.com) — não builda nada,
+# não roda contra código deste repositório. Como o deploy é manual via FTP,
+# isso é um teste de "o site está de pé e respondendo certo", não de "esse
+# commit específico funciona".
+#
+# Não roda em push/PR de propósito: pushar código aqui não muda o servidor
+# (deploy é manual por FTP), então testar automaticamente ali daria falso
+# positivo/negativo. Rode manualmente (Actions → API Smoke Test → Run workflow)
+# depois de subir os arquivos por FTP, e/ou deixe rodando todo dia pelo agendamento.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * *' # todo dia às 12:00 UTC (09:00 em Brasília)
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: https://sigsaeear.com/cidit/projetos/11/api
+      API_KEY: ${{ secrets.ARGOS_API_KEY }}
+
+    steps:
+      - name: Confere se a chave de API foi configurada
+        run: |
+          if [ -z "$API_KEY" ]; then
+            echo "::error::Secret ARGOS_API_KEY não configurado neste repositório."
+            echo "Vá em Settings → Secrets and variables → Actions → New repository secret."
+            exit 1
+          fi
+
+      - name: api/index.php responde e lista os endpoints
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" "$BASE_URL/index.php")
+          corpo=$(echo "$resposta" | head -n -1)
+          status=$(echo "$resposta" | tail -n1)
+
+          echo "Status: $status"
+          echo "$corpo" | jq .
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Esperava 200, veio $status"
+            exit 1
+          fi
+          echo "$corpo" | jq -e '.servico == "Argos API"' > /dev/null
+
+      - name: Requisição sem chave deve ser recusada (401)
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/motivos.php")
+          echo "Status: $status"
+          if [ "$status" != "401" ]; then
+            echo "::error::Endpoint sem chave deveria responder 401, veio $status. A API pode estar sem proteção!"
+            exit 1
+          fi
+
+      - name: api/motivos.php retorna a lista de motivos de falta
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" -H "X-API-Key: $API_KEY" "$BASE_URL/motivos.php")
+          corpo=$(echo "$resposta" | head -n -1)
+          status=$(echo "$resposta" | tail -n1)
+
+          echo "Status: $status"
+          echo "$corpo" | jq .
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Esperava 200, veio $status"
+            exit 1
+          fi
+
+          total=$(echo "$corpo" | jq 'length')
+          if [ "$total" -lt 1 ]; then
+            echo "::error::Lista de motivos veio vazia."
+            exit 1
+          fi
+          echo "$corpo" | jq -e '.[0] | has("nome")' > /dev/null
+
+      - name: api/alunos.php lista alunos por esquadrilha
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" -H "X-API-Key: $API_KEY" "$BASE_URL/alunos.php?esquadrilha=A")
+          corpo=$(echo "$resposta" | head -n -1)
+          status=$(echo "$resposta" | tail -n1)
+
+          echo "Status: $status"
+          echo "Total de alunos: $(echo "$corpo" | jq 'length')"
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Esperava 200, veio $status"
+            exit 1
+          fi
+
+          total=$(echo "$corpo" | jq 'length')
+          if [ "$total" -lt 1 ]; then
+            echo "::error::Nenhum aluno retornado para esquadrilha=A. Efetivo foi apagado?"
+            exit 1
+          fi
+          echo "$corpo" | jq -e '.[0] | has("nome_guerra") and has("milhao") and has("esquadrilha")' > /dev/null
+
+      - name: api/alunos.php busca por id
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" -H "X-API-Key: $API_KEY" "$BASE_URL/alunos.php?id=1")
+          corpo=$(echo "$resposta" | head -n -1)
+          status=$(echo "$resposta" | tail -n1)
+
+          echo "Status: $status"
+          echo "$corpo" | jq .
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Esperava 200, veio $status"
+            exit 1
+          fi
+          echo "$corpo" | jq -e 'has("nome_guerra")' > /dev/null
+
+      - name: api/retiradas.php responde uma lista válida
+        run: |
+          resposta=$(curl -s -w "\n%{http_code}" -H "X-API-Key: $API_KEY" "$BASE_URL/retiradas.php")
+          corpo=$(echo "$resposta" | head -n -1)
+          status=$(echo "$resposta" | tail -n1)
+
+          echo "Status: $status"
+          echo "$corpo" | jq .
+
+          if [ "$status" != "200" ]; then
+            echo "::error::Esperava 200, veio $status"
+            exit 1
+          fi
+          echo "$corpo" | jq -e 'type == "array"' > /dev/null
+
+      - name: Chave inválida deve ser recusada
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" -H "X-API-Key: chave-invalida-de-teste" "$BASE_URL/motivos.php")
+          echo "Status: $status"
+          if [ "$status" != "401" ]; then
+            echo "::error::Chave inválida deveria ser recusada com 401, veio $status."
+            exit 1
+          fi
