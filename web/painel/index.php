@@ -69,9 +69,10 @@ $logado = !empty($_SESSION['painel_id']);
 <meta name="robots" content="noindex, nofollow">
 <title>Painel — Argos</title>
 <style>
-    :root {
-        --bg: #0d1117; --bg-card: #161b22; --border: #30363d;
-        --text: #e6edf3; --text-muted: #8b949e; --accent: #4f8cff; --danger: #ff5f5f;
+        :root {
+        --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
+        --text: #16202e; --text-muted: #55637a; --accent: #2f6fed;
+        --azul-eear: #0a2e5c; --danger: #c0392b; --ok: #1f8a4c;
     }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
@@ -79,7 +80,7 @@ $logado = !empty($_SESSION['painel_id']);
     .login-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 32px; width: 100%; max-width: 340px; }
     .login-box h1 { font-size: 20px; margin: 0 0 4px; }
     .login-box p.sub { color: var(--text-muted); font-size: 13px; margin: 0 0 20px; }
-    .login-box input { width: 100%; padding: 10px 12px; margin-bottom: 12px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; }
+    .login-box input { width: 100%; padding: 10px 12px; margin-bottom: 12px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; }
     .login-box button { width: 100%; padding: 10px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer; }
     .erro { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
 
@@ -122,6 +123,7 @@ $logado = !empty($_SESSION['painel_id']);
     }
     .card h3 { margin: 0 0 6px; font-size: 15px; }
     .card p { margin: 0; color: var(--text-muted); font-size: 13px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
@@ -145,7 +147,7 @@ $logado = !empty($_SESSION['painel_id']);
 
     <div class="topbar">
         <div class="brand">ARGOS <span><?= htmlspecialchars($_SESSION['painel_nome']) ?> · <?= htmlspecialchars(nomeCargo($_SESSION['painel_cargo'])) ?><?= $_SESSION['painel_esquadrao'] ? ' · Esquadrão ' . htmlspecialchars($_SESSION['painel_esquadrao']) : '' ?><?= ($_SESSION['painel_origem'] ?? '') === 'ikarus37' ? ' · via Ikarus37' : '' ?></span></div>
-        <a href="?logout=1">sair</a>
+        <a href="?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
     </div>
 
     <div class="container">

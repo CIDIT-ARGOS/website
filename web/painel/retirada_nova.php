@@ -47,7 +47,11 @@ $grupos = listarGrupos($conexao);
 <meta name="robots" content="noindex, nofollow">
 <title>Painel — Nova retirada</title>
 <style>
-    :root { --bg: #0d1117; --bg-card: #161b22; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --accent: #4f8cff; --danger: #ff5f5f; }
+        :root {
+        --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
+        --text: #16202e; --text-muted: #55637a; --accent: #2f6fed;
+        --azul-eear: #0a2e5c; --danger: #c0392b; --ok: #1f8a4c;
+    }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
     .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); }
@@ -55,11 +59,12 @@ $grupos = listarGrupos($conexao);
     .container { padding: 24px; max-width: 500px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
     label { display: block; font-size: 12px; color: var(--text-muted); margin-top: 12px; margin-bottom: 4px; }
-    input, select { width: 100%; padding: 8px 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    input, select { width: 100%; padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
     button { padding: 9px 18px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; margin-top: 18px; }
     .erro { color: var(--danger); font-size: 13px; }
     fieldset { border: 1px solid var(--border); border-radius: 8px; margin-top: 14px; padding: 10px; }
     legend { font-size: 12px; color: var(--text-muted); padding: 0 6px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 <script>
     function alternarAgrupamento() {
@@ -141,8 +146,8 @@ $grupos = listarGrupos($conexao);
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="retiradas.php">← retiradas</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div><strong>ARGOS</strong> <a href="retiradas.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>retiradas</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">

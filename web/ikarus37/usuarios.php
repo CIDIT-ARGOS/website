@@ -248,13 +248,14 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     .scroll-x { overflow-x: auto; }
     details summary { cursor: pointer; color: var(--accent); font-size: 12px; margin-top: 6px; }
     .acoes-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div class="brand">IKARUS37 <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div class="brand">IKARUS37 <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">
@@ -337,7 +338,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                             <form method="post" onsubmit="return confirm('Excluir este usuário?');" style="margin-top:6px;">
                                 <input type="hidden" name="acao" value="excluir">
                                 <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                <button type="submit" class="danger">Excluir</button>
+                                <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                             </form>
                             <?php endif; ?>
                         </td>
@@ -448,7 +449,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                             <form method="post" onsubmit="return confirm('Excluir este usuário do painel?');" style="margin-top:6px;">
                                 <input type="hidden" name="acao" value="painel_excluir">
                                 <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                <button type="submit" class="danger">Excluir</button>
+                                <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                             </form>
                         </td>
                     <?php else: ?>

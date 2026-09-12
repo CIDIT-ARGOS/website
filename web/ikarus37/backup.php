@@ -96,13 +96,14 @@ while ($linha = mysqli_fetch_array($resultTabelas)) {
     th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
     th { background: #1d212a; color: var(--text-muted); }
     a.btn { display: inline-block; padding: 10px 20px; background: var(--accent); color: #fff; text-decoration: none; border-radius: 6px; font-size: 14px; margin-top: 10px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>IKARUS37</strong> <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div><strong>IKARUS37</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">

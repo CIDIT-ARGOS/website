@@ -106,13 +106,14 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
     .metodo-delete { background: #301717; color: #ff6b6b; }
     code.rota { font-family: monospace; font-size: 13px; }
     details summary { cursor: pointer; color: var(--accent); font-size: 12px; margin-top: 6px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div class="brand">IKARUS37 <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div class="brand">IKARUS37 <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">
@@ -176,7 +177,7 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
                         <form method="post" style="display:inline;" onsubmit="return confirm('Excluir esta chave e todo o log dela?');">
                             <input type="hidden" name="acao" value="excluir">
                             <input type="hidden" name="id" value="<?= $c['id'] ?>">
-                            <button type="submit" class="danger">excluir</button>
+                            <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>excluir</button>
                         </form>
                     </td>
                     <?php endif; ?>

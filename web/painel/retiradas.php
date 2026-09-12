@@ -33,7 +33,11 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
 <meta name="robots" content="noindex, nofollow">
 <title>Painel — Retiradas</title>
 <style>
-    :root { --bg: #0d1117; --bg-card: #161b22; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --accent: #4f8cff; --ok: #4caf7d; }
+        :root {
+        --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
+        --text: #16202e; --text-muted: #55637a; --accent: #2f6fed;
+        --azul-eear: #0a2e5c; --danger: #c0392b; --ok: #1f8a4c;
+    }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
     .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); }
@@ -43,28 +47,29 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
     button, a.btn { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; text-decoration: none; display: inline-block; }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
     th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
-    th { background: #1c2128; color: var(--text-muted); }
+    th { background: var(--azul-eear); color: #ffffff; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
-    .badge.pendente { background: #3a2f12; color: #e0b84c; }
-    .badge.enviada { background: #17301f; color: var(--ok); }
+    .badge.pendente { background: #fff3cd; color: #8a6100; }
+    .badge.enviada { background: #d9f2e3; color: var(--ok); }
     .link-btn { color: var(--accent); text-decoration: none; font-size: 12px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">
     <div style="display:flex; justify-content:space-between; align-items:center;">
         <h2>Retiradas <?= $escopo ? '— Esquadrão ' . htmlspecialchars($escopo) : '' ?></h2>
-        <a href="retirada_nova.php" class="btn">+ Nova retirada</a>
+        <a href="retirada_nova.php" class="btn"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Nova retirada</a>
     </div>
 
-    <?php if ($erro): ?><p class="erro" style="color: var(--danger, #ff5f5f);"><?= htmlspecialchars($erro) ?></p><?php endif; ?>
+    <?php if ($erro): ?><p class="erro" style="color: var(--danger, #c0392b);"><?= htmlspecialchars($erro) ?></p><?php endif; ?>
 
     <div class="card">
         <?php if (empty($retiradas)): ?>
@@ -86,7 +91,7 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                         <form method="post" style="display:inline;" onsubmit="return confirm('Excluir esta retirada e todos os itens marcados nela? Não dá pra desfazer.');">
                             <input type="hidden" name="acao" value="excluir">
                             <input type="hidden" name="id" value="<?= $r['id'] ?>">
-                            <button type="submit" class="link-btn" style="background:none; border:none; padding:0; margin-left:10px; cursor:pointer; font:inherit; color: var(--danger, #ff5f5f);">excluir</button>
+                            <button type="submit" class="link-btn" style="background:none; border:none; padding:0; margin-left:10px; cursor:pointer; font:inherit; color: var(--danger, #c0392b);"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>excluir</button>
                         </form>
                     </td>
                 </tr>

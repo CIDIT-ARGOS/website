@@ -176,6 +176,7 @@ $logado = !empty($_SESSION['admin_id']);
         color: var(--text-muted);
         margin-top: 10px;
     }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
@@ -199,7 +200,7 @@ $logado = !empty($_SESSION['admin_id']);
 
     <div class="topbar">
         <div class="brand">IKARUS37 <span><?= htmlspecialchars($_SESSION['admin_nome']) ?> · <?= htmlspecialchars($_SESSION['admin_nivel']) ?></span></div>
-        <a href="?logout=1">sair</a>
+        <a href="?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
     </div>
 
     <div class="container">

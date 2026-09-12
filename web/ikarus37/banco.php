@@ -125,13 +125,14 @@ if ($tabelaSelecionada && in_array($tabelaSelecionada, array_column($tabelas, 'n
     .scroll-x { overflow-x: auto; }
     .link-btn { color: var(--accent); text-decoration: none; font-size: 12px; margin-left: 10px; }
     .link-btn.danger-link { color: var(--danger); }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div class="brand">IKARUS37 <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div class="brand">IKARUS37 <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">
@@ -214,11 +215,11 @@ if ($tabelaSelecionada && in_array($tabelaSelecionada, array_column($tabelas, 'n
                                 <?php foreach ($linha as $v): ?><td><?= htmlspecialchars((string)$v) ?></td><?php endforeach; ?>
                                 <?php if ($chavePrimaria): ?>
                                 <td style="white-space:nowrap;">
-                                    <a href="registro_editar.php?tabela=<?= urlencode($tabelaSelecionada) ?>&id=<?= urlencode($linha[$chavePrimaria]) ?>" class="link-btn">editar</a>
+                                    <a href="registro_editar.php?tabela=<?= urlencode($tabelaSelecionada) ?>&id=<?= urlencode($linha[$chavePrimaria]) ?>" class="link-btn"><span class="i" style="--icon-url:url('../images/icons/pencil.svg')"></span>editar</a>
                                     <form method="post" style="display:inline;" onsubmit="return confirm('Excluir este registro?');">
                                         <input type="hidden" name="acao" value="excluir_registro">
                                         <input type="hidden" name="registro_id" value="<?= htmlspecialchars($linha[$chavePrimaria]) ?>">
-                                        <button type="submit" class="link-btn danger-link" style="background:none; border:none; padding:0; margin:0; cursor:pointer; font:inherit;">excluir</button>
+                                        <button type="submit" class="link-btn danger-link" style="background:none; border:none; padding:0; margin:0; cursor:pointer; font:inherit;"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>excluir</button>
                                     </form>
                                 </td>
                                 <?php endif; ?>

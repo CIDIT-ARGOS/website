@@ -71,29 +71,34 @@ $usuarios = listarUsuariosPainel($conexao);
 <meta name="robots" content="noindex, nofollow">
 <title>Painel — Usuários</title>
 <style>
-    :root { --bg: #0d1117; --bg-card: #161b22; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --accent: #4f8cff; --danger: #ff5f5f; --ok: #4caf7d; }
+        :root {
+        --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
+        --text: #16202e; --text-muted: #55637a; --accent: #2f6fed;
+        --azul-eear: #0a2e5c; --danger: #c0392b; --ok: #1f8a4c;
+    }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
     .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); }
     .topbar a { color: var(--text-muted); text-decoration: none; font-size: 13px; margin-left: 16px; }
     .container { padding: 24px; max-width: 1100px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    input, select { padding: 8px 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     button.danger { background: var(--danger); }
     button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
     .acoes { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
     th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
-    th { background: #1c2128; color: var(--text-muted); }
+    th { background: var(--azul-eear); color: #ffffff; }
     .erro { color: var(--danger); font-size: 13px; }
     .ok { color: var(--ok); font-size: 13px; }
     .form-linha { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
-    .badge.ativo { background: #17301f; color: var(--ok); }
-    .badge.inativo { background: #301717; color: var(--danger); }
+    .badge.ativo { background: #d9f2e3; color: var(--ok); }
+    .badge.inativo { background: #fbe0e0; color: var(--danger); }
     .scroll-x { overflow-x: auto; min-width: 0; }
     details summary { cursor: pointer; color: var(--accent); font-size: 12px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 <script>
     function alternarEsquadrao(select, campoEsquadrao) {
@@ -130,8 +135,8 @@ $usuarios = listarUsuariosPainel($conexao);
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">
@@ -199,7 +204,7 @@ $usuarios = listarUsuariosPainel($conexao);
                         <button form="<?= $formId ?>" type="submit">Salvar</button>
                         <button type="button" class="ghost" onclick="redefinirSenha(<?= $u['id'] ?>)">redefinir senha</button>
                         <?php if ($u['id'] != $meuId): ?>
-                        <button type="button" class="danger" onclick="excluirUsuario(<?= $u['id'] ?>)">Excluir</button>
+                        <button type="button" class="danger" onclick="excluirUsuario(<?= $u['id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                         <?php endif; ?>
                     </td>
                 </tr>

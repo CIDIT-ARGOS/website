@@ -102,13 +102,14 @@ if ($tabela && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['arquivo']
     .erro { color: var(--danger); font-size: 13px; }
     .ok { color: var(--ok); font-size: 13px; }
     code { background: #0f1115; padding: 1px 5px; border-radius: 4px; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div class="brand">IKARUS37 <a href="banco.php">← banco de dados</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div class="brand">IKARUS37 <a href="banco.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>banco de dados</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">

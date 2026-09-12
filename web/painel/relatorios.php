@@ -42,32 +42,37 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
 <meta name="robots" content="noindex, nofollow">
 <title>Painel — Relatório de retiradas</title>
 <style>
-    :root { --bg: #0d1117; --bg-card: #161b22; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --accent: #4f8cff; --ok: #4caf7d; --danger: #ff5f5f; }
+        :root {
+        --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
+        --text: #16202e; --text-muted: #55637a; --accent: #2f6fed;
+        --azul-eear: #0a2e5c; --danger: #c0392b; --ok: #1f8a4c;
+    }
     * { box-sizing: border-box; }
     body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
     .topbar { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); }
     .topbar a { color: var(--text-muted); text-decoration: none; font-size: 13px; margin-left: 16px; }
     .container { padding: 24px; max-width: 1200px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    input, select { padding: 8px 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     .filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
-    .kpi { background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+    .kpi { background: #ffffff; border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
     .kpi .valor { font-size: 26px; font-weight: 700; }
     .kpi .rotulo { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
     th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
-    th { background: #1c2128; color: var(--text-muted); }
+    th { background: var(--azul-eear); color: #ffffff; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     .vazio { color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center; }
+    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php">← painel</a></div>
-    <div><a href="index.php?logout=1">sair</a></div>
+    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
 <div class="container">
@@ -91,7 +96,7 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                     <?php endforeach; ?>
                 </select>
             <?php endif; ?>
-            <button type="submit">Filtrar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/filter.svg')"></span>Filtrar</button>
         </form>
     </div>
 
