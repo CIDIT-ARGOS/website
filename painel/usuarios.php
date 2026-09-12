@@ -81,6 +81,8 @@ $usuarios = listarUsuariosPainel($conexao);
     input, select { padding: 8px 10px; background: #0d1117; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     button.danger { background: var(--danger); }
+    button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .acoes { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
     th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
     th { background: #1c2128; color: var(--text-muted); }
@@ -97,6 +99,31 @@ $usuarios = listarUsuariosPainel($conexao);
     function alternarEsquadrao(select, campoEsquadrao) {
         const cargosEsquadrao = ['CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'];
         campoEsquadrao.style.display = cargosEsquadrao.includes(select.value) ? 'inline-block' : 'none';
+    }
+
+    function enviarAcao(campos) {
+        const form = document.createElement('form');
+        form.method = 'post';
+        for (const [nome, valor] of Object.entries(campos)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = nome;
+            input.value = valor;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function redefinirSenha(id) {
+        const novaSenha = prompt('Nova senha (mínimo 6 caracteres):');
+        if (!novaSenha) return;
+        enviarAcao({ acao: 'resetar_senha', id, nova_senha: novaSenha });
+    }
+
+    function excluirUsuario(id) {
+        if (!confirm('Excluir este usuário do painel?')) return;
+        enviarAcao({ acao: 'excluir', id });
     }
 </script>
 </head>
@@ -168,23 +195,11 @@ $usuarios = listarUsuariosPainel($conexao);
                         </label>
                     </td>
                     <td><?= htmlspecialchars($u['ultimo_login'] ?? '—') ?></td>
-                    <td>
+                    <td class="acoes">
                         <button form="<?= $formId ?>" type="submit">Salvar</button>
-                        <details>
-                            <summary>redefinir senha</summary>
-                            <form method="post" style="margin-top:6px; display:flex; gap:6px;">
-                                <input type="hidden" name="acao" value="resetar_senha">
-                                <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                <input type="password" name="nova_senha" placeholder="Nova senha" required>
-                                <button type="submit">Redefinir</button>
-                            </form>
-                        </details>
+                        <button type="button" class="ghost" onclick="redefinirSenha(<?= $u['id'] ?>)">redefinir senha</button>
                         <?php if ($u['id'] != $meuId): ?>
-                        <form method="post" onsubmit="return confirm('Excluir este usuário?');" style="margin-top:6px;">
-                            <input type="hidden" name="acao" value="excluir">
-                            <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                            <button type="submit" class="danger">Excluir</button>
-                        </form>
+                        <button type="button" class="danger" onclick="excluirUsuario(<?= $u['id'] ?>)">Excluir</button>
                         <?php endif; ?>
                     </td>
                 </tr>

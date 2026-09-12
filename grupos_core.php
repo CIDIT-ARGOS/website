@@ -54,6 +54,12 @@ function criarGrupo($conexao, $nome, $categoria) {
     return ['ok' => true, 'id' => $grupoId];
 }
 
+function excluirGrupo($conexao, $id) {
+    $stmt = mysqli_prepare($conexao, "UPDATE grupos SET ativo = 0 WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    return mysqli_stmt_execute($stmt);
+}
+
 function listarMembros($conexao, $grupoId) {
     $stmt = mysqli_prepare($conexao, "
         SELECT a.id, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha

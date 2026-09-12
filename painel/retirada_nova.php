@@ -163,7 +163,7 @@ $grupos = listarGrupos($conexao);
                 <label>Agrupamento</label>
                 <select id="agrupamento_tipo" name="agrupamento_tipo" onchange="alternarAgrupamento()">
                     <option value="esquadrilha">Esquadrilha</option>
-                    <option value="grupo">Grupo (ex: CIDIT)</option>
+                    <option value="grupo">Grupo</option>
                 </select>
             <?php else: ?>
                 <input type="hidden" id="agrupamento_tipo" name="agrupamento_tipo" value="esquadrilha">

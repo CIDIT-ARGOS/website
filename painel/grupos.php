@@ -46,6 +46,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'adicion
     }
 }
 
+// ---------- Excluir grupo ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'excluir_grupo') {
+    $grupoId = (int)($_POST['grupo_id'] ?? 0);
+    excluirGrupo($conexao, $grupoId);
+    $mensagem = "Grupo excluído.";
+    $grupoSelecionado = null;
+}
+
 // ---------- Remover membro ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'remover') {
     $grupoId = (int)($_POST['grupo_id'] ?? 0);
@@ -141,7 +149,14 @@ if ($grupoAtual && $buscaNome !== '') {
 
     <?php if ($grupoAtual): ?>
         <div class="card">
-            <h4>Adicionar membro a <?= htmlspecialchars($grupoAtual['nome']) ?></h4>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h4 style="margin:0;">Adicionar membro a <?= htmlspecialchars($grupoAtual['nome']) ?></h4>
+                <form method="post" onsubmit="return confirm('Excluir o grupo \'<?= htmlspecialchars($grupoAtual['nome'], ENT_QUOTES) ?>\'? Os membros são desvinculados, mas o histórico de retiradas já feitas continua.');">
+                    <input type="hidden" name="acao" value="excluir_grupo">
+                    <input type="hidden" name="grupo_id" value="<?= $grupoAtual['id'] ?>">
+                    <button type="submit" class="danger">Excluir grupo</button>
+                </form>
+            </div>
             <form method="get">
                 <input type="hidden" name="grupo" value="<?= htmlspecialchars($grupoAtual['nome']) ?>">
                 <input type="text" name="busca" placeholder="Nome ou milhão" value="<?= htmlspecialchars($buscaNome) ?>">

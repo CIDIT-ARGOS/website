@@ -261,6 +261,9 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
             <span class="metodo-tag metodo-put">PUT</span><code class="rota">retiradas.php?id=X&acao=enviar</code> — fecha a retirada e gera protocolo
         </div>
         <div class="endpoint">
+            <span class="metodo-tag metodo-delete">DELETE</span><code class="rota">retiradas.php?id=X</code> — exclui a retirada e seus itens
+        </div>
+        <div class="endpoint">
             <span class="metodo-tag metodo-get">GET</span><code class="rota">retirada_itens.php?retirada_id=X</code> — lista o efetivo da retirada com status atual
         </div>
         <div class="endpoint">

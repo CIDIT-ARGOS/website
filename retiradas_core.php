@@ -119,6 +119,32 @@ function enviarRetirada($conexao, $retiradaId) {
     return ['ok' => true, 'protocolo' => $protocolo];
 }
 
+/**
+ * Exclui uma retirada e seus itens. `retirada_itens.retirada_id` referencia
+ * `retiradas.id` sem ON DELETE CASCADE — por isso os itens precisam ser
+ * apagados primeiro, senão o banco recusa a exclusão por violação de chave
+ * estrangeira.
+ *
+ * @return array{ok: bool, erro?: string}
+ */
+function excluirRetirada($conexao, $id) {
+    if (!buscarRetiradaPorId($conexao, $id)) {
+        return ['ok' => false, 'erro' => 'Retirada não encontrada.'];
+    }
+
+    $stmt = mysqli_prepare($conexao, "DELETE FROM retirada_itens WHERE retirada_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_execute($stmt);
+
+    $stmt = mysqli_prepare($conexao, "DELETE FROM retiradas WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    if (!mysqli_stmt_execute($stmt)) {
+        return ['ok' => false, 'erro' => 'Erro ao excluir retirada: ' . mysqli_error($conexao)];
+    }
+
+    return ['ok' => true];
+}
+
 function buscarRetiradaPorId($conexao, $id) {
     $stmt = mysqli_prepare($conexao, "SELECT * FROM retiradas WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "i", $id);

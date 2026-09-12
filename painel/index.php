@@ -176,7 +176,7 @@ $logado = !empty($_SESSION['painel_id']);
             <?php if (escopoEsquadrao() === null): ?>
             <a href="grupos.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/users-group.svg')"></span>
-                <h3>Grupos (ex: CIDIT)</h3>
+                <h3>Grupos</h3>
                 <p>Gerenciar quem pertence a grupos que cruzam esquadrões.</p>
             </a>
             <?php endif; ?>

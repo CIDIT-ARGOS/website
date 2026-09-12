@@ -69,6 +69,20 @@ switch ($metodo) {
         responder(['protocolo' => $resultado['protocolo']]);
         break;
 
+    // ---------- EXCLUIR ----------
+    case 'DELETE':
+        if (!$id) {
+            erro("Informe o id da retirada (?id=).");
+        }
+
+        $resultado = excluirRetirada($conexao, $id);
+        if (!$resultado['ok']) {
+            erro($resultado['erro'], 404);
+        }
+
+        responder(['excluida' => true]);
+        break;
+
     default:
         erro("Método não suportado.", 405);
 }

@@ -210,17 +210,12 @@ $logado = !empty($_SESSION['admin_id']);
             <a href="api.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/api.svg')"></span>
                 <h3>API</h3>
-                <p>Endpoints, chaves de acesso e monitoramento das requisições.</p>
+                <p>Endpoints, chaves de acesso, apps conectados e monitoramento das requisições.</p>
             </a>
             <a href="banco.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/database.svg')"></span>
                 <h3>Banco de Dados</h3>
                 <p>Tabelas, estrutura e manutenção dos dados do sistema.</p>
-            </a>
-            <a href="api.php" class="card">
-                <span class="card-icon" style="--icon-url: url('../images/icons/apps.svg')"></span>
-                <h3>Apps conectados</h3>
-                <p>Cada app conectado é uma chave de API — gerencie em "API" acima.</p>
             </a>
             <a href="usuarios.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/shield-lock.svg')"></span>
