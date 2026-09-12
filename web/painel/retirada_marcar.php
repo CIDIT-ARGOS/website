@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../retiradas_core.php';
-require_once __DIR__ . '/../motivos_core.php';
+require_once __DIR__ . '/../../core/retiradas_core.php';
+require_once __DIR__ . '/../../core/motivos_core.php';
 
 $conexao = conectarBanco();
 

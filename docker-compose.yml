@@ -7,7 +7,7 @@ services:
       - "8080:80"
     volumes:
       - .:/var/www/html
-      - ./docker/config.docker.php:/var/www/html/config.php:ro
+      - ./docker/config.docker.php:/var/www/html/core/config.php:ro
       - ./docker/htaccess-local:/var/www/html/.htaccess:ro
       - ./docker/apache-local.conf:/etc/apache2/sites-enabled/000-default.conf:ro
       - ./docker/php-local.ini:/usr/local/etc/php/conf.d/zz-local.ini:ro

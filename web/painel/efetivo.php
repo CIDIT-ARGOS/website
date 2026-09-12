@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../alunos_core.php';
+require_once __DIR__ . '/../../core/alunos_core.php';
 
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao(); // null = CA inteiro, senão string do esquadrão

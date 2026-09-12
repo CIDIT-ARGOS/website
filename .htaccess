@@ -1,22 +1,21 @@
 Options -Indexes
-DirectoryIndex index.html
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
+
+    # Força HTTPS
     RewriteCond %{HTTPS} off
     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-</IfModule>
 
-# Bloqueia acesso direto a arquivos de configuração e utilitários internos
-<FilesMatch "^(config\.php|gerar_hash\.php|retiradas_core\.php|alunos_core\.php|motivos_core\.php|grupos_core\.php|painel_usuarios_core\.php)$">
-    Require all denied
-</FilesMatch>
+    # api/, core/ e database/ são pastas reais na raiz — nunca passam pelo
+    # redirecionamento pra web/ abaixo (core/ e database/ têm seu próprio
+    # .htaccess bloqueando qualquer acesso direto).
+    RewriteCond %{REQUEST_URI} ^/(api|core|database)(/|$)
+    RewriteRule ^ - [L]
 
-# Evita que o navegador guarde CSS/JS/imagens "pra sempre" sem checar se mudou.
-# "no-cache" não significa "não guardar" — significa "sempre pergunte ao servidor
-# antes de usar a cópia guardada" (o servidor responde rápido com 304 se nada mudou).
-<IfModule mod_headers.c>
-    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|webp)$">
-        Header set Cache-Control "no-cache, must-revalidate"
-    </FilesMatch>
+    # Só existe uma pasta pública de verdade (web/) com o site, o painel e o
+    # ikarus37 — mas ela fica invisível na URL: /painel/ continua sendo
+    # /painel/ pra quem acessa, e por baixo o Apache serve web/painel/.
+    RewriteCond %{REQUEST_URI} !^/web/
+    RewriteRule ^(.*)$ web/$1 [L]
 </IfModule>

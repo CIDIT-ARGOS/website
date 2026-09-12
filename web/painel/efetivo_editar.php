@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../alunos_core.php';
+require_once __DIR__ . '/../../core/alunos_core.php';
 
 if (!podeEditarEfetivo()) {
     die("Seu cargo não tem a permissão 'editar_efetivo'.");

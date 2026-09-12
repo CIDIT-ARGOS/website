@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-SRC=/argos-src
+SRC=/argos-src/database
 DB="$MYSQL_DATABASE"
 
 # Prioriza o backup mais recente (dump completo tirado do Ikarus37 -> Backup do banco,
@@ -22,5 +22,5 @@ elif [ -f "$SRC/init_db.sql" ]; then
         echo ">> [argos] seed_db.sql não encontrado — banco ficará só com o admin básico do init_db.sql."
     fi
 else
-    echo ">> [argos] Nenhum backup_*.sql nem init_db.sql encontrado na raiz do projeto. Banco ficará vazio."
+    echo ">> [argos] Nenhum backup_*.sql nem init_db.sql encontrado em database/. Banco ficará vazio."
 fi

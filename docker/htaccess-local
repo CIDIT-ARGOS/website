@@ -1,17 +1,13 @@
 Options -Indexes
-DirectoryIndex index.html
 
-# (Sem o redirect pra HTTPS da produção — localmente não temos TLS. O resto é
-# idêntico ao .htaccess real; esse arquivo só é montado dentro do container.)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
 
-# Bloqueia acesso direto a arquivos de configuração e utilitários internos
-<FilesMatch "^(config\.php|gerar_hash\.php|retiradas_core\.php|alunos_core\.php|motivos_core\.php|grupos_core\.php|painel_usuarios_core\.php)$">
-    Require all denied
-</FilesMatch>
+    # (Sem o redirect pra HTTPS da produção — localmente não temos TLS.)
 
-# Evita que o navegador guarde CSS/JS/imagens "pra sempre" sem checar se mudou.
-<IfModule mod_headers.c>
-    <FilesMatch "\.(css|js|png|jpg|jpeg|gif|svg|webp)$">
-        Header set Cache-Control "no-cache, must-revalidate"
-    </FilesMatch>
+    RewriteCond %{REQUEST_URI} ^/(api|core|database)(/|$)
+    RewriteRule ^ - [L]
+
+    RewriteCond %{REQUEST_URI} !^/web/
+    RewriteRule ^(.*)$ web/$1 [L]
 </IfModule>

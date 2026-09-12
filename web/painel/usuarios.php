@@ -1,8 +1,8 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../painel_usuarios_core.php';
+require_once __DIR__ . '/../../core/painel_usuarios_core.php';
 
 if (!podeGerenciarUsuarios()) {
     die("Seu cargo não tem permissão para gerenciar usuários do painel.");

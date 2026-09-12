@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/../retiradas_core.php';
+require_once __DIR__ . '/../core/retiradas_core.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     erro("Método não suportado.", 405);

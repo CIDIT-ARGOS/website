@@ -1,6 +1,6 @@
 <?php
 
-require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 
 $conexao = conectarBanco();

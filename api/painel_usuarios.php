@@ -4,7 +4,7 @@
 // necessário para listar/gerenciar contas (ver painel_usuarios_core.php).
 
 require_once __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/../painel_usuarios_core.php';
+require_once __DIR__ . '/../core/painel_usuarios_core.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
