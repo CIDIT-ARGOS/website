@@ -90,10 +90,38 @@ $logado = !empty($_SESSION['painel_id']);
     .topbar a:hover { color: var(--text); }
     .container { padding: 24px; max-width: 1100px; margin: 0 auto; }
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 20px; }
-    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+    .card {
+        display: block;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.15s;
+    }
+    .card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+    .card-icon {
+        display: block;
+        width: 26px;
+        height: 26px;
+        margin-bottom: 12px;
+        background-color: var(--accent);
+        -webkit-mask-image: var(--icon-url);
+        mask-image: var(--icon-url);
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+    }
     .card h3 { margin: 0 0 6px; font-size: 15px; }
-    .card p { margin: 0 0 10px; color: var(--text-muted); font-size: 13px; }
-    .card a.acao { color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
+    .card p { margin: 0; color: var(--text-muted); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -129,35 +157,35 @@ $logado = !empty($_SESSION['painel_id']);
         <?php $conexao = conectarBanco(); ?>
         <div class="grid">
             <?php if (temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada')): ?>
-            <div class="card">
+            <a href="retiradas.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/clipboard-check.svg')"></span>
                 <h3>Retiradas de falta</h3>
                 <p>Abrir chamada, marcar presença/falta e enviar.</p>
-                <a href="retiradas.php" class="acao">abrir →</a>
-            </div>
+            </a>
             <?php endif; ?>
-            <div class="card">
+            <a href="efetivo.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/users.svg')"></span>
                 <h3>Efetivo</h3>
                 <p>Consulta e gestão dos alunos<?= escopoEsquadrao() ? ' do seu esquadrão' : '' ?>.</p>
-                <a href="efetivo.php" class="acao">abrir →</a>
-            </div>
-            <div class="card">
+            </a>
+            <a href="relatorios.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/report.svg')"></span>
                 <h3>Relatório de retiradas</h3>
                 <p>Presenças, faltas e motivos por período<?= escopoEsquadrao() ? ', esquadrão ' . htmlspecialchars(escopoEsquadrao()) : '' ?>.</p>
-                <a href="relatorios.php" class="acao">abrir →</a>
-            </div>
+            </a>
             <?php if (escopoEsquadrao() === null): ?>
-            <div class="card">
+            <a href="grupos.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/users-group.svg')"></span>
                 <h3>Grupos (ex: CIDIT)</h3>
                 <p>Gerenciar quem pertence a grupos que cruzam esquadrões.</p>
-                <a href="grupos.php" class="acao">abrir →</a>
-            </div>
+            </a>
             <?php endif; ?>
             <?php if (podeGerenciarUsuarios()): ?>
-            <div class="card">
+            <a href="usuarios.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/user-cog.svg')"></span>
                 <h3>Usuários do painel</h3>
                 <p>Cadastro de comandantes, encarregados e auxiliares.</p>
-                <a href="usuarios.php" class="acao">abrir →</a>
-            </div>
+            </a>
             <?php endif; ?>
         </div>
         <?php mysqli_close($conexao); ?>

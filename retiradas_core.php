@@ -52,9 +52,15 @@ function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $es
         return ['ok' => false, 'erro' => 'Nenhum aluno ativo encontrado para esse agrupamento.'];
     }
 
-    // ---------- Confere se o aluno de serviço pertence ao próprio agrupamento ----------
-    if (!in_array((int)$alunoServicoId, $alunoIds)) {
-        return ['ok' => false, 'erro' => 'O aluno de serviço precisa pertencer ao efetivo dessa retirada.'];
+    // ---------- Confere só que o aluno de serviço existe e está ativo ----------
+    // Não exige que pertença a este agrupamento: esquadrões mais antigos tiram serviço de
+    // Aluno de Dia à Esquadrilha em OUTROS esquadrões, então quem identifica a retirada
+    // pode legitimamente não ser do efetivo que está sendo chamado.
+    $stmtServico = mysqli_prepare($conexao, "SELECT id FROM alunos WHERE id = ? AND ativo = 1");
+    mysqli_stmt_bind_param($stmtServico, "i", $alunoServicoId);
+    mysqli_stmt_execute($stmtServico);
+    if (!mysqli_fetch_assoc(mysqli_stmt_get_result($stmtServico))) {
+        return ['ok' => false, 'erro' => 'Aluno de serviço inválido ou inativo.'];
     }
 
     // ---------- Cria a retirada ----------

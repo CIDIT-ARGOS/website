@@ -23,3 +23,7 @@ desktop.ini
 # ===== Logs e arquivos temporários =====
 *.log
 *.tmp
+
+# ===== Pacote completo de ícones (Tabler) — fonte local, não vai pro repo/servidor =====
+# Só os ícones realmente usados (images/icons/*.svg) são versionados e enviados por FTP.
+icons-source/

@@ -136,10 +136,34 @@ $logado = !empty($_SESSION['admin_id']);
         margin-top: 20px;
     }
     .card {
+        display: block;
         background: var(--bg-card);
         border: 1px solid var(--border);
         border-radius: 10px;
         padding: 20px;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.15s;
+    }
+    .card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+    }
+    .card-icon {
+        display: block;
+        width: 26px;
+        height: 26px;
+        margin-bottom: 12px;
+        background-color: var(--accent);
+        -webkit-mask-image: var(--icon-url);
+        mask-image: var(--icon-url);
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
     }
     .card h3 { margin: 0 0 6px; font-size: 15px; }
     .card p { margin: 0; color: var(--text-muted); font-size: 13px; }
@@ -183,36 +207,36 @@ $logado = !empty($_SESSION['admin_id']);
         <p style="color: var(--text-muted); font-size: 14px;">Módulos administrativos do sistema Argos.</p>
 
         <div class="grid">
-            <div class="card">
+            <a href="api.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/api.svg')"></span>
                 <h3>API</h3>
                 <p>Endpoints, chaves de acesso e monitoramento das requisições.</p>
-                <a href="api.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-            </div>
-            <div class="card">
+            </a>
+            <a href="banco.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/database.svg')"></span>
                 <h3>Banco de Dados</h3>
                 <p>Tabelas, estrutura e manutenção dos dados do sistema.</p>
-                <a href="banco.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-            </div>
-            <div class="card">
+            </a>
+            <a href="api.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/apps.svg')"></span>
                 <h3>Apps conectados</h3>
                 <p>Cada app conectado é uma chave de API — gerencie em "API" acima.</p>
-                <a href="api.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-            </div>
-            <div class="card">
+            </a>
+            <a href="usuarios.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/shield-lock.svg')"></span>
                 <h3>Usuários administradores</h3>
                 <p>Gestão de contas e níveis de permissão do painel.</p>
-                <a href="usuarios.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-            </div>
-            <div class="card">
+            </a>
+            <a href="backup.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/database-export.svg')"></span>
                 <h3>Backup do banco</h3>
                 <p>Baixar dump completo (estrutura + dados) antes de mudanças arriscadas.</p>
-                <a href="backup.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-            </div>
-            <div class="card">
+            </a>
+            <a href="../painel/" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/layout-dashboard.svg')"></span>
                 <h3>Painel de Comando</h3>
                 <p>Área operacional (efetivo, retiradas, relatórios) — sua conta de admin também acessa lá.</p>
-                <a href="../painel/" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-            </div>
+            </a>
         </div>
     </div>
 

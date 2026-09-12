@@ -105,6 +105,39 @@ $grupos = mysqli_fetch_all(mysqli_query($conexao, "SELECT nome FROM grupos WHERE
             select.appendChild(opt);
         });
     }
+
+    let timeoutBusca = null;
+    function buscarAlunoServicoDebounced() {
+        clearTimeout(timeoutBusca);
+        timeoutBusca = setTimeout(buscarAlunoServico, 300);
+    }
+
+    async function buscarAlunoServico() {
+        const termo = document.getElementById('busca_aluno_servico').value.trim();
+        const select = document.getElementById('aluno_servico_id');
+
+        if (termo.length < 2) {
+            // Campo de busca vazio: volta pra lista padrão da esquadrilha/grupo.
+            carregarAlunosServico();
+            return;
+        }
+
+        select.innerHTML = '<option>Buscando...</option>';
+        const resp = await fetch('ajax_buscar_aluno.php?termo=' + encodeURIComponent(termo));
+        const alunos = await resp.json();
+
+        select.innerHTML = '';
+        if (alunos.length === 0) {
+            select.innerHTML = '<option value="">Nenhum aluno encontrado</option>';
+            return;
+        }
+        alunos.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.textContent = a.nome_guerra + ' (' + a.milhao + ') — ' + a.esquadrao + '/' + a.esquadrilha;
+            select.appendChild(opt);
+        });
+    }
 </script>
 </head>
 <body>
@@ -175,6 +208,9 @@ $grupos = mysqli_fetch_all(mysqli_query($conexao, "SELECT nome FROM grupos WHERE
             <select id="aluno_servico_id" name="aluno_servico_id" required>
                 <option value="">Selecione a esquadrilha/grupo primeiro</option>
             </select>
+
+            <input type="text" id="busca_aluno_servico" placeholder="Não achou? Buscar por nome/milhão em qualquer esquadrão (ex: Aluno de Dia à Esquadrilha)"
+                oninput="buscarAlunoServicoDebounced()" style="margin-top:6px; font-size:12px;">
 
             <button type="submit">Abrir retirada</button>
         </form>
