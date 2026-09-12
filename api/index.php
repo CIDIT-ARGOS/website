@@ -5,7 +5,7 @@ http_response_code(200);
 
 echo json_encode([
     'servico' => 'Argos API',
-    'documentacao' => 'Consulte a documentação no painel administrativo (Ikarus37 → API).',
+    'documentacao' => 'Consulte a documentação no painel administrativo.',
     'autenticacao' => 'Header obrigatório: X-API-Key',
     'endpoints' => [
         'GET/POST/PUT/DELETE /api/alunos.php',
