@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../painel_usuarios_core.php';
 
 if (!podeGerenciarUsuarios()) {
     die("Seu cargo não tem permissão para gerenciar usuários do painel.");
@@ -13,105 +14,53 @@ $meuId = (int)$_SESSION['painel_id'];
 $mensagem = null;
 $erro = null;
 
-$cargosEsquadrao = ['CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'];
-$cargosCA = ['CMD_CA', 'SUBCMD_CA', 'ADMIN_TECNICO', 'AUX_CA'];
-$todosCargos = array_merge($cargosCA, $cargosEsquadrao);
-
-function contarCmdCaAtivos($conexao) {
-    $r = mysqli_query($conexao, "SELECT COUNT(*) as total FROM painel_usuarios WHERE cargo = 'CMD_CA' AND ativo = 1");
-    return (int) mysqli_fetch_assoc($r)['total'];
-}
+$cargosEsquadrao = CARGOS_ESQUADRAO;
+$cargosCA = CARGOS_CA;
+$todosCargos = todosOsCargosPainel();
 
 // ---------- CRIAR ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'criar') {
-    $nome = trim($_POST['nome'] ?? '');
-    $usuario = trim($_POST['usuario'] ?? '');
-    $senha = $_POST['senha'] ?? '';
-    $cargo = $_POST['cargo'] ?? '';
-    $esquadrao = trim($_POST['esquadrao'] ?? '');
-
-    if ($nome === '' || $usuario === '' || $senha === '') {
-        $erro = "Preencha nome, usuário e senha.";
-    } elseif (!in_array($cargo, $todosCargos)) {
-        $erro = "Cargo inválido.";
-    } elseif (in_array($cargo, $cargosEsquadrao) && $esquadrao === '') {
-        $erro = "Cargos de esquadrão exigem informar o esquadrão.";
+    $resultado = criarUsuarioPainel($conexao, $_POST);
+    if ($resultado['ok']) {
+        $mensagem = "Usuário criado com sucesso.";
     } else {
-        $esquadraoFinal = in_array($cargo, $cargosCA) ? null : $esquadrao;
-        $usuarioEsc = mysqli_real_escape_string($conexao, $usuario);
-        $existe = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT id FROM painel_usuarios WHERE usuario = '$usuarioEsc'"));
-
-        if ($existe) {
-            $erro = "Já existe um usuário com esse login.";
-        } else {
-            $hash = password_hash($senha, PASSWORD_BCRYPT);
-            $stmt = mysqli_prepare($conexao, "INSERT INTO painel_usuarios (nome, usuario, senha_hash, cargo, esquadrao) VALUES (?, ?, ?, ?, ?)");
-            mysqli_stmt_bind_param($stmt, "sssss", $nome, $usuario, $hash, $cargo, $esquadraoFinal);
-            mysqli_stmt_execute($stmt);
-            $mensagem = "Usuário criado com sucesso.";
-        }
+        $erro = $resultado['erro'];
     }
 }
 
 // ---------- ATUALIZAR ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'atualizar') {
-    $id = (int)$_POST['id'];
-    $nome = trim($_POST['nome'] ?? '');
-    $cargo = $_POST['cargo'] ?? '';
-    $esquadrao = trim($_POST['esquadrao'] ?? '');
-    $ativo = isset($_POST['ativo']) ? 1 : 0;
-
-    $alvo = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM painel_usuarios WHERE id = $id"));
-
-    if (!$alvo) {
-        $erro = "Usuário não encontrado.";
-    } elseif ($alvo['cargo'] === 'CMD_CA' && ($cargo !== 'CMD_CA' || $ativo === 0) && contarCmdCaAtivos($conexao) <= 1) {
-        $erro = "Não é possível rebaixar ou desativar o último CMD_CA ativo.";
-    } elseif (in_array($cargo, $cargosEsquadrao) && $esquadrao === '') {
-        $erro = "Cargos de esquadrão exigem informar o esquadrão.";
-    } else {
-        $esquadraoFinal = in_array($cargo, $cargosCA) ? null : $esquadrao;
-        $stmt = mysqli_prepare($conexao, "UPDATE painel_usuarios SET nome = ?, cargo = ?, esquadrao = ?, ativo = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, "sssii", $nome, $cargo, $esquadraoFinal, $ativo, $id);
-        mysqli_stmt_execute($stmt);
+    $dados = $_POST;
+    $dados['ativo'] = isset($_POST['ativo']);
+    $resultado = atualizarUsuarioPainel($conexao, (int)$_POST['id'], $dados);
+    if ($resultado['ok']) {
         $mensagem = "Usuário atualizado.";
+    } else {
+        $erro = $resultado['erro'];
     }
 }
 
 // ---------- RESETAR SENHA ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'resetar_senha') {
-    $id = (int)$_POST['id'];
-    $novaSenha = $_POST['nova_senha'] ?? '';
-
-    if (strlen($novaSenha) < 6) {
-        $erro = "A nova senha precisa ter pelo menos 6 caracteres.";
-    } else {
-        $hash = password_hash($novaSenha, PASSWORD_BCRYPT);
-        $stmt = mysqli_prepare($conexao, "UPDATE painel_usuarios SET senha_hash = ? WHERE id = ?");
-        mysqli_stmt_bind_param($stmt, "si", $hash, $id);
-        mysqli_stmt_execute($stmt);
+    $resultado = resetarSenhaUsuarioPainel($conexao, (int)$_POST['id'], $_POST['nova_senha'] ?? '');
+    if ($resultado['ok']) {
         $mensagem = "Senha redefinida com sucesso.";
+    } else {
+        $erro = $resultado['erro'];
     }
 }
 
 // ---------- EXCLUIR ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'excluir') {
-    $id = (int)$_POST['id'];
-
-    if ($id === $meuId) {
-        $erro = "Você não pode excluir a própria conta.";
+    $resultado = excluirUsuarioPainel($conexao, (int)$_POST['id'], $meuId);
+    if ($resultado['ok']) {
+        $mensagem = "Usuário excluído.";
     } else {
-        $alvo = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM painel_usuarios WHERE id = $id"));
-        if ($alvo && $alvo['cargo'] === 'CMD_CA' && contarCmdCaAtivos($conexao) <= 1) {
-            $erro = "Não é possível excluir o último CMD_CA ativo.";
-        } else {
-            mysqli_query($conexao, "DELETE FROM painel_usuarios WHERE id = $id");
-            $mensagem = "Usuário excluído.";
-        }
+        $erro = $resultado['erro'];
     }
 }
 
-$usuarios = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_usuarios ORDER BY criado_em ASC"), MYSQLI_ASSOC);
+$usuarios = listarUsuariosPainel($conexao);
 
 ?>
 <!DOCTYPE html>

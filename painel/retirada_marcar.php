@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../retiradas_core.php';
+require_once __DIR__ . '/../motivos_core.php';
 
 $conexao = conectarBanco();
 
@@ -13,7 +14,7 @@ if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_reti
 $escopo = escopoEsquadrao();
 $id = (int)($_GET['id'] ?? 0);
 
-$retirada = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM retiradas WHERE id = " . $id));
+$retirada = buscarRetiradaPorId($conexao, $id);
 if (!$retirada) {
     die("Retirada não encontrada.");
 }
@@ -43,18 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['itens']) && $retirada
         }
     }
 
-    $retirada = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM retiradas WHERE id = " . $id));
+    $retirada = buscarRetiradaPorId($conexao, $id);
 }
 
-$itens = mysqli_fetch_all(mysqli_query($conexao, "
-    SELECT ri.*, a.nome_guerra, a.milhao
-    FROM retirada_itens ri
-    JOIN alunos a ON a.id = ri.aluno_id
-    WHERE ri.retirada_id = $id
-    ORDER BY a.nome_guerra
-"), MYSQLI_ASSOC);
+$itens = listarItensRetirada($conexao, $id);
 
-$motivos = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome FROM motivos_falta WHERE ativo = 1 ORDER BY ordem"), MYSQLI_ASSOC);
+$motivos = listarMotivos($conexao);
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 $somenteLeitura = $retirada['status'] === 'enviada';

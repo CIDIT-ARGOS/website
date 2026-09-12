@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../grupos_core.php';
 
 $conexao = conectarBanco();
 
@@ -13,7 +14,6 @@ $mensagem = null;
 $erro = null;
 
 $grupoSelecionado = $_GET['grupo'] ?? null;
-$categoriasValidas = ['clube', 'servico', 'comissao'];
 $rotulosCategorias = ['clube' => 'Clube', 'servico' => 'Serviço', 'comissao' => 'Comissão'];
 
 // ---------- Criar novo grupo ----------
@@ -21,32 +21,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'criar_g
     $nomeNovo = trim($_POST['nome'] ?? '');
     $categoria = $_POST['categoria'] ?? '';
 
-    if ($nomeNovo === '') {
-        $erro = "Informe o nome do grupo.";
-    } elseif (!in_array($categoria, $categoriasValidas)) {
-        $erro = "Categoria inválida.";
+    $resultado = criarGrupo($conexao, $nomeNovo, $categoria);
+    if ($resultado['ok']) {
+        $mensagem = "Grupo \"$nomeNovo\" criado (também disponível como motivo de falta).";
+        $grupoSelecionado = $nomeNovo;
     } else {
-        $existe = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT id FROM grupos WHERE nome = '" . mysqli_real_escape_string($conexao, $nomeNovo) . "'"));
-        if ($existe) {
-            $erro = "Já existe um grupo com esse nome.";
-        } else {
-            $stmt = mysqli_prepare($conexao, "INSERT INTO grupos (nome, categoria) VALUES (?, ?)");
-            mysqli_stmt_bind_param($stmt, "ss", $nomeNovo, $categoria);
-            mysqli_stmt_execute($stmt);
-
-            // Todo grupo também vira uma opção de motivo de falta (ex: marcar "CIDIT"
-            // como motivo na chamada normal da esquadrilha, sem precisar de retirada própria).
-            $motivoExiste = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT id FROM motivos_falta WHERE nome = '" . mysqli_real_escape_string($conexao, $nomeNovo) . "'"));
-            if (!$motivoExiste) {
-                $proximaOrdem = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COALESCE(MAX(ordem), 0) + 1 as prox FROM motivos_falta"))['prox'];
-                $stmt = mysqli_prepare($conexao, "INSERT INTO motivos_falta (nome, requer_observacao, ordem) VALUES (?, 0, ?)");
-                mysqli_stmt_bind_param($stmt, "si", $nomeNovo, $proximaOrdem);
-                mysqli_stmt_execute($stmt);
-            }
-
-            $mensagem = "Grupo \"$nomeNovo\" criado (também disponível como motivo de falta).";
-            $grupoSelecionado = $nomeNovo;
-        }
+        $erro = $resultado['erro'];
     }
 }
 
@@ -55,14 +35,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'adicion
     $grupoNome = $_POST['grupo'] ?? '';
     $alunoId = (int)($_POST['aluno_id'] ?? 0);
 
-    $grupo = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT id FROM grupos WHERE nome = '" . mysqli_real_escape_string($conexao, $grupoNome) . "'"));
+    $grupo = buscarGrupoPorNome($conexao, $grupoNome);
 
     if (!$grupo || !$alunoId) {
         $erro = "Grupo ou aluno inválido.";
     } else {
-        $stmt = mysqli_prepare($conexao, "INSERT IGNORE INTO grupo_membros (grupo_id, aluno_id) VALUES (?, ?)");
-        mysqli_stmt_bind_param($stmt, "ii", $grupo['id'], $alunoId);
-        mysqli_stmt_execute($stmt);
+        adicionarMembro($conexao, $grupo['id'], $alunoId);
         $mensagem = "Membro adicionado.";
         $grupoSelecionado = $grupoNome;
     }
@@ -73,45 +51,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'remover
     $grupoId = (int)($_POST['grupo_id'] ?? 0);
     $alunoId = (int)($_POST['aluno_id'] ?? 0);
 
-    $stmt = mysqli_prepare($conexao, "DELETE FROM grupo_membros WHERE grupo_id = ? AND aluno_id = ?");
-    mysqli_stmt_bind_param($stmt, "ii", $grupoId, $alunoId);
-    mysqli_stmt_execute($stmt);
+    removerMembro($conexao, $grupoId, $alunoId);
     $mensagem = "Membro removido.";
 }
 
-$grupos = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM grupos WHERE ativo = 1 ORDER BY nome"), MYSQLI_ASSOC);
+$grupos = listarGrupos($conexao);
 
 $membros = [];
 $grupoAtual = null;
 if ($grupoSelecionado) {
-    $grupoAtual = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM grupos WHERE nome = '" . mysqli_real_escape_string($conexao, $grupoSelecionado) . "'"));
+    $grupoAtual = buscarGrupoPorNome($conexao, $grupoSelecionado);
     if ($grupoAtual) {
-        $stmt = mysqli_prepare($conexao, "
-            SELECT a.id, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
-            FROM grupo_membros gm
-            JOIN alunos a ON a.id = gm.aluno_id
-            WHERE gm.grupo_id = ?
-            ORDER BY a.nome_guerra
-        ");
-        mysqli_stmt_bind_param($stmt, "i", $grupoAtual['id']);
-        mysqli_stmt_execute($stmt);
-        $membros = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+        $membros = listarMembros($conexao, $grupoAtual['id']);
     }
 }
 
 $buscaNome = $_GET['busca'] ?? '';
 $candidatos = [];
 if ($grupoAtual && $buscaNome !== '') {
-    $termo = "%$buscaNome%";
-    $stmt = mysqli_prepare($conexao, "
-        SELECT id, nome_guerra, milhao, esquadrao, esquadrilha FROM alunos
-        WHERE ativo = 1 AND (nome_guerra LIKE ? OR milhao LIKE ?)
-        AND id NOT IN (SELECT aluno_id FROM grupo_membros WHERE grupo_id = ?)
-        ORDER BY nome_guerra LIMIT 20
-    ");
-    mysqli_stmt_bind_param($stmt, "ssi", $termo, $termo, $grupoAtual['id']);
-    mysqli_stmt_execute($stmt);
-    $candidatos = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+    $candidatos = buscarCandidatosGrupo($conexao, $grupoAtual['id'], $buscaNome);
 }
 
 ?>

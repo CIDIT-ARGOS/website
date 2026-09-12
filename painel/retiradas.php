@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../retiradas_core.php';
 
 $conexao = conectarBanco();
 
@@ -10,24 +11,7 @@ if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_reti
 }
 
 $escopo = escopoEsquadrao();
-
-$filtros = [];
-$params = [];
-$tipos = "";
-
-if ($escopo !== null) {
-    $filtros[] = "esquadrao = ?";
-    $params[] = $escopo;
-    $tipos .= "s";
-}
-
-$where = $filtros ? "WHERE " . implode(" AND ", $filtros) : "";
-$stmt = mysqli_prepare($conexao, "SELECT * FROM retiradas $where ORDER BY data_hora DESC LIMIT 100");
-if ($params) {
-    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-}
-mysqli_stmt_execute($stmt);
-$retiradas = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+$retiradas = listarRetiradas($conexao, ['esquadrao' => $escopo, 'limite' => 100]);
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 

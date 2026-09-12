@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../retiradas_core.php';
+require_once __DIR__ . '/../alunos_core.php';
 
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao();
@@ -11,89 +13,23 @@ $dataFim = $_GET['data_fim'] ?? date('Y-m-d');
 $tipo = $_GET['tipo'] ?? '';
 $esquadraoFiltro = $_GET['esquadrao'] ?? '';
 
-$filtros = ["r.data_hora BETWEEN ? AND ?"];
-$params = [$dataInicio . " 00:00:00", $dataFim . " 23:59:59"];
-$tipos = "ss";
+$filtrosRelatorio = [
+    'data_inicio' => $dataInicio,
+    'data_fim' => $dataFim,
+    'tipo' => $tipo ?: null,
+    'esquadrao' => $escopo ?? ($esquadraoFiltro ?: null),
+];
 
-if ($escopo !== null) {
-    $filtros[] = "a.esquadrao = ?";
-    $params[] = $escopo;
-    $tipos .= "s";
-} elseif ($esquadraoFiltro !== '') {
-    $filtros[] = "a.esquadrao = ?";
-    $params[] = $esquadraoFiltro;
-    $tipos .= "s";
-}
+$resumo = relatorioResumo($conexao, $filtrosRelatorio);
+$totalItens = $resumo['total_itens'];
+$totalPresentes = $resumo['total_presentes'];
+$totalFaltas = $resumo['total_faltas'];
+$percentualPresenca = $resumo['percentual_presenca'];
 
-if ($tipo !== '') {
-    $filtros[] = "r.tipo = ?";
-    $params[] = $tipo;
-    $tipos .= "s";
-}
+$porMotivo = relatorioPorMotivo($conexao, $filtrosRelatorio);
+$retiradas = relatorioRetiradas($conexao, $filtrosRelatorio);
 
-$where = "WHERE " . implode(" AND ", $filtros);
-
-// ---------- Resumo geral ----------
-$sqlResumo = "
-    SELECT
-        COUNT(*) as total_itens,
-        SUM(ri.presente) as total_presentes,
-        SUM(1 - ri.presente) as total_faltas
-    FROM retirada_itens ri
-    JOIN retiradas r ON r.id = ri.retirada_id
-    JOIN alunos a ON a.id = ri.aluno_id
-    $where
-";
-$stmt = mysqli_prepare($conexao, $sqlResumo);
-mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-mysqli_stmt_execute($stmt);
-$resumo = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-
-$totalItens = (int)($resumo['total_itens'] ?? 0);
-$totalPresentes = (int)($resumo['total_presentes'] ?? 0);
-$totalFaltas = (int)($resumo['total_faltas'] ?? 0);
-$percentualPresenca = $totalItens > 0 ? round($totalPresentes / $totalItens * 100, 1) : null;
-
-// ---------- Faltas por motivo ----------
-$sqlMotivos = "
-    SELECT COALESCE(m.nome, 'Sem motivo') as motivo, COUNT(*) as total
-    FROM retirada_itens ri
-    JOIN retiradas r ON r.id = ri.retirada_id
-    JOIN alunos a ON a.id = ri.aluno_id
-    LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
-    $where AND ri.presente = 0
-    GROUP BY motivo
-    ORDER BY total DESC
-";
-$stmt = mysqli_prepare($conexao, $sqlMotivos);
-mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-mysqli_stmt_execute($stmt);
-$porMotivo = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-
-// ---------- Retiradas no período ----------
-$sqlRetiradas = "
-    SELECT
-        r.id, r.tipo, r.agrupamento_tipo, r.agrupamento_valor, r.status, r.protocolo, r.data_hora,
-        COUNT(ri.id) as total_itens,
-        SUM(ri.presente) as presentes,
-        SUM(1 - ri.presente) as faltas
-    FROM retiradas r
-    JOIN retirada_itens ri ON ri.retirada_id = r.id
-    JOIN alunos a ON a.id = ri.aluno_id
-    $where
-    GROUP BY r.id
-    ORDER BY r.data_hora DESC
-";
-$stmt = mysqli_prepare($conexao, $sqlRetiradas);
-mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-mysqli_stmt_execute($stmt);
-$retiradas = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-
-$esquadroesDisponiveis = [];
-if ($escopo === null) {
-    $r = mysqli_query($conexao, "SELECT DISTINCT esquadrao FROM alunos WHERE ativo = 1 ORDER BY esquadrao");
-    while ($l = mysqli_fetch_assoc($r)) $esquadroesDisponiveis[] = $l['esquadrao'];
-}
+$esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 

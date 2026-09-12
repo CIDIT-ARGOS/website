@@ -3,6 +3,8 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../retiradas_core.php';
+require_once __DIR__ . '/../alunos_core.php';
+require_once __DIR__ . '/../grupos_core.php';
 
 $conexao = conectarBanco();
 
@@ -32,13 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Esquadrões disponíveis (só quem tem visão CA escolhe; senão já é fixo)
-$esquadroesDisponiveis = [];
-if ($escopo === null) {
-    $r = mysqli_query($conexao, "SELECT DISTINCT esquadrao FROM alunos WHERE ativo = 1 ORDER BY esquadrao");
-    while ($l = mysqli_fetch_assoc($r)) $esquadroesDisponiveis[] = $l['esquadrao'];
-}
+$esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
 
-$grupos = mysqli_fetch_all(mysqli_query($conexao, "SELECT nome FROM grupos WHERE ativo = 1 ORDER BY nome"), MYSQLI_ASSOC);
+$grupos = listarGrupos($conexao);
 
 ?>
 <!DOCTYPE html>

@@ -2,65 +2,23 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../alunos_core.php';
 
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao(); // null = CA inteiro, senão string do esquadrão
 
-// ---------- Filtros ----------
-$filtros = ["a.ativo = 1"];
-$params = [];
-$tipos = "";
-
-if ($escopo !== null) {
-    $filtros[] = "a.esquadrao = ?";
-    $params[] = $escopo;
-    $tipos .= "s";
-} elseif (!empty($_GET['esquadrao'])) {
-    $filtros[] = "a.esquadrao = ?";
-    $params[] = $_GET['esquadrao'];
-    $tipos .= "s";
-}
-
-if (!empty($_GET['esquadrilha'])) {
-    $filtros[] = "a.esquadrilha = ?";
-    $params[] = $_GET['esquadrilha'];
-    $tipos .= "s";
-}
-if (!empty($_GET['especialidade'])) {
-    $filtros[] = "a.especialidade = ?";
-    $params[] = $_GET['especialidade'];
-    $tipos .= "s";
-}
-if (!empty($_GET['busca'])) {
-    $filtros[] = "(a.nome_guerra LIKE ? OR a.milhao LIKE ?)";
-    $termo = "%" . $_GET['busca'] . "%";
-    $params[] = $termo;
-    $params[] = $termo;
-    $tipos .= "ss";
-}
-
-$where = "WHERE " . implode(" AND ", $filtros);
-$sql = "
-    SELECT a.*, COALESCE(p.exibicao, a.posto_graduacao) as posto_exibicao
-    FROM alunos a
-    LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
-    $where
-    ORDER BY a.esquadrilha, a.nome_guerra
-";
-
-$stmt = mysqli_prepare($conexao, $sql);
-if ($params) {
-    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-}
-mysqli_stmt_execute($stmt);
-$alunos = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+$filtros = [
+    'esquadrao' => $escopo ?? ($_GET['esquadrao'] ?? null),
+    'esquadrilha' => $_GET['esquadrilha'] ?? null,
+    'especialidade' => $_GET['especialidade'] ?? null,
+    'busca' => $_GET['busca'] ?? null,
+    'com_posto_exibicao' => true,
+    'order_by' => 'a.esquadrilha, a.nome_guerra',
+];
+$alunos = listarAlunos($conexao, $filtros);
 
 // listas para os filtros (dentro do escopo)
-$esquadroesDisponiveis = [];
-if ($escopo === null) {
-    $r = mysqli_query($conexao, "SELECT DISTINCT esquadrao FROM alunos WHERE ativo = 1 ORDER BY esquadrao");
-    while ($l = mysqli_fetch_assoc($r)) $esquadroesDisponiveis[] = $l['esquadrao'];
-}
+$esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
 
 ?>
 <!DOCTYPE html>

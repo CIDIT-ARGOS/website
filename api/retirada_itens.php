@@ -14,23 +14,7 @@ switch ($metodo) {
             erro("Informe retirada_id (?retirada_id=).");
         }
 
-        $stmt = mysqli_prepare($conexao, "
-            SELECT ri.*, a.nome_guerra, a.milhao, m.nome as motivo_nome
-            FROM retirada_itens ri
-            JOIN alunos a ON a.id = ri.aluno_id
-            LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
-            WHERE ri.retirada_id = ?
-            ORDER BY a.nome_guerra
-        ");
-        mysqli_stmt_bind_param($stmt, "i", $retiradaId);
-        mysqli_stmt_execute($stmt);
-        $resultado = mysqli_stmt_get_result($stmt);
-
-        $itens = [];
-        while ($linha = mysqli_fetch_assoc($resultado)) {
-            $itens[] = $linha;
-        }
-        responder($itens);
+        responder(listarItensRetirada($conexao, $retiradaId));
         break;
 
     // ---------- MARCAR PRESENÇA/FALTA DE UM ALUNO ----------

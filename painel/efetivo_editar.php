@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../alunos_core.php';
 
 if (!podeEditarEfetivo()) {
     die("Seu cargo não tem a permissão 'editar_efetivo'.");
@@ -14,7 +15,7 @@ $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $mensagem = null;
 $erro = null;
 
-$aluno = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM alunos WHERE id = " . $id));
+$aluno = buscarAlunoPorId($conexao, $id);
 
 if (!$aluno) {
     die("Aluno não encontrado.");
@@ -25,35 +26,15 @@ if ($escopo !== null && $aluno['esquadrao'] !== $escopo) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $sexo = $_POST['sexo'] ?? '';
-    $curso = $_POST['curso'] ?? '';
-    $serie = trim($_POST['serie'] ?? '');
-    $esquadrilha = trim($_POST['esquadrilha'] ?? '');
-    $especialidade = trim($_POST['especialidade'] ?? '');
-    $subEspecialidade = trim($_POST['sub_especialidade'] ?? '');
-    $ativo = isset($_POST['ativo']) ? 1 : 0;
+    $dados = $_POST;
+    $dados['ativo'] = isset($_POST['ativo']);
 
-    if (!in_array($sexo, ['M', 'F'])) {
-        $erro = "Sexo inválido.";
-    } elseif (!in_array($curso, ['CFS', 'EAGS'])) {
-        $erro = "Curso inválido.";
-    } elseif ($curso === 'EAGS' && $serie !== 'EAGS') {
-        $erro = "Para EAGS, a série deve ser 'EAGS'.";
-    } elseif ($curso === 'CFS' && !in_array($serie, ['1', '2', '3', '4'])) {
-        $erro = "Para CFS, a série deve ser 1, 2, 3 ou 4.";
+    $resultado = atualizarAlunoParcial($conexao, $id, $dados);
+    if ($resultado['ok']) {
+        $mensagem = "Aluno atualizado com sucesso.";
+        $aluno = buscarAlunoPorId($conexao, $id);
     } else {
-        $stmt = mysqli_prepare($conexao, "
-            UPDATE alunos SET sexo = ?, curso = ?, serie = ?, esquadrilha = ?, especialidade = ?, sub_especialidade = ?, ativo = ?
-            WHERE id = ?
-        ");
-        mysqli_stmt_bind_param($stmt, "ssssssii", $sexo, $curso, $serie, $esquadrilha, $especialidade, $subEspecialidade, $ativo, $id);
-
-        if (mysqli_stmt_execute($stmt)) {
-            $mensagem = "Aluno atualizado com sucesso.";
-            $aluno = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM alunos WHERE id = " . $id));
-        } else {
-            $erro = "Erro ao atualizar: " . mysqli_stmt_error($stmt);
-        }
+        $erro = $resultado['erro'];
     }
 }
 

@@ -269,6 +269,38 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
 <pre>{ "presente": 0, "motivo_falta_id": 1, "observacao": "opcional" }</pre>
             </details>
         </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">grupos.php</code> — lista grupos ativos (ex: CIDIT)
+            <p style="color: var(--text-muted); font-size: 12px;"><code>?id=X</code> retorna um grupo com seus membros.</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-post">POST</span><code class="rota">grupos.php</code> — cria grupo <code>{ "nome": "...", "categoria": "clube|servico|comissao" }</code>
+            <p style="color: var(--text-muted); font-size: 12px;"><code>?id=X</code> + corpo <code>{ "aluno_id": Y }</code> adiciona um membro ao grupo X.</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-delete">DELETE</span><code class="rota">grupos.php?id=X&aluno_id=Y</code> — remove um membro do grupo
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">painel_usuarios.php</code> — lista usuários do Painel de Comando (sem senha)
+            <p style="color: var(--text-muted); font-size: 12px;"><code>?id=X</code> retorna um usuário só.</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-post">POST</span><code class="rota">painel_usuarios.php</code> — cria usuário
+            <details><summary>ver exemplo de corpo</summary>
+<pre>{ "nome": "...", "usuario": "...", "senha": "...", "cargo": "CMD_ESQUADRAO", "esquadrao": "PRATA" }</pre>
+            </details>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-put">PUT</span><code class="rota">painel_usuarios.php?id=X</code> — atualiza nome/cargo/esquadrão/ativo
+            <p style="color: var(--text-muted); font-size: 12px;"><code>?id=X&acao=resetar_senha</code> + corpo <code>{ "nova_senha": "..." }</code> redefine a senha.</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-delete">DELETE</span><code class="rota">painel_usuarios.php?id=X</code> — exclui usuário
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">relatorios.php</code> — resumo, faltas por motivo e retiradas do período
+            <p style="color: var(--text-muted); font-size: 12px;">Filtros: <code>?data_inicio=</code>, <code>?data_fim=</code>, <code>?tipo=</code>, <code>?esquadrao=</code></p>
+        </div>
 
         <p style="color: var(--text-muted); font-size: 12px; margin-top: 16px;">Exemplo com curl:</p>
 <pre>curl -H "X-API-Key: SUA_CHAVE" \
