@@ -246,7 +246,6 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     .badge.ativo { background: #17301f; color: var(--ok); }
     .badge.inativo { background: #301717; color: var(--danger); }
     .scroll-x { overflow-x: auto; }
-    details summary { cursor: pointer; color: var(--accent); font-size: 12px; margin-top: 6px; }
     .acoes-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
@@ -325,22 +324,12 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                             </div>
                         </td>
                         <td style="border-left:none;">
-                            <details>
-                                <summary>redefinir senha</summary>
-                                <form method="post" class="acoes-form" style="margin-top:6px;">
-                                    <input type="hidden" name="acao" value="resetar_senha">
-                                    <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                    <input type="password" name="nova_senha" placeholder="Nova senha" required>
-                                    <button type="submit">Redefinir</button>
-                                </form>
-                            </details>
-                            <?php if ($u['id'] != $meuId): ?>
-                            <form method="post" onsubmit="return confirm('Excluir este usuário?');" style="margin-top:6px;">
-                                <input type="hidden" name="acao" value="excluir">
-                                <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
-                            </form>
-                            <?php endif; ?>
+                            <div class="acoes-form">
+                                <button type="button" class="ghost" onclick="redefinirSenha('resetar_senha', <?= $u['id'] ?>)">redefinir senha</button>
+                                <?php if ($u['id'] != $meuId): ?>
+                                <button type="button" class="danger" onclick="excluirUsuario('excluir', <?= $u['id'] ?>, 'Excluir este usuário?')"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
+                                <?php endif; ?>
+                            </div>
                         </td>
                     <?php else: ?>
                         <td><?= htmlspecialchars($u['nome']) ?></td>
@@ -437,20 +426,10 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                             </div>
                         </td>
                         <td style="border-left:none;">
-                            <details>
-                                <summary>redefinir senha</summary>
-                                <form method="post" class="acoes-form" style="margin-top:6px;">
-                                    <input type="hidden" name="acao" value="painel_resetar_senha">
-                                    <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                    <input type="password" name="nova_senha" placeholder="Nova senha" required>
-                                    <button type="submit">Redefinir</button>
-                                </form>
-                            </details>
-                            <form method="post" onsubmit="return confirm('Excluir este usuário do painel?');" style="margin-top:6px;">
-                                <input type="hidden" name="acao" value="painel_excluir">
-                                <input type="hidden" name="id" value="<?= $u['id'] ?>">
-                                <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
-                            </form>
+                            <div class="acoes-form">
+                                <button type="button" class="ghost" onclick="redefinirSenha('painel_resetar_senha', <?= $u['id'] ?>)">redefinir senha</button>
+                                <button type="button" class="danger" onclick="excluirUsuario('painel_excluir', <?= $u['id'] ?>, 'Excluir este usuário do painel?')"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
+                            </div>
                         </td>
                     <?php else: ?>
                         <td><?= htmlspecialchars($u['nome']) ?></td>
@@ -476,6 +455,31 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
 
     function alternarEsquadraoLinha(select, campoId) {
         document.getElementById(campoId).style.display = CARGOS_ESQUADRAO.includes(select.value) ? 'inline-block' : 'none';
+    }
+
+    function enviarAcao(campos) {
+        const form = document.createElement('form');
+        form.method = 'post';
+        for (const [nome, valor] of Object.entries(campos)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = nome;
+            input.value = valor;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    function redefinirSenha(acao, id) {
+        const novaSenha = prompt('Nova senha (mínimo 6 caracteres):');
+        if (!novaSenha) return;
+        enviarAcao({ acao, id, nova_senha: novaSenha });
+    }
+
+    function excluirUsuario(acao, id, mensagem) {
+        if (!confirm(mensagem)) return;
+        enviarAcao({ acao, id });
     }
 </script>
 
