@@ -12,5 +12,8 @@ echo json_encode([
         'GET /api/motivos.php',
         'GET/POST/PUT /api/retiradas.php',
         'GET/PUT /api/retirada_itens.php',
+        'GET/POST/DELETE /api/grupos.php',
+        'GET/POST/PUT/DELETE /api/painel_usuarios.php',
+        'GET /api/relatorios.php',
     ],
 ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);

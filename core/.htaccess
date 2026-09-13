@@ -1,0 +1,5 @@
+# Nada aqui deve ser acessível direto pelo navegador — são as credenciais do
+# banco e toda a lógica de negócio compartilhada entre o site e a API.
+# Bloqueio por pasta inteira, não por lista de arquivos: assim um arquivo novo
+# fica protegido automaticamente, sem depender de lembrar de atualizar uma regra.
+Require all denied

@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="images/logo-cidit.png" alt="CIDIT" height="90">
-  <img src="images/logo-eear.png" alt="EEAR" height="90">
+  <img src="web/images/logo-cidit.png" alt="CIDIT" height="90">
+  <img src="web/images/logo-eear.png" alt="EEAR" height="90">
 </div>
 
 <h1 align="center">Argos</h1>
@@ -33,10 +33,10 @@ PHP + MySQL, hospedado na Hostinger. Sem frameworks — simples de manter e de d
 
 | | Nome | Função |
 |---|---|---|
-| <img src="images/logo-especialista.png" width="28"> | AL 26/3138 SIN Simioni | Encarregado do projeto |
-| <img src="images/logo-especialista.png" width="28"> | AL 26/3119 SIN Santana | Desenvolvedor |
-| <img src="images/logo-especialista.png" width="28"> | AL 26/3103 SIN Menezes | Desenvolvedor |
-| <img src="images/logo-especialista.png" width="28"> | AL 26/3118 SIN Gabriel | Desenvolvedor |
+| <img src="web/images/logo-especialista.png" width="28"> | AL 26/3138 SIN Simioni | Encarregado do projeto |
+| <img src="web/images/logo-especialista.png" width="28"> | AL 26/3119 SIN Santana | Desenvolvedor |
+| <img src="web/images/logo-especialista.png" width="28"> | AL 26/3103 SIN Menezes | Desenvolvedor |
+| <img src="web/images/logo-especialista.png" width="28"> | AL 26/3118 SIN Gabriel | Desenvolvedor |
 
 ---
 

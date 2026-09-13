@@ -1,0 +1,53 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/config.docker.php:/var/www/html/core/config.php:ro
+      - ./docker/htaccess-local:/var/www/html/.htaccess:ro
+      - ./docker/apache-local.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+      - ./docker/php-local.ini:/usr/local/etc/php/conf.d/zz-local.ini:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: argos_root
+      MYSQL_DATABASE: argos
+      MYSQL_USER: argos
+      MYSQL_PASSWORD: argos
+    ports:
+      - "3307:3306"
+    volumes:
+      - argos_db_data:/var/lib/mysql
+      - .:/argos-src:ro
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: argos_root
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  argos_db_data:

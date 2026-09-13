@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/bootstrap.php';
-require_once __DIR__ . '/../retiradas_core.php';
+require_once __DIR__ . '/../core/retiradas_core.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
@@ -11,46 +11,19 @@ switch ($metodo) {
     // ---------- LISTAR / BUSCAR ----------
     case 'GET':
         if ($id) {
-            $retirada = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM retiradas WHERE id = " . $id));
+            $retirada = buscarRetiradaPorId($conexao, $id);
             if (!$retirada) {
                 erro("Retirada não encontrada.", 404);
             }
             responder($retirada);
         }
 
-        $filtros = [];
-        $params = [];
-        $tipos = "";
-
-        if (!empty($_GET['esquadrao'])) {
-            $filtros[] = "esquadrao = ?";
-            $params[] = $_GET['esquadrao'];
-            $tipos .= "s";
-        }
-        if (!empty($_GET['status'])) {
-            $filtros[] = "status = ?";
-            $params[] = $_GET['status'];
-            $tipos .= "s";
-        }
-        if (!empty($_GET['tipo'])) {
-            $filtros[] = "tipo = ?";
-            $params[] = $_GET['tipo'];
-            $tipos .= "s";
-        }
-
-        $where = $filtros ? "WHERE " . implode(" AND ", $filtros) : "";
-        $stmt = mysqli_prepare($conexao, "SELECT * FROM retiradas $where ORDER BY data_hora DESC");
-        if ($params) {
-            mysqli_stmt_bind_param($stmt, $tipos, ...$params);
-        }
-        mysqli_stmt_execute($stmt);
-        $resultado = mysqli_stmt_get_result($stmt);
-
-        $retiradas = [];
-        while ($linha = mysqli_fetch_assoc($resultado)) {
-            $retiradas[] = $linha;
-        }
-        responder($retiradas);
+        $filtros = [
+            'esquadrao' => $_GET['esquadrao'] ?? null,
+            'status' => $_GET['status'] ?? null,
+            'tipo' => $_GET['tipo'] ?? null,
+        ];
+        responder(listarRetiradas($conexao, $filtros));
         break;
 
     // ---------- ABRIR NOVA RETIRADA ----------
@@ -94,6 +67,20 @@ switch ($metodo) {
         }
 
         responder(['protocolo' => $resultado['protocolo']]);
+        break;
+
+    // ---------- EXCLUIR ----------
+    case 'DELETE':
+        if (!$id) {
+            erro("Informe o id da retirada (?id=).");
+        }
+
+        $resultado = excluirRetirada($conexao, $id);
+        if (!$resultado['ok']) {
+            erro($resultado['erro'], 404);
+        }
+
+        responder(['excluida' => true]);
         break;
 
     default:

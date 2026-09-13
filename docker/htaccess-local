@@ -1,0 +1,13 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # (Sem o redirect pra HTTPS da produção — localmente não temos TLS.)
+
+    RewriteCond %{REQUEST_URI} ^/(api|core|database)(/|$)
+    RewriteRule ^ - [L]
+
+    RewriteCond %{REQUEST_URI} !^/web/
+    RewriteRule ^(.*)$ web/$1 [L]
+</IfModule>
