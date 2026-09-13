@@ -321,10 +321,6 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                         <td>
                             <div class="acoes-form">
                                 <button form="<?= $formId ?>" type="submit">Salvar</button>
-                            </div>
-                        </td>
-                        <td style="border-left:none;">
-                            <div class="acoes-form">
                                 <button type="button" class="ghost" onclick="redefinirSenha('resetar_senha', <?= $u['id'] ?>)">redefinir senha</button>
                                 <?php if ($u['id'] != $meuId): ?>
                                 <button type="button" class="danger" onclick="excluirUsuario('excluir', <?= $u['id'] ?>, 'Excluir este usuário?')"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
@@ -423,10 +419,6 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                         <td>
                             <div class="acoes-form">
                                 <button form="<?= $formId ?>" type="submit">Salvar</button>
-                            </div>
-                        </td>
-                        <td style="border-left:none;">
-                            <div class="acoes-form">
                                 <button type="button" class="ghost" onclick="redefinirSenha('painel_resetar_senha', <?= $u['id'] ?>)">redefinir senha</button>
                                 <button type="button" class="danger" onclick="excluirUsuario('painel_excluir', <?= $u['id'] ?>, 'Excluir este usuário do painel?')"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                             </div>
