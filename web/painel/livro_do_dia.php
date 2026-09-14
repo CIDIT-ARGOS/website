@@ -175,7 +175,10 @@ foreach ($esquadroesParaMontar as $esq) {
                         <span>TÉRMINO: <?= htmlspecialchars(dataEstiloLivro($d['data_termino'])) ?></span><br>
                         <?php if ($d['numero']): ?><span>Nº DA DISPENSA: <?= htmlspecialchars($d['numero']) ?></span><br><?php endif; ?>
                         <span>MOTIVO: <?= htmlspecialchars($d['motivo']) ?></span><br>
-                        <?php if ($d['dispensado_de']): ?><span>DISPENSADO DE: <?= htmlspecialchars($d['dispensado_de']) ?></span><?php endif; ?>
+                        <?php
+                            $dispensadoDePartes = array_filter([$d['tags_nomes'] ?? null, $d['dispensado_de'] ?? null]);
+                        ?>
+                        <?php if (!empty($dispensadoDePartes)): ?><span>DISPENSADO DE: <?= htmlspecialchars(implode(', ', $dispensadoDePartes)) ?></span><?php endif; ?>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>

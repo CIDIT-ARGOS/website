@@ -246,6 +246,31 @@ CREATE TABLE dispensas (
   INDEX idx_aluno_periodo (aluno_id, data_inicio, data_termino)
 );
 
+-- "Dispensado de": catálogo de tags (múltipla escolha) + dispensas.dispensado_de
+-- vira campo livre "específico" pra quando nenhuma tag serve.
+CREATE TABLE dispensa_tipos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(50) NOT NULL UNIQUE,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  ordem INT NOT NULL DEFAULT 0
+);
+
+INSERT INTO dispensa_tipos (nome, ordem) VALUES
+('Ordem Unida', 1),
+('Formatura', 2),
+('Entrada em Forma', 3),
+('Educação Física', 4),
+('Serviço', 5);
+
+CREATE TABLE dispensa_dispensa_tipos (
+  dispensa_id INT NOT NULL,
+  dispensa_tipo_id INT NOT NULL,
+
+  PRIMARY KEY (dispensa_id, dispensa_tipo_id),
+  FOREIGN KEY (dispensa_id) REFERENCES dispensas(id) ON DELETE CASCADE,
+  FOREIGN KEY (dispensa_tipo_id) REFERENCES dispensa_tipos(id)
+);
+
 -- ================= PERMISSÕES =================
 CREATE TABLE permissoes (
   id INT AUTO_INCREMENT PRIMARY KEY,

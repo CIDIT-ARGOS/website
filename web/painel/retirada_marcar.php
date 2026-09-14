@@ -71,6 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['itens']) && $retirada
 $itens = listarItensRetirada($conexao, $id);
 
 $motivos = listarMotivos($conexao);
+$tiposDispensa = $podeLancarDispensa ? listarDispensaTipos($conexao) : [];
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 $somenteLeitura = $retirada['status'] === 'enviada';
@@ -108,6 +109,8 @@ $somenteLeitura = $retirada['status'] === 'enviada';
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
     .badge.pendente { background: #fff3cd; color: #8a6100; }
     .badge.enviada { background: #d9f2e3; color: var(--ok); }
+    .tag-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #eef1f6; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+    .tag-check input { margin: 0; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 <script>
@@ -147,6 +150,13 @@ $somenteLeitura = $retirada['status'] === 'enviada';
             input.value = valor;
             form.appendChild(input);
         }
+        document.querySelectorAll('.disp_tipo_' + alunoId + ':checked').forEach(chk => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'dispensa_tipo_ids[]';
+            input.value = chk.value;
+            form.appendChild(input);
+        });
         document.body.appendChild(form);
         form.submit();
     }
@@ -214,7 +224,13 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                                 <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" id="disp_termino_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Nº <input type="text" id="disp_numero_<?= $item['aluno_id'] ?>" style="width:70px;"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Motivo <input type="text" id="disp_motivo_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
-                                <label style="font-size:12px; color:var(--text-muted);">Dispensado de <input type="text" id="disp_dispensado_de_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
+                            </div>
+                            <div class="form-linha" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:0 0 8px;">
+                                <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
+                                <?php foreach ($tiposDispensa as $t): ?>
+                                    <label class="tag-check"><input type="checkbox" class="disp_tipo_<?= $item['aluno_id'] ?>" value="<?= $t['id'] ?>"> <?= htmlspecialchars($t['nome']) ?></label>
+                                <?php endforeach; ?>
+                                <input type="text" id="disp_dispensado_de_<?= $item['aluno_id'] ?>" placeholder="Específico (opcional)" style="min-width:160px;">
                                 <button type="button" onclick="lancarDispensa(<?= $item['aluno_id'] ?>)">Salvar dispensa</button>
                             </div>
                         </td>

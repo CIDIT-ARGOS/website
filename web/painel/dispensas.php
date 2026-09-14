@@ -67,6 +67,7 @@ if ($escopo !== null) {
     $filtrosAlunos['esquadrao'] = $escopo;
 }
 $alunos = listarAlunos($conexao, $filtrosAlunos);
+$tiposDispensa = listarDispensaTipos($conexao);
 
 ?>
 <!DOCTYPE html>
@@ -101,6 +102,8 @@ $alunos = listarAlunos($conexao, $filtrosAlunos);
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
     .badge.ativa { background: #d9f2e3; color: var(--ok); }
     .badge.encerrada { background: #eef1f6; color: var(--text-muted); }
+    .tag-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #eef1f6; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+    .tag-check input { margin: 0; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
@@ -134,8 +137,14 @@ $alunos = listarAlunos($conexao, $filtrosAlunos);
             <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" name="data_termino" required></label>
             <input type="text" name="numero" placeholder="Nº da dispensa">
             <input type="text" name="motivo" placeholder="Motivo" required style="min-width:180px;">
-            <input type="text" name="dispensado_de" placeholder="Dispensado de" style="min-width:180px;">
             <button type="submit">Cadastrar</button>
+            <div style="width:100%; display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:4px;">
+                <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
+                <?php foreach ($tiposDispensa as $t): ?>
+                    <label class="tag-check"><input type="checkbox" name="dispensa_tipo_ids[]" value="<?= $t['id'] ?>"> <?= htmlspecialchars($t['nome']) ?></label>
+                <?php endforeach; ?>
+                <input type="text" name="dispensado_de" placeholder="Específico (opcional)" style="min-width:180px;">
+            </div>
         </form>
     </div>
 
@@ -151,6 +160,7 @@ $alunos = listarAlunos($conexao, $filtrosAlunos);
                 <?php $formId = 'form_' . $d['id']; ?>
                 <?php $detalheId = 'detalhe_' . $d['id']; ?>
                 <?php $ativa = $d['data_inicio'] <= $hoje && $d['data_termino'] >= $hoje; ?>
+                <?php $tagsIdsAtuais = array_column(listarTagsDispensa($conexao, $d['id']), 'id'); ?>
                 <tr>
                     <td><?= htmlspecialchars(identificacaoAluno($d)) ?></td>
                     <td><span class="badge <?= $ativa ? 'ativa' : 'encerrada' ?>"><?= $ativa ? 'ativa' : 'encerrada' ?></span></td>
@@ -166,7 +176,13 @@ $alunos = listarAlunos($conexao, $filtrosAlunos);
                             <label style="font-size:12px; color:var(--text-muted);">Término <input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Nº <input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Motivo <input form="<?= $formId ?>" type="text" name="motivo" value="<?= htmlspecialchars($d['motivo']) ?>" style="min-width:180px;"></label>
-                            <label style="font-size:12px; color:var(--text-muted);">Dispensado de <input form="<?= $formId ?>" type="text" name="dispensado_de" value="<?= htmlspecialchars($d['dispensado_de'] ?? '') ?>" style="min-width:180px;"></label>
+                        </div>
+                        <div class="form-linha" style="padding:0 0 10px;">
+                            <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
+                            <?php foreach ($tiposDispensa as $t): ?>
+                                <label class="tag-check"><input form="<?= $formId ?>" type="checkbox" name="dispensa_tipo_ids[]" value="<?= $t['id'] ?>" <?= in_array($t['id'], $tagsIdsAtuais) ? 'checked' : '' ?>> <?= htmlspecialchars($t['nome']) ?></label>
+                            <?php endforeach; ?>
+                            <input form="<?= $formId ?>" type="text" name="dispensado_de" value="<?= htmlspecialchars($d['dispensado_de'] ?? '') ?>" placeholder="Específico (opcional)" style="min-width:180px;">
                             <button type="submit" form="<?= $formId ?>">Salvar</button>
                         </div>
                     </td>

@@ -114,6 +114,32 @@ function marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, 
 }
 
 /**
+ * Alunos marcados como falta com motivo DMED (dispensa médica) nesta
+ * retirada, mas sem uma dispensa de verdade cadastrada cobrindo a data —
+ * ou seja, alguém selecionou o motivo sem "lançar" a dispensa de fato.
+ * Usado pra travar o envio da chamada até a dispensa existir no sistema.
+ */
+function alunosSemDispensaComprovada($conexao, $retiradaId) {
+    $stmt = mysqli_prepare($conexao, "
+        SELECT ri.aluno_id, a.nome_guerra, a.milhao
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        JOIN motivos_falta m ON m.id = ri.motivo_falta_id
+        WHERE ri.retirada_id = ? AND ri.presente = 0 AND m.codigo = 'DMED'
+          AND NOT EXISTS (
+              SELECT 1 FROM dispensas d
+              WHERE d.aluno_id = ri.aluno_id
+                AND d.data_inicio <= DATE(r.data_hora)
+                AND d.data_termino >= DATE(r.data_hora)
+          )
+    ");
+    mysqli_stmt_bind_param($stmt, "i", $retiradaId);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
  * Fecha a retirada: gera protocolo e marca como enviada.
  *
  * @return array{ok: bool, erro?: string, protocolo?: string}
@@ -125,6 +151,12 @@ function enviarRetirada($conexao, $retiradaId) {
     }
     if ($retirada['status'] === 'enviada') {
         return ['ok' => false, 'erro' => 'Essa retirada já foi enviada.', 'protocolo' => $retirada['protocolo']];
+    }
+
+    $semDispensa = alunosSemDispensaComprovada($conexao, $retiradaId);
+    if (!empty($semDispensa)) {
+        $nomes = implode(', ', array_map(fn($a) => "{$a['milhao']} {$a['nome_guerra']}", $semDispensa));
+        return ['ok' => false, 'erro' => "Não dá pra enviar: marcado(s) como dispensa médica sem a dispensa lançada no sistema ainda — $nomes. Lance a dispensa (botão \"Lançar\" na linha do aluno) antes de enviar."];
     }
 
     $protocolo = date('Ymd') . '-' . str_pad($retiradaId, 4, '0', STR_PAD_LEFT) . '-' . strtoupper(bin2hex(random_bytes(2)));

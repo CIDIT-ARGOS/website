@@ -5,6 +5,43 @@
 // Usada pela tela de gestão (dispensas.php), pela sugestão automática na
 // chamada (retiradas_core.php::abrirRetirada) e pelo Livro do Dia.
 
+function listarDispensaTipos($conexao) {
+    $resultado = mysqli_query($conexao, "SELECT * FROM dispensa_tipos WHERE ativo = 1 ORDER BY ordem");
+    return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
+}
+
+/**
+ * Substitui as tags "dispensado de" de uma dispensa pelo conjunto informado.
+ */
+function definirTagsDispensa($conexao, $dispensaId, array $tipoIds) {
+    $stmt = mysqli_prepare($conexao, "DELETE FROM dispensa_dispensa_tipos WHERE dispensa_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $dispensaId);
+    mysqli_stmt_execute($stmt);
+
+    $stmt = mysqli_prepare($conexao, "INSERT IGNORE INTO dispensa_dispensa_tipos (dispensa_id, dispensa_tipo_id) VALUES (?, ?)");
+    foreach ($tipoIds as $tipoId) {
+        $tipoId = (int) $tipoId;
+        if ($tipoId <= 0) {
+            continue;
+        }
+        mysqli_stmt_bind_param($stmt, "ii", $dispensaId, $tipoId);
+        mysqli_stmt_execute($stmt);
+    }
+}
+
+function listarTagsDispensa($conexao, $dispensaId) {
+    $stmt = mysqli_prepare($conexao, "
+        SELECT dt.id, dt.nome
+        FROM dispensa_dispensa_tipos ddt
+        JOIN dispensa_tipos dt ON dt.id = ddt.dispensa_tipo_id
+        WHERE ddt.dispensa_id = ?
+        ORDER BY dt.ordem
+    ");
+    mysqli_stmt_bind_param($stmt, "i", $dispensaId);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
 function listarDispensas($conexao, $filtros = []) {
     $condicoes = [];
     $params = [];
@@ -31,7 +68,11 @@ function listarDispensas($conexao, $filtros = []) {
 
     $sql = "
         SELECT d.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
-               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
+               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha,
+               (SELECT GROUP_CONCAT(dt.nome ORDER BY dt.ordem SEPARATOR ', ')
+                FROM dispensa_dispensa_tipos ddt
+                JOIN dispensa_tipos dt ON dt.id = ddt.dispensa_tipo_id
+                WHERE ddt.dispensa_id = d.id) AS tags_nomes
         FROM dispensas d
         JOIN alunos a ON a.id = d.aluno_id
         LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
@@ -49,7 +90,11 @@ function listarDispensas($conexao, $filtros = []) {
 function buscarDispensaPorId($conexao, $id) {
     $stmt = mysqli_prepare($conexao, "
         SELECT d.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
-               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
+               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha,
+               (SELECT GROUP_CONCAT(dt.nome ORDER BY dt.ordem SEPARATOR ', ')
+                FROM dispensa_dispensa_tipos ddt
+                JOIN dispensa_tipos dt ON dt.id = ddt.dispensa_tipo_id
+                WHERE ddt.dispensa_id = d.id) AS tags_nomes
         FROM dispensas d
         JOIN alunos a ON a.id = d.aluno_id
         LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
@@ -110,7 +155,9 @@ function criarDispensa($conexao, $dados) {
     if (!mysqli_stmt_execute($stmt)) {
         return ['ok' => false, 'erro' => 'Erro ao criar dispensa: ' . mysqli_error($conexao)];
     }
-    return ['ok' => true, 'id' => mysqli_insert_id($conexao)];
+    $novoId = mysqli_insert_id($conexao);
+    definirTagsDispensa($conexao, $novoId, $dados['dispensa_tipo_ids'] ?? []);
+    return ['ok' => true, 'id' => $novoId];
 }
 
 function atualizarDispensa($conexao, $id, $dados) {
@@ -138,6 +185,7 @@ function atualizarDispensa($conexao, $id, $dados) {
     if (!mysqli_stmt_execute($stmt)) {
         return ['ok' => false, 'erro' => 'Erro ao atualizar dispensa: ' . mysqli_error($conexao)];
     }
+    definirTagsDispensa($conexao, $id, $dados['dispensa_tipo_ids'] ?? []);
     return ['ok' => true];
 }
 

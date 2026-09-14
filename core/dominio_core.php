@@ -79,6 +79,18 @@ function dominioEntidades() {
                 ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
             ],
         ],
+        'dispensa_tipos' => [
+            'tabela' => 'dispensa_tipos',
+            'rotulo' => 'Tipos de dispensa',
+            'rotulo_singular' => 'Tipo de dispensa',
+            'permissao' => 'gerenciar_motivos',
+            'ordem_por' => 'ordem',
+            'campos' => [
+                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'ordem', 'rotulo' => 'Ordem', 'tipo' => 'numero'],
+                ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
+            ],
+        ],
     ];
 }
 

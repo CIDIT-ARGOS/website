@@ -8,11 +8,16 @@ require_once __DIR__ . '/../../core/alunos_core.php';
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao();
 
+// "Só ausentes" começa marcado por padrão (visão mais útil no dia a dia) —
+// só desliga se o usuário de fato desmarcar e filtrar de novo.
+$formularioEnviado = isset($_GET['filtrado']);
+$somenteAusentes = $formularioEnviado ? isset($_GET['somente_ausentes']) : true;
+
 $filtros = [
     'esquadrao' => $escopo ?? ($_GET['esquadrao'] ?? null),
     'esquadrilha' => $_GET['esquadrilha'] ?? null,
     'busca' => $_GET['busca'] ?? null,
-    'somente_ausentes' => isset($_GET['somente_ausentes']),
+    'somente_ausentes' => $somenteAusentes,
 ];
 
 $resumo = situacaoResumo($conexao, $filtros);
@@ -111,7 +116,8 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
             <?php endif; ?>
             <input type="text" name="esquadrilha" placeholder="Esquadrilha (A/B/C/D)" value="<?= htmlspecialchars($_GET['esquadrilha'] ?? '') ?>">
             <input type="text" name="busca" placeholder="Nome ou milhão" value="<?= htmlspecialchars($_GET['busca'] ?? '') ?>">
-            <label class="check"><input type="checkbox" name="somente_ausentes" value="1" <?= isset($_GET['somente_ausentes']) ? 'checked' : '' ?>> Só ausentes</label>
+            <input type="hidden" name="filtrado" value="1">
+            <label class="check"><input type="checkbox" name="somente_ausentes" value="1" <?= $somenteAusentes ? 'checked' : '' ?>> Só ausentes</label>
             <button type="submit"><span class="i" style="--icon-url:url('../images/icons/filter.svg')"></span>Filtrar</button>
         </form>
     </div>
