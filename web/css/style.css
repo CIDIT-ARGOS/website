@@ -394,28 +394,26 @@ a {
   margin-top: 14px;
 }
 
-/* Argos Panoptes como marca d'água decorativa atrás do título da seção —
-   dissolve antes de chegar no texto corrido, pra não brigar com a leitura. */
-#apresentacao {
+/* Argos Panoptes como marca d'água decorativa atrás do mockup do celular —
+   ancorada na própria coluna de mídia (.split-media), não na seção inteira.
+   A primeira versão usava margin-right em vw relativo à seção toda, e isso
+   furava o texto em qualquer largura entre ~960px e ~1200px (notebook comum,
+   janela não maximizada) porque o vw não tem relação nenhuma com onde a
+   coluna de texto realmente termina. Ancorando na coluna de mídia, a imagem
+   fisicamente não tem como invadir a coluna de texto, em nenhuma largura. */
+.split-media {
   position: relative;
-  overflow: hidden;
-}
-
-#apresentacao .section-inner {
-  position: relative;
-  z-index: 1;
 }
 
 .mito-bg {
   position: absolute;
-  top: -16px;
-  right: 4%;
-  width: 360px;
-  max-width: 42%;
+  top: -60px;
+  right: 10px;
+  width: 220px;
+  max-width: 60%;
   z-index: 0;
-  opacity: 0.85;
+  opacity: 1;
   pointer-events: none;
-  -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 88%);
   mask-image: linear-gradient(to bottom, #000 45%, transparent 88%);
 }
 
@@ -856,9 +854,9 @@ a {
   }
 
   .mito-bg {
-    width: 220px;
-    max-width: 52%;
-    opacity: 0.6;
+    top: -30px;
+    right: 6px;
+    width: 130px;
   }
 
   .cards-3,
