@@ -5,6 +5,10 @@ require_once __DIR__ . '/auth.php';
 
 $conexao = conectarBanco();
 
+if (!temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado')) {
+    die("Sua conta não tem a permissão 'acesso_tecnico_avancado'.");
+}
+
 $tabela = $_GET['tabela'] ?? '';
 
 // Valida que a tabela realmente existe (evita injeção via nome de tabela)

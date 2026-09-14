@@ -172,6 +172,9 @@ function dominioCampoInput($campo, $valor, $formId, $unidadesDisponiveis) {
                     <?php endforeach; ?>
                     <td style="white-space:nowrap;">
                         <button type="submit" form="<?= $formId ?>">Salvar</button>
+                        <?php if ($chaveEntidade === 'grupos_acesso'): ?>
+                            <a href="grupo_acesso_detalhe.php?id=<?= $r['id'] ?>"><span class="i" style="--icon-url:url('../images/icons/users-group.svg')"></span>membros/permissões</a>
+                        <?php endif; ?>
                         <button type="button" class="danger" onclick="if(confirm('Excluir este registro?')) document.getElementById('form_excluir_<?= $r['id'] ?>').submit();"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                     </td>
                 </tr>
@@ -192,7 +195,10 @@ function dominioCampoInput($campo, $valor, $formId, $unidadesDisponiveis) {
     </div>
 
     <?php if ($chaveEntidade === 'grupos_acesso'): ?>
-        <p style="color: var(--text-muted); font-size: 12px;">Membros e permissões de cada grupo de acesso: em breve — por enquanto, use o Ikarus37 (acesso técnico) pra isso.</p>
+        <p style="color: var(--text-muted); font-size: 12px;">Use "membros/permissões" na linha de cada grupo pra escolher quem entra e o que o grupo concede.</p>
+    <?php endif; ?>
+    <?php if ($chaveEntidade === 'cargos'): ?>
+        <p style="color: var(--text-muted); font-size: 12px;"><a href="permissoes_cargo.php">Gerenciar permissões de cada cargo →</a></p>
     <?php endif; ?>
     <?php endif; ?>
 </div>

@@ -159,6 +159,9 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
                     <?php endforeach; ?>
                     <td style="white-space:nowrap;">
                         <button type="submit" form="<?= $formId ?>">Salvar</button>
+                        <?php if ($chaveEntidade === 'grupos_acesso'): ?>
+                            <a href="grupo_acesso_detalhe.php?id=<?= $r['id'] ?>" style="color:var(--accent); font-size:13px;">membros/permissões</a>
+                        <?php endif; ?>
                         <button type="button" class="danger" onclick="if(confirm('Excluir este registro?')) document.getElementById('form_excluir_<?= $r['id'] ?>').submit();"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                     </td>
                 </tr>
@@ -177,6 +180,9 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
         </table>
         </div>
     </div>
+    <?php if ($chaveEntidade === 'cargos'): ?>
+        <p style="color: var(--text-muted); font-size: 12px;"><a href="permissoes_cargo.php" style="color:var(--accent);">Gerenciar permissões de cada cargo →</a></p>
+    <?php endif; ?>
     <?php endif; ?>
 </div>
 

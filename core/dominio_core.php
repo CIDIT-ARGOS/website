@@ -42,6 +42,24 @@ function dominioEntidades() {
                 ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
             ],
         ],
+        'cargos' => [
+            'tabela' => 'cargos',
+            'rotulo' => 'Cargos',
+            'rotulo_singular' => 'Cargo',
+            'permissao' => 'gerenciar_cargos',
+            'ordem_por' => 'sistema, escopo, nome',
+            'campos' => [
+                ['nome' => 'sistema', 'rotulo' => 'Sistema', 'tipo' => 'select', 'obrigatorio' => true, 'opcoes' => [
+                    'painel' => 'Painel', 'ikarus37' => 'Ikarus37',
+                ]],
+                ['nome' => 'chave', 'rotulo' => 'Chave (usada no código — evite renomear)', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'escopo', 'rotulo' => 'Escopo (só painel)', 'tipo' => 'select', 'opcoes' => [
+                    '' => '— nenhum —', 'ca' => 'CA (não exige esquadrão)', 'esquadrao' => 'Esquadrão (exige esquadrão)',
+                ]],
+                ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
+            ],
+        ],
     ];
 }
 

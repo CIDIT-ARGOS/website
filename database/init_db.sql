@@ -1,3 +1,9 @@
+-- Sem isso, um SQL console/mysql CLI que não abre em utf8mb4 por padrão
+-- corrompe todo acento inserido aqui (double-encoding — o mesmo bug que já
+-- apareceu em produção). SET NAMES manda o SERVIDOR interpretar os bytes que
+-- vêm a seguir como utf8mb4, independente da configuração do cliente.
+SET NAMES utf8mb4;
+
 -- =====================================================================
 -- ARGOS — Script de inicialização completo do banco de dados
 -- Consolida schema_alunos.sql + schema_painel.sql + schema_permissoes.sql
@@ -35,7 +41,7 @@ CREATE TABLE admin_usuarios (
   nome VARCHAR(100) NOT NULL,
   usuario VARCHAR(50) NOT NULL UNIQUE,
   senha_hash VARCHAR(255) NOT NULL,
-  nivel ENUM('super_admin', 'admin', 'suporte') NOT NULL DEFAULT 'admin',
+  nivel VARCHAR(30) NOT NULL DEFAULT 'admin',
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ultimo_login DATETIME NULL
@@ -53,10 +59,7 @@ CREATE TABLE painel_usuarios (
   nome VARCHAR(100) NOT NULL,
   usuario VARCHAR(50) NOT NULL UNIQUE,
   senha_hash VARCHAR(255) NOT NULL,
-  cargo ENUM(
-    'CMD_CA', 'SUBCMD_CA', 'ADMIN_TECNICO', 'AUX_CA',
-    'CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'
-  ) NOT NULL,
+  cargo VARCHAR(30) NOT NULL,
   esquadrao VARCHAR(50) NULL,
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -254,6 +257,47 @@ INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
 SELECT 'painel', 'AUX_ESQUADRAO', id FROM permissoes
 WHERE chave IN ('registrar_retirada');
 -- AUX_ESQUADRAO: só registrar_retirada (faz a chamada), não edita efetivo.
+
+-- ================= CARGOS (catálogo, editável no Controle do Domínio) =================
+-- painel_usuarios.cargo e admin_usuarios.nivel guardam a `chave` daqui como
+-- texto solto (sem FK) — criar um cargo novo não exige deploy, só cadastro
+-- aqui + conceder permissões em cargo_permissoes.
+CREATE TABLE cargos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sistema ENUM('painel', 'ikarus37') NOT NULL,
+  chave VARCHAR(30) NOT NULL,
+  nome VARCHAR(100) NOT NULL,
+  escopo ENUM('ca', 'esquadrao') NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_sistema_chave (sistema, chave)
+);
+
+INSERT INTO cargos (sistema, chave, nome, escopo) VALUES
+('painel', 'CMD_CA', 'Comandante do CA', 'ca'),
+('painel', 'SUBCMD_CA', 'Subcomandante do CA', 'ca'),
+('painel', 'ADMIN_TECNICO', 'Administrador Técnico', 'ca'),
+('painel', 'AUX_CA', 'Auxiliar CA', 'ca'),
+('painel', 'CMD_ESQUADRAO', 'Comandante de Esquadrão', 'esquadrao'),
+('painel', 'ENC_ESQUADRAO', 'Encarregado de Esquadrão', 'esquadrao'),
+('painel', 'AUX_ESQUADRAO', 'Auxiliar de Esquadrão', 'esquadrao'),
+('ikarus37', 'super_admin', 'Super administrador', NULL),
+('ikarus37', 'admin', 'Administrador', NULL),
+('ikarus37', 'suporte', 'Suporte', NULL);
+
+INSERT INTO permissoes (chave, descricao) VALUES
+('gerenciar_cargos', 'Criar, editar e desativar cargos (Controle do Domínio de Negócio)'),
+('acesso_tecnico_avancado', 'Console SQL, backup, exportar/importar tabela e editor de registro cru — ferramentas de emergência, não o uso do dia a dia');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'ikarus37', 'super_admin', id FROM permissoes WHERE chave IN ('gerenciar_cargos', 'acesso_tecnico_avancado');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', cargo, p.id
+FROM (SELECT 'CMD_CA' AS cargo UNION SELECT 'SUBCMD_CA') c
+CROSS JOIN permissoes p
+WHERE p.chave = 'gerenciar_cargos';
 
 -- ================= UNIDADES (árvore organizacional) =================
 -- EEAR { DEF { Galpões }, CA { Doutrina, Esquadrões } }. Junto com grupos_acesso

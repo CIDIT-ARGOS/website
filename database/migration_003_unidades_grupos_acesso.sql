@@ -1,3 +1,7 @@
+SET NAMES utf8mb4;
+-- Sem isso, um SQL console/mysql CLI que não abre em utf8mb4 por padrão
+-- corrompe os acentos deste arquivo ao inserir (double-encoding).
+
 -- Permissões e grupos estilo POSIX/UNIX + a árvore organizacional da escola.
 --
 -- Aditivo: não mexe em painel_usuarios, cargo_permissoes nem em nenhum cargo que já

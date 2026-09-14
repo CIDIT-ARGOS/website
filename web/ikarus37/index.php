@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
 }
 
 $logado = !empty($_SESSION['admin_id']);
+$podeTecnicoAvancado = $logado && temPermissao(conectarBanco(), 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado');
 
 ?>
 <!DOCTYPE html>
@@ -213,21 +214,25 @@ $logado = !empty($_SESSION['admin_id']);
                 <h3>API</h3>
                 <p>Endpoints, chaves de acesso, apps conectados e monitoramento das requisições.</p>
             </a>
+            <?php if ($podeTecnicoAvancado): ?>
             <a href="banco.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/database.svg')"></span>
                 <h3>Banco de Dados</h3>
-                <p>Tabelas, estrutura e manutenção dos dados do sistema.</p>
+                <p>Console SQL, exportar/importar e editor de registro cru — ferramenta de emergência.</p>
             </a>
+            <?php endif; ?>
             <a href="usuarios.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/shield-lock.svg')"></span>
                 <h3>Usuários administradores</h3>
                 <p>Gestão de contas e níveis de permissão do painel.</p>
             </a>
+            <?php if ($podeTecnicoAvancado): ?>
             <a href="backup.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/database-export.svg')"></span>
                 <h3>Backup do banco</h3>
                 <p>Baixar dump completo (estrutura + dados) antes de mudanças arriscadas.</p>
             </a>
+            <?php endif; ?>
             <a href="../painel/" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/layout-dashboard.svg')"></span>
                 <h3>Painel de Comando</h3>
