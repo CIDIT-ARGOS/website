@@ -170,13 +170,16 @@ CREATE TABLE retiradas (
   agrupamento_tipo ENUM('esquadrilha', 'especialidade', 'grupo') NOT NULL,
   agrupamento_valor VARCHAR(50) NOT NULL,
   esquadrao VARCHAR(50) NULL, -- obrigatório quando agrupamento_tipo = 'esquadrilha'; NULL quando 'grupo'
-  aluno_servico_id INT NOT NULL,
+  aluno_servico_id INT NULL, -- legado; quem abre a retirada agora é sempre a sessão logada (ver abaixo)
+  painel_usuario_id INT NULL, -- quem abriu, quando logado como conta normal do painel
+  responsavel_nome VARCHAR(100) NULL, -- nome gravado no momento da abertura (cobre também login via ponte do Ikarus37)
   status ENUM('pendente', 'enviada') NOT NULL DEFAULT 'pendente',
   protocolo VARCHAR(40) NULL UNIQUE,
   data_hora DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   enviada_em DATETIME NULL,
 
-  FOREIGN KEY (aluno_servico_id) REFERENCES alunos(id)
+  FOREIGN KEY (aluno_servico_id) REFERENCES alunos(id),
+  FOREIGN KEY (painel_usuario_id) REFERENCES painel_usuarios(id)
 );
 
 CREATE TABLE retirada_itens (

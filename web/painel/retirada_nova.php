@@ -16,15 +16,22 @@ $escopo = escopoEsquadrao(); // null = pode escolher esquadrão/grupo livremente
 $erro = null;
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+$rotulosCategorias = ['clube' => 'Clube', 'servico' => 'Serviço', 'comissao' => 'Comissão'];
+
+// O responsável pela retirada é sempre quem está logado nesse exato momento —
+// nunca uma escolha do formulário — pra não dar pra abrir uma retirada e
+// atribuí-la ao nome de outra pessoa.
+$viaIkarus = ($_SESSION['painel_origem'] ?? '') === 'ikarus37';
+$painelUsuarioId = $viaIkarus ? null : (int) $_SESSION['painel_id'];
+$responsavelNome = $_SESSION['painel_nome'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $tipo = $_POST['tipo'] ?? '';
     $agrupamentoTipo = $_POST['agrupamento_tipo'] ?? 'esquadrilha';
     $esquadrao = $escopo ?? trim($_POST['esquadrao'] ?? '');
     $agrupamentoValor = trim($_POST['agrupamento_valor'] ?? '');
-    $alunoServicoId = (int)($_POST['aluno_servico_id'] ?? 0);
 
-    $resultado = abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $alunoServicoId);
+    $resultado = abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $responsavelNome, $painelUsuarioId);
 
     if ($resultado['ok']) {
         header("Location: retirada_marcar.php?id=" . $resultado['retirada_id']);
@@ -64,82 +71,37 @@ $grupos = listarGrupos($conexao);
     .erro { color: var(--danger); font-size: 13px; }
     fieldset { border: 1px solid var(--border); border-radius: 8px; margin-top: 14px; padding: 10px; }
     legend { font-size: 12px; color: var(--text-muted); padding: 0 6px; }
+    .responsavel { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
+    .responsavel .rotulo { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 <script>
-    function alternarAgrupamento() {
-        const tipo = document.getElementById('agrupamento_tipo').value;
-        const ehEsquadrilha = tipo === 'esquadrilha';
+    function alternarTipo() {
+        const tipoAlto = document.getElementById('tipo_alto_nivel').value;
+        const ehRotina = tipoAlto === 'rotina';
 
-        document.getElementById('bloco_esquadrilha').style.display = ehEsquadrilha ? 'block' : 'none';
-        document.getElementById('bloco_grupo').style.display = ehEsquadrilha ? 'none' : 'block';
+        document.getElementById('agrupamento_tipo').value = ehRotina ? 'esquadrilha' : 'grupo';
+        document.getElementById('bloco_esquadrilha').style.display = ehRotina ? 'block' : 'none';
+        document.getElementById('bloco_grupo').style.display = ehRotina ? 'none' : 'block';
 
         // Só o campo do bloco ativo deve ser enviado no submit.
-        document.getElementById('esquadrilha').disabled = !ehEsquadrilha;
-        document.getElementById('grupo').disabled = ehEsquadrilha;
+        document.getElementById('esquadrilha').disabled = !ehRotina;
+        document.getElementById('grupo').disabled = ehRotina;
 
-        carregarAlunosServico();
+        if (!ehRotina) {
+            filtrarGruposPorCategoria(tipoAlto);
+        }
     }
 
-    async function carregarAlunosServico() {
-        const esquadrao = document.getElementById('esquadrao') ? document.getElementById('esquadrao').value : document.getElementById('esquadrao_fixo').value;
-        const agrupamentoTipo = document.getElementById('agrupamento_tipo').value;
-        const valor = agrupamentoTipo === 'esquadrilha'
-            ? document.getElementById('esquadrilha').value
-            : document.getElementById('grupo').value;
-
-        const select = document.getElementById('aluno_servico_id');
-        select.innerHTML = '<option>Carregando...</option>';
-
-        const params = new URLSearchParams();
-        if (agrupamentoTipo === 'esquadrilha') {
-            params.set('esquadrao', esquadrao);
-            params.set('esquadrilha', valor);
+    function filtrarGruposPorCategoria(categoria) {
+        const select = document.getElementById('grupo');
+        let primeiraVisivel = null;
+        for (const opt of select.options) {
+            const visivel = opt.dataset.categoria === categoria;
+            opt.hidden = !visivel;
+            if (visivel && !primeiraVisivel) primeiraVisivel = opt;
         }
-        // Busca alunos via endpoint interno (sem precisar da API key, é a mesma sessão do painel)
-        const resp = await fetch('ajax_alunos_grupo.php?' + params.toString() + '&agrupamento_tipo=' + agrupamentoTipo + '&grupo=' + encodeURIComponent(valor));
-        const alunos = await resp.json();
-
-        select.innerHTML = '';
-        alunos.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id;
-            opt.textContent = a.nome_guerra + ' (' + a.milhao + ')';
-            select.appendChild(opt);
-        });
-    }
-
-    let timeoutBusca = null;
-    function buscarAlunoServicoDebounced() {
-        clearTimeout(timeoutBusca);
-        timeoutBusca = setTimeout(buscarAlunoServico, 300);
-    }
-
-    async function buscarAlunoServico() {
-        const termo = document.getElementById('busca_aluno_servico').value.trim();
-        const select = document.getElementById('aluno_servico_id');
-
-        if (termo.length < 2) {
-            // Campo de busca vazio: volta pra lista padrão da esquadrilha/grupo.
-            carregarAlunosServico();
-            return;
-        }
-
-        select.innerHTML = '<option>Buscando...</option>';
-        const resp = await fetch('ajax_buscar_aluno.php?termo=' + encodeURIComponent(termo));
-        const alunos = await resp.json();
-
-        select.innerHTML = '';
-        if (alunos.length === 0) {
-            select.innerHTML = '<option value="">Nenhum aluno encontrado</option>';
-            return;
-        }
-        alunos.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.id;
-            opt.textContent = a.nome_guerra + ' (' + a.milhao + ') — ' + a.esquadrao + '/' + a.esquadrilha;
-            select.appendChild(opt);
-        });
+        select.value = primeiraVisivel ? primeiraVisivel.value : '';
     }
 </script>
 </head>
@@ -157,39 +119,34 @@ $grupos = listarGrupos($conexao);
 
     <div class="card">
         <form method="post">
-            <label>Tipo de entrada em forma</label>
-            <select name="tipo" required>
-                <?php foreach ($tiposRetirada as $valor => $rotulo): ?>
-                    <option value="<?= $valor ?>"><?= $rotulo ?></option>
-                <?php endforeach; ?>
-            </select>
-
             <?php if ($escopo === null): ?>
-                <label>Agrupamento</label>
-                <select id="agrupamento_tipo" name="agrupamento_tipo" onchange="alternarAgrupamento()">
-                    <option value="esquadrilha">Esquadrilha</option>
-                    <option value="grupo">Grupo</option>
+                <label>Tipo</label>
+                <select id="tipo_alto_nivel" onchange="alternarTipo()">
+                    <option value="rotina">Rotina CA</option>
+                    <?php foreach ($rotulosCategorias as $valor => $rotulo): ?>
+                        <option value="<?= $valor ?>"><?= $rotulo ?></option>
+                    <?php endforeach; ?>
                 </select>
+                <input type="hidden" id="agrupamento_tipo" name="agrupamento_tipo" value="esquadrilha">
             <?php else: ?>
                 <input type="hidden" id="agrupamento_tipo" name="agrupamento_tipo" value="esquadrilha">
             <?php endif; ?>
 
             <fieldset id="bloco_esquadrilha">
-                <legend>Esquadrilha</legend>
+                <legend>Rotina CA</legend>
                 <?php if ($escopo === null): ?>
                     <label>Esquadrão</label>
-                    <select id="esquadrao" name="esquadrao" onchange="carregarAlunosServico()">
+                    <select id="esquadrao" name="esquadrao">
                         <?php foreach ($esquadroesDisponiveis as $e): ?>
                             <option value="<?= htmlspecialchars($e) ?>"><?= htmlspecialchars($e) ?></option>
                         <?php endforeach; ?>
                     </select>
                 <?php else: ?>
-                    <input type="hidden" id="esquadrao_fixo" value="<?= htmlspecialchars($escopo) ?>">
                     <p style="font-size:13px; color:var(--text-muted); margin:4px 0;">Esquadrão: <?= htmlspecialchars($escopo) ?></p>
                 <?php endif; ?>
 
                 <label>Esquadrilha</label>
-                <select id="esquadrilha" name="agrupamento_valor" onchange="carregarAlunosServico()">
+                <select id="esquadrilha" name="agrupamento_valor">
                     <option value="A">A</option>
                     <option value="B">B</option>
                     <option value="C">C</option>
@@ -200,30 +157,31 @@ $grupos = listarGrupos($conexao);
             <fieldset id="bloco_grupo" style="display:none;">
                 <legend>Grupo</legend>
                 <label>Grupo</label>
-                <select id="grupo" name="agrupamento_valor" disabled onchange="carregarAlunosServico()">
+                <select id="grupo" name="agrupamento_valor" disabled>
                     <?php foreach ($grupos as $g): ?>
-                        <option value="<?= htmlspecialchars($g['nome']) ?>"><?= htmlspecialchars($g['nome']) ?></option>
+                        <option value="<?= htmlspecialchars($g['nome']) ?>" data-categoria="<?= htmlspecialchars($g['categoria']) ?>" hidden>
+                            <?= htmlspecialchars($g['nome']) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
             </fieldset>
 
-            <label>Identificação do aluno de serviço</label>
-            <select id="aluno_servico_id" name="aluno_servico_id" required>
-                <option value="">Selecione a esquadrilha/grupo primeiro</option>
+            <label>Entrada</label>
+            <select name="tipo" required>
+                <?php foreach ($tiposRetirada as $valor => $rotulo): ?>
+                    <option value="<?= $valor ?>"><?= $rotulo ?></option>
+                <?php endforeach; ?>
             </select>
 
-            <input type="text" id="busca_aluno_servico" placeholder="Não achou? Buscar por nome/milhão em qualquer esquadrão (ex: Aluno de Dia à Esquadrilha)"
-                oninput="buscarAlunoServicoDebounced()" style="margin-top:6px; font-size:12px;">
+            <div class="responsavel">
+                <div class="rotulo">Responsável pela retirada</div>
+                <?= htmlspecialchars($responsavelNome) ?> · <?= htmlspecialchars(nomeCargo($_SESSION['painel_cargo'])) ?>
+            </div>
 
             <button type="submit">Abrir retirada</button>
         </form>
     </div>
 </div>
-
-<script>
-    // Carrega a lista inicial ao abrir a página
-    carregarAlunosServico();
-</script>
 
 </body>
 </html>

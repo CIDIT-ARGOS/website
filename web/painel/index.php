@@ -170,6 +170,11 @@ $logado = !empty($_SESSION['painel_id']);
                 <h3>Efetivo</h3>
                 <p>Consulta e gestão dos alunos<?= escopoEsquadrao() ? ' do seu esquadrão' : '' ?>.</p>
             </a>
+            <a href="situacao.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/map-pin.svg')"></span>
+                <h3>Situação do efetivo</h3>
+                <p>Onde cada aluno está agora — presente, ausente e por qual motivo.</p>
+            </a>
             <a href="relatorios.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/report.svg')"></span>
                 <h3>Relatório de retiradas</h3>

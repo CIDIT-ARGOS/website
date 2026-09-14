@@ -30,7 +30,7 @@ switch ($metodo) {
     case 'POST':
         $dados = corpoJson();
 
-        foreach (['tipo', 'agrupamento_tipo', 'agrupamento_valor', 'aluno_servico_id'] as $campo) {
+        foreach (['tipo', 'agrupamento_tipo', 'agrupamento_valor', 'responsavel_nome'] as $campo) {
             if (empty($dados[$campo])) {
                 erro("Campo obrigatório ausente: $campo");
             }
@@ -42,7 +42,9 @@ switch ($metodo) {
             $dados['agrupamento_tipo'],
             $dados['agrupamento_valor'],
             $dados['esquadrao'] ?? null,
-            $dados['aluno_servico_id']
+            $dados['responsavel_nome'],
+            null,
+            $dados['aluno_servico_id'] ?? null
         );
 
         if (!$resultado['ok']) {

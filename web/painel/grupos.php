@@ -108,8 +108,20 @@ if ($grupoAtual && $buscaNome !== '') {
     th { background: var(--azul-eear); color: #ffffff; }
     .erro { color: var(--danger); font-size: 13px; }
     .ok { color: var(--ok); font-size: 13px; }
-    .tabs a { color: var(--text-muted); text-decoration: none; margin-right: 14px; padding-bottom: 4px; }
-    .tabs a.ativo { color: var(--text); border-bottom: 2px solid var(--accent); }
+    .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
+    .lista-grupos { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; max-height: 75vh; overflow-y: auto; }
+    .lista-grupos input { width: 100%; margin-bottom: 10px; }
+    .lista-grupos h5 { font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); margin: 14px 0 6px; }
+    .lista-grupos h5:first-of-type { margin-top: 0; }
+    .lista-grupos a { display: flex; justify-content: space-between; align-items: center; padding: 7px 8px; border-radius: 6px; color: var(--text); text-decoration: none; font-size: 13px; }
+    .lista-grupos a:hover { background: var(--bg); }
+    .lista-grupos a.ativo { background: var(--accent); color: #fff; }
+    .lista-grupos a small { color: inherit; opacity: .65; }
+    .lista-grupos .vazio { color: var(--text-muted); font-size: 12px; padding: 6px 8px; }
+    @media (max-width: 700px) {
+        .layout { grid-template-columns: 1fr; }
+        .lista-grupos { max-height: 300px; }
+    }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
@@ -123,17 +135,27 @@ if ($grupoAtual && $buscaNome !== '') {
 <div class="container">
     <h2>Grupos</h2>
 
-    <div class="tabs">
-        <?php foreach ($grupos as $g): ?>
-            <a href="?grupo=<?= urlencode($g['nome']) ?>" class="<?= $grupoSelecionado === $g['nome'] ? 'ativo' : '' ?>">
-                <?= htmlspecialchars($g['nome']) ?> <small style="color:var(--text-muted);">(<?= $rotulosCategorias[$g['categoria']] ?? $g['categoria'] ?>)</small>
-            </a>
-        <?php endforeach; ?>
-    </div>
-
     <?php if ($erro): ?><p class="erro"><?= htmlspecialchars($erro) ?></p><?php endif; ?>
     <?php if ($mensagem): ?><p class="ok"><?= htmlspecialchars($mensagem) ?></p><?php endif; ?>
 
+    <div class="layout">
+        <div class="lista-grupos">
+            <input type="text" id="filtro_grupos" placeholder="Buscar grupo..." oninput="filtrarGrupos()">
+            <?php foreach ($rotulosCategorias as $catValor => $catRotulo): ?>
+                <?php $gruposDaCategoria = array_filter($grupos, fn($g) => $g['categoria'] === $catValor); ?>
+                <h5><?= $catRotulo ?></h5>
+                <?php if (empty($gruposDaCategoria)): ?>
+                    <p class="vazio">Nenhum grupo ainda.</p>
+                <?php endif; ?>
+                <?php foreach ($gruposDaCategoria as $g): ?>
+                    <a href="?grupo=<?= urlencode($g['nome']) ?>" data-nome="<?= htmlspecialchars(mb_strtolower($g['nome'])) ?>" class="<?= $grupoSelecionado === $g['nome'] ? 'ativo' : '' ?>">
+                        <?= htmlspecialchars($g['nome']) ?>
+                    </a>
+                <?php endforeach; ?>
+            <?php endforeach; ?>
+        </div>
+
+        <div>
     <div class="card">
         <h4>Criar novo grupo</h4>
         <form method="post" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
@@ -214,9 +236,31 @@ if ($grupoAtual && $buscaNome !== '') {
             </table>
         </div>
     <?php else: ?>
-        <p style="color: var(--text-muted); font-size: 13px;">Selecione um grupo acima.</p>
+        <div class="card">
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0;">Selecione um grupo na lista ao lado.</p>
+        </div>
     <?php endif; ?>
+        </div>
+    </div>
 </div>
+
+<script>
+    function filtrarGrupos() {
+        const termo = document.getElementById('filtro_grupos').value.trim().toLowerCase();
+        document.querySelectorAll('.lista-grupos a').forEach(a => {
+            a.style.display = a.dataset.nome.includes(termo) ? 'flex' : 'none';
+        });
+        document.querySelectorAll('.lista-grupos h5').forEach(h => {
+            let temVisivel = false;
+            let el = h.nextElementSibling;
+            while (el && el.tagName !== 'H5') {
+                if (el.tagName === 'A' && el.style.display !== 'none') temVisivel = true;
+                el = el.nextElementSibling;
+            }
+            h.style.display = temVisivel ? 'block' : 'none';
+        });
+    }
+</script>
 
 </body>
 </html>

@@ -112,6 +112,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
         (<?= htmlspecialchars($retirada['agrupamento_tipo']) ?>: <?= htmlspecialchars($retirada['agrupamento_valor']) ?>)
         <span class="badge <?= $retirada['status'] ?>"><?= htmlspecialchars($retirada['status']) ?></span>
     </h2>
+    <p style="color: var(--text-muted); font-size: 13px;">Responsável: <strong><?= htmlspecialchars($retirada['responsavel_nome'] ?? '—') ?></strong></p>
     <?php if ($retirada['protocolo']): ?>
         <p style="color: var(--text-muted); font-size: 13px;">Protocolo: <strong><?= htmlspecialchars($retirada['protocolo']) ?></strong></p>
     <?php endif; ?>
