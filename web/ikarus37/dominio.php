@@ -67,6 +67,10 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
             }
             echo "</select>";
             break;
+        case 'numero':
+            $valorEsc = htmlspecialchars((string) ($valor ?? '0'));
+            echo "<input form=\"$formId\" type=\"number\" name=\"$nome\" value=\"$valorEsc\" style=\"width:70px;\">";
+            break;
         default:
             $valorEsc = htmlspecialchars((string) ($valor ?? ''));
             echo "<input form=\"$formId\" type=\"text\" name=\"$nome\" value=\"$valorEsc\">";

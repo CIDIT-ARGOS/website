@@ -42,6 +42,10 @@ function podeGerenciarDominio() {
     return temPermissao(_painelConexao(), 'painel', $_SESSION['painel_cargo'], 'gerenciar_dominio', idUsuarioPainel());
 }
 
+function podeGerenciarDispensas() {
+    return temPermissao(_painelConexao(), 'painel', $_SESSION['painel_cargo'], 'gerenciar_dispensas', idUsuarioPainel());
+}
+
 function nomeCargo($cargo) {
     $linha = buscarCargoPorChave(_painelConexao(), 'painel', $cargo);
     return $linha ? $linha['nome'] : $cargo;

@@ -60,6 +60,25 @@ function dominioEntidades() {
                 ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
             ],
         ],
+        'motivos_falta' => [
+            'tabela' => 'motivos_falta',
+            'rotulo' => 'Motivos de falta',
+            'rotulo_singular' => 'Motivo',
+            'permissao' => 'gerenciar_motivos',
+            'ordem_por' => 'ordem',
+            'campos' => [
+                ['nome' => 'codigo', 'rotulo' => 'Código', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'classificacao', 'rotulo' => 'Classificação', 'tipo' => 'select', 'obrigatorio' => true, 'opcoes' => [
+                    'presente' => 'Presente',
+                    'ausente_nao_falta' => 'Ausente (não é falta)',
+                    'falta' => 'Falta',
+                ]],
+                ['nome' => 'requer_observacao', 'rotulo' => 'Exige observação', 'tipo' => 'checkbox'],
+                ['nome' => 'ordem', 'rotulo' => 'Ordem', 'tipo' => 'numero'],
+                ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
+            ],
+        ],
     ];
 }
 
@@ -190,6 +209,9 @@ function _dominioValorETipo($campo, $valorBruto) {
             return [!empty($valorBruto) ? 1 : 0, "i"];
         case 'unidade_pai':
             $valor = ($valorBruto === '' || $valorBruto === null) ? null : (int) $valorBruto;
+            return [$valor, "i"];
+        case 'numero':
+            $valor = ($valorBruto === '' || $valorBruto === null) ? 0 : (int) $valorBruto;
             return [$valor, "i"];
         default:
             $valor = trim((string) ($valorBruto ?? ''));

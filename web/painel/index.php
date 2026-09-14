@@ -180,6 +180,18 @@ $logado = !empty($_SESSION['painel_id']);
                 <h3>Relatório de retiradas</h3>
                 <p>Presenças, faltas e motivos por período<?= escopoEsquadrao() ? ', esquadrão ' . htmlspecialchars(escopoEsquadrao()) : '' ?>.</p>
             </a>
+            <a href="livro_do_dia.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/book.svg')"></span>
+                <h3>Livro do Dia</h3>
+                <p>Resumo do dia no formato do Livro de Serviço — pronto pra baixar em PDF.</p>
+            </a>
+            <?php if (podeGerenciarDispensas()): ?>
+            <a href="dispensas.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/medical-cross.svg')"></span>
+                <h3>Dispensas médicas</h3>
+                <p>Cadastro de dispensa com período — sugerida automaticamente na chamada.</p>
+            </a>
+            <?php endif; ?>
             <?php if (escopoEsquadrao() === null): ?>
             <a href="grupos.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/users-group.svg')"></span>

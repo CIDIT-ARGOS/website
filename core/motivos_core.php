@@ -5,7 +5,7 @@
 
 function listarMotivos($conexao) {
     $resultado = mysqli_query($conexao, "
-        SELECT id, nome, requer_observacao, ordem
+        SELECT id, nome, codigo, classificacao, requer_observacao, ordem
         FROM motivos_falta
         WHERE ativo = 1
         ORDER BY ordem ASC
@@ -16,6 +16,13 @@ function listarMotivos($conexao) {
 function buscarMotivoPorNome($conexao, $nome) {
     $stmt = mysqli_prepare($conexao, "SELECT * FROM motivos_falta WHERE nome = ?");
     mysqli_stmt_bind_param($stmt, "s", $nome);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
+}
+
+function buscarMotivoPorCodigo($conexao, $codigo) {
+    $stmt = mysqli_prepare($conexao, "SELECT * FROM motivos_falta WHERE codigo = ? AND ativo = 1");
+    mysqli_stmt_bind_param($stmt, "s", $codigo);
     mysqli_stmt_execute($stmt);
     return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
 }
