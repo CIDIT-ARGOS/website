@@ -222,9 +222,11 @@ function listarRetiradasDoDia($conexao, $esquadrao, $data) {
 
 function listarItensRetirada($conexao, $retiradaId) {
     $stmt = mysqli_prepare($conexao, "
-        SELECT ri.*, a.nome_guerra, a.milhao, m.nome as motivo_nome, m.codigo as motivo_codigo
+        SELECT ri.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+               a.especialidade, a.nome_guerra, a.milhao, m.nome as motivo_nome, m.codigo as motivo_codigo
         FROM retirada_itens ri
         JOIN alunos a ON a.id = ri.aluno_id
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
         WHERE ri.retirada_id = ?
         ORDER BY a.nome_guerra

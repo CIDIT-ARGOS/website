@@ -39,11 +39,13 @@ function situacaoAtualAlunos($conexao, $filtros = []) {
 
     $sql = "
         SELECT
-            a.id, a.posto_graduacao, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha, a.curso, a.serie,
-            u.presente, u.observacao, u.motivo_nome, u.tipo AS retirada_tipo, u.data_hora AS retirada_data_hora
+            a.id, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+            a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha, a.curso, a.serie,
+            u.presente, u.observacao, u.motivo_nome, u.motivo_codigo, u.tipo AS retirada_tipo, u.data_hora AS retirada_data_hora
         FROM alunos a
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         LEFT JOIN (
-            SELECT x.aluno_id, x.presente, x.observacao, mf.nome AS motivo_nome, x.tipo, x.data_hora
+            SELECT x.aluno_id, x.presente, x.observacao, mf.nome AS motivo_nome, mf.codigo AS motivo_codigo, x.tipo, x.data_hora
             FROM (
                 SELECT ri.aluno_id, ri.presente, ri.observacao, ri.motivo_falta_id, r.tipo, r.data_hora,
                        ROW_NUMBER() OVER (PARTITION BY ri.aluno_id ORDER BY r.data_hora DESC) AS rn

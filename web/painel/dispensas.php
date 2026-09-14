@@ -23,15 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $dados = $_POST;
         $dados['painel_usuario_id'] = $usuarioId;
 
-        // Perfil restrito a esquadrão só pode criar dispensa pra aluno do próprio esquadrão.
-        if ($escopo !== null) {
-            $aluno = buscarAlunoPorId($conexao, (int) ($dados['aluno_id'] ?? 0));
-            if (!$aluno || $aluno['esquadrao'] !== $escopo) {
-                $erro = "Você só pode cadastrar dispensa pra alunos do Esquadrão $escopo.";
-            }
-        }
-
-        if (!$erro) {
+        $aluno = buscarAlunoPorMilhao($conexao, trim($_POST['milhao_aluno'] ?? ''));
+        if (!$aluno) {
+            $erro = "Aluno não encontrado — escolha um nome da lista de sugestões.";
+        } elseif ($escopo !== null && $aluno['esquadrao'] !== $escopo) {
+            $erro = "Você só pode cadastrar dispensa pra alunos do Esquadrão $escopo.";
+        } else {
+            $dados['aluno_id'] = $aluno['id'];
             $resultado = criarDispensa($conexao, $dados);
             $mensagem = $resultado['ok'] ? "Dispensa cadastrada." : null;
             $erro = $resultado['ok'] ? null : $resultado['erro'];
@@ -64,7 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $dispensas = listarDispensas($conexao, $escopo !== null ? ['esquadrao' => $escopo] : []);
-$alunos = listarAlunos($conexao, $escopo !== null ? ['esquadrao' => $escopo] : []);
+$filtrosAlunos = ['com_posto_exibicao' => true];
+if ($escopo !== null) {
+    $filtrosAlunos['esquadrao'] = $escopo;
+}
+$alunos = listarAlunos($conexao, $filtrosAlunos);
 
 ?>
 <!DOCTYPE html>
@@ -122,12 +124,12 @@ $alunos = listarAlunos($conexao, $escopo !== null ? ['esquadrao' => $escopo] : [
         <h4>Nova dispensa</h4>
         <form method="post" class="form-linha">
             <input type="hidden" name="acao" value="criar">
-            <select name="aluno_id" required>
-                <option value="">— escolha o aluno —</option>
+            <input type="text" name="milhao_aluno" list="lista_alunos" placeholder="Digite o nome ou milhão do aluno" required autocomplete="off" style="min-width:260px;">
+            <datalist id="lista_alunos">
                 <?php foreach ($alunos as $a): ?>
-                    <option value="<?= $a['id'] ?>"><?= htmlspecialchars($a['nome_guerra']) ?> (<?= htmlspecialchars($a['milhao']) ?>, <?= htmlspecialchars($a['esquadrao']) ?>/<?= htmlspecialchars($a['esquadrilha']) ?>)</option>
+                    <option value="<?= htmlspecialchars($a['milhao']) ?>"><?= htmlspecialchars(identificacaoAluno($a)) ?> — <?= htmlspecialchars($a['esquadrao']) ?>/<?= htmlspecialchars($a['esquadrilha']) ?></option>
                 <?php endforeach; ?>
-            </select>
+            </datalist>
             <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" name="data_inicio" required></label>
             <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" name="data_termino" required></label>
             <input type="text" name="numero" placeholder="Nº da dispensa">
@@ -149,7 +151,7 @@ $alunos = listarAlunos($conexao, $escopo !== null ? ['esquadrao' => $escopo] : [
                 <?php $formId = 'form_' . $d['id']; ?>
                 <?php $ativa = $d['data_inicio'] <= $hoje && $d['data_termino'] >= $hoje; ?>
                 <tr>
-                    <td><?= htmlspecialchars($d['nome_guerra']) ?> (<?= htmlspecialchars($d['milhao']) ?>)</td>
+                    <td><?= htmlspecialchars(identificacaoAluno($d)) ?></td>
                     <td><input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>"></td>
                     <td><input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></td>
                     <td><input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></td>

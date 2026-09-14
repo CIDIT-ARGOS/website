@@ -250,6 +250,10 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     .scroll-x { overflow-x: auto; }
     .acoes-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .campo-senha { position: relative; display: inline-block; }
+    .campo-senha input { padding-right: 34px !important; }
+    .campo-senha .toggle-senha { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 0; width: 18px; }
+    .campo-senha .toggle-senha:hover { color: var(--text); }
 </style>
 </head>
 <body>
@@ -273,7 +277,12 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
             <div class="form-linha">
                 <input type="text" name="nome" placeholder="Nome" required>
                 <input type="text" name="usuario" placeholder="Usuário (login)" required>
-                <input type="password" name="senha" placeholder="Senha" required>
+                <div class="campo-senha">
+                    <input type="password" name="senha" id="campo_senha_admin" placeholder="Senha" required>
+                    <button type="button" class="toggle-senha" onclick="alternarSenha('campo_senha_admin', this)" aria-label="Mostrar senha">
+                        <span class="i" style="--icon-url:url('../images/icons/eye.svg'); margin:0;"></span>
+                    </button>
+                </div>
                 <select name="nivel">
                     <?php foreach ($niveisLista as $n): ?>
                         <option value="<?= htmlspecialchars($n['chave']) ?>" <?= $n['chave'] === 'admin' ? 'selected' : '' ?>><?= htmlspecialchars($n['nome']) ?></option>
@@ -363,7 +372,12 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
             <div class="form-linha">
                 <input type="text" name="nome" placeholder="Nome" required>
                 <input type="text" name="usuario" placeholder="Usuário (login)" required>
-                <input type="password" name="senha" placeholder="Senha" required>
+                <div class="campo-senha">
+                    <input type="password" name="senha" id="campo_senha_painel" placeholder="Senha" required>
+                    <button type="button" class="toggle-senha" onclick="alternarSenha('campo_senha_painel', this)" aria-label="Mostrar senha">
+                        <span class="i" style="--icon-url:url('../images/icons/eye.svg'); margin:0;"></span>
+                    </button>
+                </div>
                 <select name="cargo" onchange="alternarEsquadraoNovo(this)">
                     <?php foreach ($todosCargosLista as $c): ?>
                         <option value="<?= htmlspecialchars($c['chave']) ?>" <?= $c['chave'] === 'CMD_ESQUADRAO' ? 'selected' : '' ?>><?= htmlspecialchars($c['nome']) ?></option>
@@ -438,6 +452,14 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
 
 <script>
     const CARGOS_ESQUADRAO = <?= json_encode(array_values($cargosEsquadrao)) ?>;
+
+    function alternarSenha(id, botao) {
+        const campo = document.getElementById(id);
+        const oculto = campo.type === 'password';
+        campo.type = oculto ? 'text' : 'password';
+        botao.querySelector('.i').style.setProperty('--icon-url', oculto ? "url('../images/icons/eye-off.svg')" : "url('../images/icons/eye.svg')");
+        botao.setAttribute('aria-label', oculto ? 'Ocultar senha' : 'Mostrar senha');
+    }
 
     function alternarEsquadraoNovo(select) {
         document.getElementById('novo_esquadrao').style.display = CARGOS_ESQUADRAO.includes(select.value) ? 'inline-block' : 'none';

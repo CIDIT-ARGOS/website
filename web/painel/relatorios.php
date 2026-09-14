@@ -127,12 +127,13 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
 
     <div class="card">
         <h4>Retiradas (chamadas) no período</h4>
+        <p style="color: var(--text-muted); font-size: 12px; margin-top: -6px;">Cada linha é um livro de chamada — clique em "Ver lista" pra abrir a lista de presentes e ausentes daquela retirada.</p>
         <?php if (empty($retiradas)): ?>
             <p class="vazio">Nenhuma retirada registrada ainda neste período. Assim que o módulo de chamada estiver em uso, os registros aparecem aqui automaticamente.</p>
         <?php else: ?>
             <div class="scroll-x">
             <table>
-                <tr><th>Data/Hora</th><th>Tipo</th><th>Agrupamento</th><th>Responsável</th><th>Status</th><th>Protocolo</th><th>Presentes</th><th>Faltas</th></tr>
+                <tr><th>Data/Hora</th><th>Tipo</th><th>Agrupamento</th><th>Responsável</th><th>Status</th><th>Protocolo</th><th>Presentes</th><th>Faltas</th><th></th></tr>
                 <?php foreach ($retiradas as $r): ?>
                     <tr>
                         <td><?= htmlspecialchars($r['data_hora']) ?></td>
@@ -143,6 +144,7 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                         <td><?= htmlspecialchars($r['protocolo'] ?? '—') ?></td>
                         <td><?= $r['presentes'] ?></td>
                         <td><?= $r['faltas'] ?></td>
+                        <td><a href="retirada_marcar.php?id=<?= $r['id'] ?>"><span class="i" style="--icon-url:url('../images/icons/clipboard-check.svg')"></span>Ver lista</a></td>
                     </tr>
                 <?php endforeach; ?>
             </table>

@@ -81,6 +81,10 @@ $logado = !empty($_SESSION['painel_id']);
     .login-box h1 { font-size: 20px; margin: 0 0 4px; }
     .login-box p.sub { color: var(--text-muted); font-size: 13px; margin: 0 0 20px; }
     .login-box input { width: 100%; padding: 10px 12px; margin-bottom: 12px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 14px; }
+    .campo-senha { position: relative; margin-bottom: 12px; }
+    .campo-senha input { padding-right: 40px !important; margin-bottom: 0 !important; }
+    .campo-senha .toggle-senha { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 0; width: 20px; }
+    .campo-senha .toggle-senha:hover { color: var(--text); }
     .login-box button { width: 100%; padding: 10px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 14px; cursor: pointer; }
     .erro { color: var(--danger); font-size: 13px; margin-bottom: 12px; }
 
@@ -137,9 +141,23 @@ $logado = !empty($_SESSION['painel_id']);
             <?php if ($erroLogin): ?><p class="erro"><?= htmlspecialchars($erroLogin) ?></p><?php endif; ?>
             <form method="post">
                 <input type="text" name="usuario" placeholder="Usuário" autofocus required>
-                <input type="password" name="senha" placeholder="Senha" required>
+                <div class="campo-senha">
+                    <input type="password" name="senha" id="campo_senha_login" placeholder="Senha" required>
+                    <button type="button" class="toggle-senha" onclick="alternarSenha('campo_senha_login', this)" aria-label="Mostrar senha">
+                        <span class="i" style="--icon-url:url('../images/icons/eye.svg'); margin:0;"></span>
+                    </button>
+                </div>
                 <button type="submit">Entrar</button>
             </form>
+            <script>
+                function alternarSenha(id, botao) {
+                    const campo = document.getElementById(id);
+                    const oculto = campo.type === 'password';
+                    campo.type = oculto ? 'text' : 'password';
+                    botao.querySelector('.i').style.setProperty('--icon-url', oculto ? "url('../images/icons/eye-off.svg')" : "url('../images/icons/eye.svg')");
+                    botao.setAttribute('aria-label', oculto ? 'Ocultar senha' : 'Mostrar senha');
+                }
+            </script>
         </div>
     </div>
 

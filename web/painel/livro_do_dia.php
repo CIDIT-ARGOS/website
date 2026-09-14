@@ -155,7 +155,7 @@ foreach ($esquadroesParaMontar as $esq) {
                     <ul>
                         <?php foreach ($faltas as $f): ?>
                             <li>
-                                <?= htmlspecialchars($f['milhao']) ?> <?= htmlspecialchars($f['nome_guerra']) ?>
+                                <?= htmlspecialchars(identificacaoAluno($f)) ?>
                                 (<?= htmlspecialchars($f['motivo_codigo'] ?? $f['motivo_nome'] ?? 'sem motivo') ?><?= $f['observacao'] ? ' — ' . htmlspecialchars($f['observacao']) : '' ?>)
                             </li>
                         <?php endforeach; ?>
@@ -169,7 +169,7 @@ foreach ($esquadroesParaMontar as $esq) {
             <?php else: ?>
                 <?php foreach ($livro['dispensas'] as $d): ?>
                     <div class="dispensa-bloco">
-                        <strong><?= htmlspecialchars($d['milhao']) ?> <?= htmlspecialchars($d['nome_guerra']) ?></strong>
+                        <strong><?= htmlspecialchars(identificacaoAluno($d)) ?></strong>
                         <span>INÍCIO: <?= htmlspecialchars(dataEstiloLivro($d['data_inicio'])) ?></span><br>
                         <span>TÉRMINO: <?= htmlspecialchars(dataEstiloLivro($d['data_termino'])) ?></span><br>
                         <?php if ($d['numero']): ?><span>Nº DA DISPENSA: <?= htmlspecialchars($d['numero']) ?></span><br><?php endif; ?>

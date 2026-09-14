@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/motivos_core.php';
+require_once __DIR__ . '/../../core/alunos_core.php';
 
 $conexao = conectarBanco();
 
@@ -124,7 +125,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
         <form method="post">
             <div class="scroll-x">
             <table>
-                <tr><th>Presente</th><th>Nome de Guerra</th><th>Milhão</th><th>Motivo (se faltou)</th><th>Observação</th></tr>
+                <tr><th>Presente</th><th>Identificação</th><th>Motivo (se faltou)</th><th>Observação</th></tr>
                 <?php foreach ($itens as $item): ?>
                     <tr id="linha_<?= $item['aluno_id'] ?>" class="<?= !$item['presente'] ? 'falta-row' : '' ?>">
                         <td>
@@ -133,8 +134,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                                 <?= $somenteLeitura ? 'disabled' : '' ?>
                                 onchange="alternarMotivo(<?= $item['aluno_id'] ?>, this)">
                         </td>
-                        <td><?= htmlspecialchars($item['nome_guerra']) ?></td>
-                        <td><?= htmlspecialchars($item['milhao']) ?></td>
+                        <td><?= htmlspecialchars(identificacaoAluno($item)) ?></td>
                         <td>
                             <select id="motivo_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][motivo_falta_id]"
                                 style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>

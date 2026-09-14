@@ -119,7 +119,7 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
         <div class="scroll-x">
         <table>
             <tr>
-                <th>Posto</th><th>Nome de Guerra</th><th>Milhão</th><th>Esquadrão/Esquadrilha</th>
+                <th>Identificação</th><th>Esquadrão/Esquadrilha</th>
                 <th>Status</th><th>Motivo</th><th>Última chamada</th>
             </tr>
             <?php foreach ($alunos as $a): ?>
@@ -136,12 +136,10 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                     }
                 ?>
                 <tr>
-                    <td><?= htmlspecialchars($a['posto_graduacao']) ?></td>
-                    <td><?= htmlspecialchars($a['nome_guerra']) ?></td>
-                    <td><?= htmlspecialchars($a['milhao']) ?></td>
+                    <td><?= htmlspecialchars(identificacaoAluno($a)) ?></td>
                     <td><?= htmlspecialchars($a['esquadrao']) ?> / <?= htmlspecialchars($a['esquadrilha']) ?></td>
                     <td><span class="badge <?= $statusClasse ?>"><?= $statusRotulo ?></span></td>
-                    <td><?= htmlspecialchars($a['motivo_nome'] ?? '—') ?></td>
+                    <td><?= htmlspecialchars($a['motivo_codigo'] ?? $a['motivo_nome'] ?? '—') ?></td>
                     <td>
                         <?php if ($a['retirada_data_hora']): ?>
                             <?= htmlspecialchars($tiposRetirada[$a['retirada_tipo']] ?? $a['retirada_tipo']) ?> — <?= htmlspecialchars($a['retirada_data_hora']) ?>

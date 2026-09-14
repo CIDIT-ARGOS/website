@@ -62,9 +62,11 @@ function excluirGrupo($conexao, $id) {
 
 function listarMembros($conexao, $grupoId) {
     $stmt = mysqli_prepare($conexao, "
-        SELECT a.id, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
+        SELECT a.id, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
         FROM grupo_membros gm
         JOIN alunos a ON a.id = gm.aluno_id
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         WHERE gm.grupo_id = ?
         ORDER BY a.nome_guerra
     ");
@@ -95,10 +97,13 @@ function buscarCandidatosGrupo($conexao, $grupoId, $termo, $limite = 20) {
     $like = "%$termo%";
     $limite = (int) $limite;
     $stmt = mysqli_prepare($conexao, "
-        SELECT id, nome_guerra, milhao, esquadrao, esquadrilha FROM alunos
-        WHERE ativo = 1 AND (nome_guerra LIKE ? OR milhao LIKE ?)
-        AND id NOT IN (SELECT aluno_id FROM grupo_membros WHERE grupo_id = ?)
-        ORDER BY nome_guerra LIMIT $limite
+        SELECT a.id, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
+        FROM alunos a
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
+        WHERE a.ativo = 1 AND (a.nome_guerra LIKE ? OR a.milhao LIKE ?)
+        AND a.id NOT IN (SELECT aluno_id FROM grupo_membros WHERE grupo_id = ?)
+        ORDER BY a.nome_guerra LIMIT $limite
     ");
     mysqli_stmt_bind_param($stmt, "ssi", $like, $like, $grupoId);
     mysqli_stmt_execute($stmt);

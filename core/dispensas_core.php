@@ -30,9 +30,11 @@ function listarDispensas($conexao, $filtros = []) {
     $where = $condicoes ? "WHERE " . implode(" AND ", $condicoes) : "";
 
     $sql = "
-        SELECT d.*, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
+        SELECT d.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
         FROM dispensas d
         JOIN alunos a ON a.id = d.aluno_id
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         $where
         ORDER BY d.data_inicio DESC
     ";
@@ -46,9 +48,11 @@ function listarDispensas($conexao, $filtros = []) {
 
 function buscarDispensaPorId($conexao, $id) {
     $stmt = mysqli_prepare($conexao, "
-        SELECT d.*, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
+        SELECT d.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+               a.especialidade, a.nome_guerra, a.milhao, a.esquadrao, a.esquadrilha
         FROM dispensas d
         JOIN alunos a ON a.id = d.aluno_id
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         WHERE d.id = ?
     ");
     mysqli_stmt_bind_param($stmt, "i", $id);

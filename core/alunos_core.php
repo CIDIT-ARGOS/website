@@ -5,6 +5,25 @@
 
 const CURSOS_VALIDOS = ['CFS', 'EAGS'];
 
+/**
+ * Identificação padrão do aluno em qualquer listagem/relatório do sistema:
+ * "AL 26/3138 SIN SIMIONI" (posto/graduação de exibição, milhão,
+ * especialidade, nome de guerra). Aceita tanto uma linha com
+ * `posto_exibicao` já resolvido (join com postos_graduacao) quanto uma linha
+ * "crua" (só `posto_graduacao`, sem o join) — nesse caso usa o próprio
+ * código como fallback.
+ */
+function identificacaoAluno($aluno) {
+    $posto = $aluno['posto_exibicao'] ?? $aluno['posto_graduacao'] ?? '';
+    $partes = array_filter([
+        $posto,
+        $aluno['milhao'] ?? '',
+        $aluno['especialidade'] ?? '',
+        $aluno['nome_guerra'] ?? '',
+    ], fn($v) => trim((string) $v) !== '');
+    return implode(' ', $partes);
+}
+
 function validarAluno($dados, $parcial = false) {
     $camposObrigatorios = [
         'posto_graduacao', 'nome_guerra', 'sexo', 'identidade_militar',
@@ -112,6 +131,13 @@ function listarAlunos($conexao, $filtros = []) {
 function buscarAlunoPorId($conexao, $id) {
     $stmt = mysqli_prepare($conexao, "SELECT * FROM alunos WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
+}
+
+function buscarAlunoPorMilhao($conexao, $milhao) {
+    $stmt = mysqli_prepare($conexao, "SELECT * FROM alunos WHERE milhao = ? AND ativo = 1");
+    mysqli_stmt_bind_param($stmt, "s", $milhao);
     mysqli_stmt_execute($stmt);
     return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
 }
