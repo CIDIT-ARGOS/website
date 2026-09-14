@@ -47,7 +47,8 @@ if ($entidade) {
     }
 }
 
-$registros = $entidade ? dominioListar($conexao, $entidade) : [];
+$mostrarInativos = isset($_GET['mostrar_inativos']);
+$registros = $entidade ? dominioListar($conexao, $entidade, $mostrarInativos) : [];
 $unidadesDisponiveis = listarUnidades($conexao);
 
 function dominioCampoInput($campo, $valor, $formId, $unidadesDisponiveis) {
@@ -167,7 +168,15 @@ function dominioCampoInput($campo, $valor, $formId, $unidadesDisponiveis) {
     </div>
 
     <div class="card">
-        <h4><?= htmlspecialchars($entidade['rotulo']) ?> (<?= count($registros) ?>)</h4>
+        <?php $temAtivo = in_array('ativo', array_column($entidade['campos'], 'nome')); ?>
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <h4 style="margin:0;"><?= htmlspecialchars($entidade['rotulo']) ?> (<?= count($registros) ?>)</h4>
+            <?php if ($temAtivo): ?>
+                <a href="?entidade=<?= urlencode($chaveEntidade) ?><?= $mostrarInativos ? '' : '&mostrar_inativos=1' ?>" style="font-size:12px; color:var(--accent);">
+                    <?= $mostrarInativos ? 'Ocultar inativos' : 'Mostrar inativos' ?>
+                </a>
+            <?php endif; ?>
+        </div>
         <div class="scroll-x">
         <table>
             <tr>

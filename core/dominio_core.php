@@ -98,10 +98,27 @@ function dominioEntidade($chave) {
     return dominioEntidades()[$chave] ?? null;
 }
 
-function dominioListar($conexao, $entidade) {
+function _dominioTemCampoAtivo($entidade) {
+    foreach ($entidade['campos'] as $campo) {
+        if ($campo['nome'] === 'ativo') {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
+ * Por padrão só lista os registros ativos — "excluir" aqui é soft delete
+ * (preserva o que já referencia o registro), então sem esse filtro o item
+ * "excluído" continuava aparecendo na lista igual antes, e parecia que a
+ * exclusão não tinha feito nada. $incluirInativos = true pra revisar/
+ * reativar o que foi desativado.
+ */
+function dominioListar($conexao, $entidade, $incluirInativos = false) {
     $tabela = $entidade['tabela'];
     $ordem = $entidade['ordem_por'];
-    $resultado = mysqli_query($conexao, "SELECT * FROM `$tabela` ORDER BY $ordem");
+    $where = (!$incluirInativos && _dominioTemCampoAtivo($entidade)) ? "WHERE ativo = 1" : "";
+    $resultado = mysqli_query($conexao, "SELECT * FROM `$tabela` $where ORDER BY $ordem");
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
 }
 
