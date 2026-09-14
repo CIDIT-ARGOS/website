@@ -3,10 +3,14 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../api/Database/DbConnection.php';
 require_once __DIR__ . '/../api/Repository/User/UserRepository.php';
+require_once __DIR__ . '/../Common/Constants/ControlPainel.Constants.php';
+require_once __DIR__ . '/../Common/Constants/Default.Constants.php';
 
 
 use api\Database\DbConnection\DbConnection;
 use api\Repository\User\UserRepository;
+use Common\Constants\ControlPainelConstants;
+use Common\Constants\DefaultConstants;
 
 session_start();
 
@@ -39,16 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
         $_SESSION['admin_nivel'] = $admin['nivel'];
         $userRepository->updateLastLogin((int)$admin['id'], $db);
         header("Location: index.php");
+        $db->closeConnection();
+        error_log("Login attempt for user: {$_POST['usuario']} - 1");
         exit;
-    } else {
-        $erroLogin = "Usuário ou senha inválidos.";
     }
-
+    error_log("Login attempt for user: {$_POST['usuario']} - 2");
+    $erroLogin = "Usuário ou senha inválidos.";
     $db->closeConnection();
 }
 
 $logado = !empty($_SESSION['admin_id']);
-
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -58,7 +62,8 @@ $logado = !empty($_SESSION['admin_id']);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <link rel="stylesheet" href="/css/control-panel.css">
-    <title>Ikarus37 — Painel Argos</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <title><?= DefaultConstants::PROJECT_NAME ?> — Painel Argos</title>
 </head>
 
 <body>
@@ -67,7 +72,7 @@ $logado = !empty($_SESSION['admin_id']);
 
         <div class="login-wrap">
             <div class="login-box">
-                <h1>Ikarus37</h1>
+                <h1><?= DefaultConstants::PROJECT_NAME ?></h1>
                 <p class="sub">Painel administrativo — Projeto Argos</p>
                 <?php if ($erroLogin): ?><p class="erro"><?= htmlspecialchars($erroLogin) ?></p><?php endif; ?>
                 <form method="post">
@@ -81,50 +86,47 @@ $logado = !empty($_SESSION['admin_id']);
     <?php else: ?>
 
         <div class="topbar">
-            <div class="brand">IKARUS37 <span><?= htmlspecialchars($_SESSION['admin_nome']) ?> · <?= htmlspecialchars($_SESSION['admin_nivel']) ?></span></div>
+            <div class="brand"><?= DefaultConstants::PROJECT_NAME ?> <span><?= htmlspecialchars($_SESSION['admin_nome']) ?> · <?= htmlspecialchars($_SESSION['admin_nivel']) ?></span></div>
             <a href="?logout=1">sair</a>
         </div>
 
         <div class="container">
-            <h2>Painel de controle</h2>
-            <p style="color: var(--text-muted); font-size: 14px;">Módulos administrativos do sistema Argos.</p>
+            <div class="page-header">
+                <div>
+                    <span class="page-eyebrow">ADMINISTRAÇÃO</span>
+                    <h1>Painel de controle</h1>
+                    <p>Gerencie os módulos administrativos do sistema Argos.</p>
+                </div>
+            </div>
 
-            <div class="grid">
-                <div class="card">
-                    <h3>API</h3>
-                    <p>Endpoints, chaves de acesso e monitoramento das requisições.</p>
-                    <a href="api.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-                </div>
-                <div class="card">
-                    <h3>Banco de Dados</h3>
-                    <p>Tabelas, estrutura e manutenção dos dados do sistema.</p>
-                    <a href="banco.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-                </div>
-                <div class="card">
-                    <h3>Apps conectados</h3>
-                    <p>Cada app conectado é uma chave de API — gerencie em "API" acima.</p>
-                    <a href="api.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-                </div>
-                <div class="card">
-                    <h3>Usuários administradores</h3>
-                    <p>Gestão de contas e níveis de permissão do painel.</p>
-                    <a href="usuarios.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-                </div>
-                <div class="card">
-                    <h3>Backup do banco</h3>
-                    <p>Baixar dump completo (estrutura + dados) antes de mudanças arriscadas.</p>
-                    <a href="backup.php" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
-                </div>
-                <div class="card">
-                    <h3>Painel de Comando</h3>
-                    <p>Área operacional (efetivo, retiradas, relatórios) — sua conta de admin também acessa lá.</p>
-                    <a href="../painel/" class="badge" style="text-decoration:none; color: var(--accent);">abrir →</a>
+            <div class="container">
+                <div class="grid">
+                    <?php foreach (ControlPainelConstants::CARDS as $card): ?>
+                        <a href="<?= htmlspecialchars($card['href']) ?>" class="card">
+                            <div class="card-icon">
+                                <i data-lucide="<?= htmlspecialchars($card['icon']) ?>"></i>
+                            </div>
+
+                            <div class="card-content">
+                                <h3><?= htmlspecialchars($card['title']) ?></h3>
+                                <p>
+                                    <?= htmlspecialchars($card['description']) ?>
+                                </p>
+                            </div>
+
+                            <div class="card-footer">
+                                <span><?= htmlspecialchars($card['footer']) ?></span>
+                                <span class="arrow"><i data-lucide="arrow-right"></i></span>
+                            </div>
+                        </a>
+                    <?php endforeach; ?>
                 </div>
             </div>
         </div>
-
     <?php endif; ?>
-
 </body>
+<script>
+    lucide.createIcons();
+</script>
 
 </html>
