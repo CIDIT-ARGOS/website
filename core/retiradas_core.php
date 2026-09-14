@@ -10,9 +10,20 @@ const AGRUPAMENTOS_VALIDOS = ['esquadrilha', 'grupo']; // 'especialidade' ainda 
  * Abre uma nova retirada e já cria os itens (um por aluno do grupo), todos como "presente"
  * por padrão — a chamada em campo marca só as exceções (falta), como já é a lógica do Argos.
  *
+ * O responsável pela retirada é sempre quem está de fato autenticado no momento —
+ * nunca uma escolha livre — pra não dar pra abrir uma retirada e atribuí-la ao
+ * nome de outra pessoa. $responsavelNome é obrigatório; $painelUsuarioId é opcional
+ * (fica NULL quando o login veio da ponte do Ikarus37, que não tem linha própria em
+ * painel_usuarios). $alunoServicoId é legado, mantido só pra quem ainda envia esse
+ * campo via API.
+ *
  * @return array{ok: bool, erro?: string, retirada_id?: int}
  */
-function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $alunoServicoId) {
+function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $responsavelNome, $painelUsuarioId = null, $alunoServicoId = null) {
+    if (trim($responsavelNome ?? '') === '') {
+        return ['ok' => false, 'erro' => 'Responsável pela retirada não identificado.'];
+    }
+
     if (!in_array($tipo, TIPOS_RETIRADA_VALIDOS)) {
         return ['ok' => false, 'erro' => 'Tipo de retirada inválido.'];
     }
@@ -52,23 +63,12 @@ function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $es
         return ['ok' => false, 'erro' => 'Nenhum aluno ativo encontrado para esse agrupamento.'];
     }
 
-    // ---------- Confere só que o aluno de serviço existe e está ativo ----------
-    // Não exige que pertença a este agrupamento: esquadrões mais antigos tiram serviço de
-    // Aluno de Dia à Esquadrilha em OUTROS esquadrões, então quem identifica a retirada
-    // pode legitimamente não ser do efetivo que está sendo chamado.
-    $stmtServico = mysqli_prepare($conexao, "SELECT id FROM alunos WHERE id = ? AND ativo = 1");
-    mysqli_stmt_bind_param($stmtServico, "i", $alunoServicoId);
-    mysqli_stmt_execute($stmtServico);
-    if (!mysqli_fetch_assoc(mysqli_stmt_get_result($stmtServico))) {
-        return ['ok' => false, 'erro' => 'Aluno de serviço inválido ou inativo.'];
-    }
-
     // ---------- Cria a retirada ----------
     $stmt = mysqli_prepare($conexao, "
-        INSERT INTO retiradas (tipo, agrupamento_tipo, agrupamento_valor, esquadrao, aluno_servico_id, status)
-        VALUES (?, ?, ?, ?, ?, 'pendente')
+        INSERT INTO retiradas (tipo, agrupamento_tipo, agrupamento_valor, esquadrao, aluno_servico_id, painel_usuario_id, responsavel_nome, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'pendente')
     ");
-    mysqli_stmt_bind_param($stmt, "ssssi", $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $alunoServicoId);
+    mysqli_stmt_bind_param($stmt, "ssssiis", $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $alunoServicoId, $painelUsuarioId, $responsavelNome);
     mysqli_stmt_execute($stmt);
     $retiradaId = mysqli_insert_id($conexao);
 
@@ -276,7 +276,7 @@ function relatorioRetiradas($conexao, $filtros) {
 
     $sql = "
         SELECT
-            r.id, r.tipo, r.agrupamento_tipo, r.agrupamento_valor, r.status, r.protocolo, r.data_hora,
+            r.id, r.tipo, r.agrupamento_tipo, r.agrupamento_valor, r.status, r.protocolo, r.data_hora, r.responsavel_nome,
             COUNT(ri.id) as total_itens, SUM(ri.presente) as presentes, SUM(1 - ri.presente) as faltas
         FROM retiradas r
         JOIN retirada_itens ri ON ri.retirada_id = r.id

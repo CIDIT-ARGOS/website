@@ -132,12 +132,13 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
         <?php else: ?>
             <div class="scroll-x">
             <table>
-                <tr><th>Data/Hora</th><th>Tipo</th><th>Agrupamento</th><th>Status</th><th>Protocolo</th><th>Presentes</th><th>Faltas</th></tr>
+                <tr><th>Data/Hora</th><th>Tipo</th><th>Agrupamento</th><th>Responsável</th><th>Status</th><th>Protocolo</th><th>Presentes</th><th>Faltas</th></tr>
                 <?php foreach ($retiradas as $r): ?>
                     <tr>
                         <td><?= htmlspecialchars($r['data_hora']) ?></td>
                         <td><?= htmlspecialchars($tiposRetirada[$r['tipo']] ?? $r['tipo']) ?></td>
                         <td><?= htmlspecialchars($r['agrupamento_tipo']) ?>: <?= htmlspecialchars($r['agrupamento_valor']) ?></td>
+                        <td><?= htmlspecialchars($r['responsavel_nome'] ?? '—') ?></td>
                         <td><?= htmlspecialchars($r['status']) ?></td>
                         <td><?= htmlspecialchars($r['protocolo'] ?? '—') ?></td>
                         <td><?= $r['presentes'] ?></td>

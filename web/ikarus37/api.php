@@ -254,9 +254,10 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
   "agrupamento_tipo": "esquadrilha",
   "agrupamento_valor": "A",
   "esquadrao": "PRATA",
-  "aluno_servico_id": 2
+  "responsavel_nome": "AL 26/3138 SIN SIMIONI"
 }</pre>
             </details>
+            <p style="color: var(--text-muted); font-size: 12px;"><code>responsavel_nome</code> é obrigatório — a API ainda não tem login de usuário, então quem chama é responsável por informar quem de fato está abrindo a retirada (isso muda quando o app tiver autenticação própria). <code>aluno_servico_id</code> é opcional e legado.</p>
         </div>
         <div class="endpoint">
             <span class="metodo-tag metodo-put">PUT</span><code class="rota">retiradas.php?id=X&acao=enviar</code> — fecha a retirada e gera protocolo
