@@ -15,7 +15,8 @@ $esquadraoEscolhido = $escopo ?? ($_GET['esquadrao'] ?? 'todos');
 // Formato "19 AGO 2026" do documento de referência — sem depender de locale
 // instalado no servidor (evita quebrar se o pt_BR.utf8 não existir no PHP).
 function dataEstiloLivro($dataIso) {
-    $meses = ['01' => 'JAN', '02' => 'FEV', '03' => 'MAR', '04' => 'ABR', '05' => 'MAI', '06' => 'JUN',
+    // MAIO não é abreviado pra MAI — vai por extenso mesmo (regra do padrão militar).
+    $meses = ['01' => 'JAN', '02' => 'FEV', '03' => 'MAR', '04' => 'ABR', '05' => 'MAIO', '06' => 'JUN',
               '07' => 'JUL', '08' => 'AGO', '09' => 'SET', '10' => 'OUT', '11' => 'NOV', '12' => 'DEZ'];
     [$ano, $mes, $dia] = explode('-', $dataIso);
     return "$dia {$meses[$mes]} $ano";
