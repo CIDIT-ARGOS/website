@@ -394,29 +394,6 @@ a {
   margin-top: 14px;
 }
 
-/* Argos Panoptes como marca d'água decorativa atrás do mockup do celular —
-   ancorada na própria coluna de mídia (.split-media), não na seção inteira.
-   A primeira versão usava margin-right em vw relativo à seção toda, e isso
-   furava o texto em qualquer largura entre ~960px e ~1200px (notebook comum,
-   janela não maximizada) porque o vw não tem relação nenhuma com onde a
-   coluna de texto realmente termina. Ancorando na coluna de mídia, a imagem
-   fisicamente não tem como invadir a coluna de texto, em nenhuma largura. */
-.split-media {
-  position: relative;
-}
-
-.mito-bg {
-  position: absolute;
-  top: -60px;
-  right: 10px;
-  width: 220px;
-  max-width: 60%;
-  z-index: 0;
-  opacity: 1;
-  pointer-events: none;
-  mask-image: linear-gradient(to bottom, #000 45%, transparent 88%);
-}
-
 /* ==================== SPLIT LAYOUT ==================== */
 
 .split {
@@ -851,12 +828,6 @@ a {
 
   .hero-media {
     margin-top: 32px;
-  }
-
-  .mito-bg {
-    top: -30px;
-    right: 6px;
-    width: 130px;
   }
 
   .cards-3,
