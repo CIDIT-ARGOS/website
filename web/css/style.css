@@ -394,12 +394,28 @@ a {
   margin-top: 14px;
 }
 
-.mito-figure {
-  float: right;
-  width: 140px;
-  max-width: 35%;
+.media-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.mito-card {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 280px;
+  background: linear-gradient(180deg, var(--azul-claro), #ffffff);
+  border: 1px solid var(--borda);
+  border-radius: 20px;
+  padding: 16px 16px 0;
+}
+
+.mito-img {
+  width: 120px;
   height: auto;
-  margin: 0 0 16px 24px;
 }
 
 /* ==================== SPLIT LAYOUT ==================== */
@@ -836,14 +852,6 @@ a {
 
   .hero-media {
     margin-top: 32px;
-  }
-
-  .mito-figure {
-    float: none;
-    display: block;
-    width: 120px;
-    max-width: 40%;
-    margin: 0 auto 20px;
   }
 
   .cards-3,
