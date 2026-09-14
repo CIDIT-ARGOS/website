@@ -176,6 +176,16 @@ function listarAlunosPorEsquadrilha($conexao, $esquadrao, $esquadrilha) {
     return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
 }
 
+function contarAlunosAtivos($conexao, $esquadrao = null) {
+    if ($esquadrao !== null) {
+        $stmt = mysqli_prepare($conexao, "SELECT COUNT(*) as total FROM alunos WHERE ativo = 1 AND esquadrao = ?");
+        mysqli_stmt_bind_param($stmt, "s", $esquadrao);
+        mysqli_stmt_execute($stmt);
+        return (int) mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['total'];
+    }
+    return (int) mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as total FROM alunos WHERE ativo = 1"))['total'];
+}
+
 function listarEsquadroesDistintos($conexao) {
     $r = mysqli_query($conexao, "SELECT DISTINCT esquadrao FROM alunos WHERE ativo = 1 ORDER BY esquadrao");
     $esquadroes = [];

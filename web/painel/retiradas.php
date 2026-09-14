@@ -88,7 +88,11 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                     <td><span class="badge <?= $r['status'] ?>"><?= htmlspecialchars($r['status']) ?></span></td>
                     <td><?= htmlspecialchars($r['protocolo'] ?? '—') ?></td>
                     <td style="white-space:nowrap;">
-                        <a href="retirada_marcar.php?id=<?= $r['id'] ?>" class="link-btn"><?= $r['status'] === 'pendente' ? 'continuar chamada' : 'ver' ?></a>
+                        <?php if ($r['status'] === 'pendente'): ?>
+                            <a href="retirada_marcar.php?id=<?= $r['id'] ?>" class="link-btn"><span class="i" style="--icon-url:url('../images/icons/clipboard-check.svg')"></span>continuar chamada</a>
+                        <?php else: ?>
+                            <a href="retirada_marcar.php?id=<?= $r['id'] ?>" class="link-btn"><span class="i" style="--icon-url:url('../images/icons/eye.svg')"></span>ver</a>
+                        <?php endif; ?>
                         <form method="post" style="display:inline;" onsubmit="return confirm('Excluir esta retirada e todos os itens marcados nela? Não dá pra desfazer.');">
                             <input type="hidden" name="acao" value="excluir">
                             <input type="hidden" name="id" value="<?= $r['id'] ?>">

@@ -16,6 +16,7 @@ $filtros = [
     'order_by' => 'a.esquadrilha, a.nome_guerra',
 ];
 $alunos = listarAlunos($conexao, $filtros);
+$totalAtivos = contarAlunosAtivos($conexao, $escopo);
 
 // listas para os filtros (dentro do escopo)
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
@@ -47,6 +48,10 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     th { background: var(--azul-eear); color: #ffffff; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     .filtros { display: flex; gap: 10px; flex-wrap: wrap; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .kpi { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+    .kpi .valor { font-size: 26px; font-weight: 700; }
+    .kpi .rotulo { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
     .link-btn { color: var(--accent); text-decoration: none; font-size: 12px; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
@@ -60,6 +65,12 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 
 <div class="container">
     <h2>Efetivo <?= $escopo ? '— Esquadrão ' . htmlspecialchars($escopo) : '(todos os esquadrões)' ?></h2>
+
+    <div class="card">
+        <div class="kpis">
+            <div class="kpi"><div class="valor"><?= $totalAtivos ?></div><div class="rotulo">Total de alunos na ativa<?= $escopo ? '' : ' (todos os esquadrões)' ?></div></div>
+        </div>
+    </div>
 
     <div class="card">
         <form method="get" class="filtros">

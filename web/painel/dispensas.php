@@ -144,23 +144,31 @@ $alunos = listarAlunos($conexao, $filtrosAlunos);
         <div class="scroll-x">
         <table>
             <tr>
-                <th>Aluno</th><th>Início</th><th>Término</th><th>Nº</th><th>Motivo</th><th>Dispensado de</th><th>Status</th><th>Ações</th>
+                <th>Aluno</th><th>Status</th><th>Ações</th>
             </tr>
             <?php $hoje = date('Y-m-d'); ?>
             <?php foreach ($dispensas as $d): ?>
                 <?php $formId = 'form_' . $d['id']; ?>
+                <?php $detalheId = 'detalhe_' . $d['id']; ?>
                 <?php $ativa = $d['data_inicio'] <= $hoje && $d['data_termino'] >= $hoje; ?>
                 <tr>
                     <td><?= htmlspecialchars(identificacaoAluno($d)) ?></td>
-                    <td><input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>"></td>
-                    <td><input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></td>
-                    <td><input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></td>
-                    <td><input form="<?= $formId ?>" type="text" name="motivo" value="<?= htmlspecialchars($d['motivo']) ?>"></td>
-                    <td><input form="<?= $formId ?>" type="text" name="dispensado_de" value="<?= htmlspecialchars($d['dispensado_de'] ?? '') ?>"></td>
                     <td><span class="badge <?= $ativa ? 'ativa' : 'encerrada' ?>"><?= $ativa ? 'ativa' : 'encerrada' ?></span></td>
                     <td style="white-space:nowrap;">
-                        <button type="submit" form="<?= $formId ?>">Salvar</button>
+                        <button type="button" onclick="alternarDetalheDispensa('<?= $detalheId ?>', this)"><span class="i" style="--icon-url:url('../images/icons/eye.svg')"></span><span class="rotulo-abrir">Abrir</span></button>
                         <button type="button" class="danger" onclick="if(confirm('Excluir esta dispensa?')) document.getElementById('form_excluir_<?= $d['id'] ?>').submit();"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
+                    </td>
+                </tr>
+                <tr id="<?= $detalheId ?>" hidden>
+                    <td colspan="3">
+                        <div class="form-linha" style="padding:10px 0;">
+                            <label style="font-size:12px; color:var(--text-muted);">Início <input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Término <input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Nº <input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Motivo <input form="<?= $formId ?>" type="text" name="motivo" value="<?= htmlspecialchars($d['motivo']) ?>" style="min-width:180px;"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Dispensado de <input form="<?= $formId ?>" type="text" name="dispensado_de" value="<?= htmlspecialchars($d['dispensado_de'] ?? '') ?>" style="min-width:180px;"></label>
+                            <button type="submit" form="<?= $formId ?>">Salvar</button>
+                        </div>
                     </td>
                 </tr>
                 <form id="<?= $formId ?>" method="post">
@@ -173,10 +181,17 @@ $alunos = listarAlunos($conexao, $filtrosAlunos);
                 </form>
             <?php endforeach; ?>
             <?php if (empty($dispensas)): ?>
-                <tr><td colspan="8" style="color:var(--text-muted);">Nenhuma dispensa cadastrada ainda.</td></tr>
+                <tr><td colspan="3" style="color:var(--text-muted);">Nenhuma dispensa cadastrada ainda.</td></tr>
             <?php endif; ?>
         </table>
         </div>
+        <script>
+            function alternarDetalheDispensa(id, botao) {
+                const linha = document.getElementById(id);
+                linha.hidden = !linha.hidden;
+                botao.querySelector('.rotulo-abrir').textContent = linha.hidden ? 'Abrir' : 'Fechar';
+            }
+        </script>
     </div>
 </div>
 
