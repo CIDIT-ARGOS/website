@@ -193,6 +193,11 @@ $logado = !empty($_SESSION['painel_id']);
                 <h3>Situação do efetivo</h3>
                 <p>Onde cada aluno está agora — presente, ausente e por qual motivo.</p>
             </a>
+            <a href="dashboard.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/chart-bar.svg')"></span>
+                <h3>Painel Argos</h3>
+                <p>Gráficos, quantidades e tendências — dados reais pra analisar e exportar.</p>
+            </a>
             <a href="relatorios.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/report.svg')"></span>
                 <h3>Relatório de retiradas</h3>

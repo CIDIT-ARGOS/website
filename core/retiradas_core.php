@@ -324,3 +324,91 @@ function relatorioRetiradas($conexao, $filtros) {
     mysqli_stmt_execute($stmt);
     return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
 }
+
+/**
+ * Ausências no período divididas por classificação (falta de verdade vs
+ * ausência justificada) — base do gráfico vermelho/amarelo do Painel Argos.
+ */
+function relatorioPorClassificacao($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT COALESCE(m.classificacao, 'ausente_nao_falta') as classificacao, COUNT(*) as total
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
+        $where AND ri.presente = 0
+        GROUP BY classificacao
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Faltas no período agrupadas por esquadrão — só faz sentido pra quem vê o
+ * CA inteiro (visão de esquadrão já é implicitamente 1 linha só).
+ */
+function relatorioPorEsquadrao($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT a.esquadrao, COUNT(*) as total_itens, SUM(1 - ri.presente) as faltas
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        $where
+        GROUP BY a.esquadrao
+        ORDER BY faltas DESC
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Faltas no período agrupadas por esquadrilha — usado quando o usuário já
+ * está restrito a um único esquadrão (relatorioPorEsquadrao não ajudaria,
+ * seria uma barra só).
+ */
+function relatorioPorEsquadrilha($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT a.esquadrilha, COUNT(*) as total_itens, SUM(1 - ri.presente) as faltas
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        $where
+        GROUP BY a.esquadrilha
+        ORDER BY a.esquadrilha
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Taxa de presença por dia no período — base do gráfico de linha (tendência).
+ */
+function evolucaoDiariaPresenca($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT DATE(r.data_hora) as dia, COUNT(*) as total_itens, SUM(ri.presente) as presentes
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        $where
+        GROUP BY dia
+        ORDER BY dia
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
