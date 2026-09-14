@@ -306,6 +306,10 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
             <span class="metodo-tag metodo-get">GET</span><code class="rota">relatorios.php</code> — resumo, faltas por motivo e retiradas do período
             <p style="color: var(--text-muted); font-size: 12px;">Filtros: <code>?data_inicio=</code>, <code>?data_fim=</code>, <code>?tipo=</code>, <code>?esquadrao=</code></p>
         </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">situacao.php</code> — destinômetro: onde cada aluno está agora (presente/ausente e motivo), a partir da última chamada enviada em que apareceu
+            <p style="color: var(--text-muted); font-size: 12px;">Filtros: <code>?esquadrao=</code>, <code>?esquadrilha=</code>, <code>?busca=</code> (nome ou milhão), <code>?somente_ausentes</code>. Retorna <code>resumo</code> (KPIs: efetivo, presentes, ausentes, sem registro, faltas por motivo) e <code>alunos</code> (lista).</p>
+        </div>
 
         <p style="color: var(--text-muted); font-size: 12px; margin-top: 16px;">Exemplo com curl:</p>
 <pre>curl -H "X-API-Key: SUA_CHAVE" \
