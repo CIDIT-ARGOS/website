@@ -453,6 +453,18 @@ FROM (SELECT 'CMD_CA' AS cargo UNION SELECT 'SUBCMD_CA') c
 CROSS JOIN permissoes p
 WHERE p.chave IN ('gerenciar_dominio', 'gerenciar_unidades', 'gerenciar_grupos_acesso');
 
+-- Grupo de acesso de exemplo: DEF não tem nenhum cargo no sistema (só CA e
+-- Esquadrão têm) — este é o caso de uso real que justifica grupos de acesso.
+-- Sem membro ainda; serve de modelo pra replicar em Galpões/Doutrina.
+INSERT INTO grupos_acesso (nome, descricao) VALUES
+('Comandante do DEF', 'Pode gerenciar unidades organizacionais e acessar o Controle do Domínio de Negócio, sem precisar de um cargo de CA. Modelo pra replicar em Galpões/Doutrina quando tiverem gente designada.');
+
+INSERT INTO grupo_acesso_permissoes (grupo_acesso_id, permissao_id, unidade_id)
+SELECT g.id, p.id, NULL
+FROM grupos_acesso g
+CROSS JOIN permissoes p
+WHERE g.nome = 'Comandante do DEF' AND p.chave IN ('gerenciar_dominio', 'gerenciar_unidades');
+
 -- ================= CHAVES DE API (Apps conectados) =================
 CREATE TABLE api_chaves (
   id INT AUTO_INCREMENT PRIMARY KEY,
