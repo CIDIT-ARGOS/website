@@ -16,7 +16,9 @@
 
 O Argos substitui a chamada de presença em papel por um sistema eletrônico simples. O militar responsável abre a chamada, marca presença ou falta de cada aluno e o sistema já gera o registro com data, hora e protocolo — sem planilha, sem papel, sem retrabalho.
 
-O nome vem da vigia constante do efetivo, como o gigante da mitologia grega que nunca dormia.
+<img src="web/images/argos_corpo_inteiro-removebg-preview.png" alt="Argos Panoptes" align="right" width="160">
+
+O nome vem da vigia constante do efetivo, como o gigante da mitologia grega que nunca dormia — Argos Panoptes, "o que tudo vê", coberto de olhos que vigiavam sem descanso.
 
 ## Como funciona, em resumo
 
