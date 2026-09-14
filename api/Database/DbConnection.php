@@ -21,9 +21,6 @@ class DbConnection
 
     private function connect()
     {
-        error_log(
-            "Host: {$this->host} | Database: {$this->database} | Username: {$this->username} | Password: {$this->password}"
-        );
         $this->connection = mysqli_connect($this->host, $this->username, $this->password, $this->database);
 
         if (!$this->connection) {

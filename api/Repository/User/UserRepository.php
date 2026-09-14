@@ -13,7 +13,6 @@ class UserRepository
 {
     public function findByUser(string $user, DbConnection $db)
     {
-        error_log("Entrou aqui!!");
         try {
             $connection = $db->getConnection();
             $escapeUser = mysqli_real_escape_string($connection, $user);
