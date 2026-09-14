@@ -7,7 +7,7 @@ require_once __DIR__ . '/../../core/motivos_core.php';
 
 $conexao = conectarBanco();
 
-if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada')) {
+if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())) {
     die("Seu cargo não tem a permissão 'registrar_retirada'.");
 }
 

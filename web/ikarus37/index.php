@@ -233,6 +233,11 @@ $logado = !empty($_SESSION['admin_id']);
                 <h3>Painel de Comando</h3>
                 <p>Área operacional (efetivo, retiradas, relatórios) — sua conta de admin também acessa lá.</p>
             </a>
+            <a href="dominio.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/sitemap.svg')"></span>
+                <h3>Controle do Domínio de Negócio</h3>
+                <p>Unidades organizacionais e grupos de acesso — CRUD sem SQL direto.</p>
+            </a>
         </div>
     </div>
 

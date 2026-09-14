@@ -255,6 +255,89 @@ SELECT 'painel', 'AUX_ESQUADRAO', id FROM permissoes
 WHERE chave IN ('registrar_retirada');
 -- AUX_ESQUADRAO: só registrar_retirada (faz a chamada), não edita efetivo.
 
+-- ================= UNIDADES (árvore organizacional) =================
+-- EEAR { DEF { Galpões }, CA { Doutrina, Esquadrões } }. Junto com grupos_acesso
+-- abaixo, é uma SEGUNDA fonte de permissão (somada por OR à cargo_permissoes
+-- acima) — cargo continua valendo do jeito que já vale; isso serve pra dar
+-- acesso a unidades que não têm nenhum conceito de cargo (DEF, Galpões, Doutrina).
+CREATE TABLE unidades (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  tipo ENUM('escola', 'divisao', 'galpao', 'ca', 'esquadrao', 'doutrina') NOT NULL,
+  unidade_pai_id INT NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (unidade_pai_id) REFERENCES unidades(id)
+);
+
+-- ================= GRUPOS DE ACESSO (estilo POSIX) =================
+-- Não confundir com a tabela `grupos` acima (agrupamentos de retirada tipo CIDIT).
+CREATE TABLE grupos_acesso (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL UNIQUE,
+  descricao VARCHAR(255) NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE grupo_acesso_membros (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  grupo_acesso_id INT NOT NULL,
+  painel_usuario_id INT NOT NULL,
+  unidade_id INT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_membro (grupo_acesso_id, painel_usuario_id, unidade_id),
+  FOREIGN KEY (grupo_acesso_id) REFERENCES grupos_acesso(id),
+  FOREIGN KEY (painel_usuario_id) REFERENCES painel_usuarios(id),
+  FOREIGN KEY (unidade_id) REFERENCES unidades(id)
+);
+
+CREATE TABLE grupo_acesso_permissoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  grupo_acesso_id INT NOT NULL,
+  permissao_id INT NOT NULL,
+  unidade_id INT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_permissao (grupo_acesso_id, permissao_id, unidade_id),
+  FOREIGN KEY (grupo_acesso_id) REFERENCES grupos_acesso(id),
+  FOREIGN KEY (permissao_id) REFERENCES permissoes(id),
+  FOREIGN KEY (unidade_id) REFERENCES unidades(id)
+);
+
+INSERT INTO unidades (nome, tipo, unidade_pai_id) VALUES ('EEAR', 'escola', NULL);
+SET @eear = LAST_INSERT_ID();
+
+INSERT INTO unidades (nome, tipo, unidade_pai_id) VALUES
+  ('DEF', 'divisao', @eear),
+  ('CA', 'ca', @eear);
+SET @ca = (SELECT id FROM unidades WHERE nome = 'CA' AND unidade_pai_id = @eear);
+
+INSERT INTO unidades (nome, tipo, unidade_pai_id) VALUES ('Doutrina', 'doutrina', @ca);
+
+-- Esquadrões existentes (se o efetivo já tiver sido semeado) entram como unidade
+-- desde já; numa instalação do zero (alunos ainda vazia) essa consulta não acha
+-- nada, e os esquadrões/galpões são cadastrados pelo Controle do Domínio de Negócio.
+INSERT INTO unidades (nome, tipo, unidade_pai_id)
+SELECT DISTINCT esquadrao, 'esquadrao', @ca FROM alunos WHERE esquadrao IS NOT NULL;
+
+INSERT INTO permissoes (chave, descricao) VALUES
+  ('gerenciar_dominio', 'Acessar o Controle do Domínio de Negócio (CRUD dos objetos do sistema)'),
+  ('gerenciar_unidades', 'Criar, editar e excluir unidades organizacionais (EEAR, DEF, Galpões, CA, Esquadrões, Doutrina)'),
+  ('gerenciar_grupos_acesso', 'Criar grupos de acesso, gerenciar membros e conceder/revogar permissões');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'ikarus37', 'super_admin', id FROM permissoes
+WHERE chave IN ('gerenciar_dominio', 'gerenciar_unidades', 'gerenciar_grupos_acesso');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', cargo, p.id
+FROM (SELECT 'CMD_CA' AS cargo UNION SELECT 'SUBCMD_CA') c
+CROSS JOIN permissoes p
+WHERE p.chave IN ('gerenciar_dominio', 'gerenciar_unidades', 'gerenciar_grupos_acesso');
+
 -- ================= CHAVES DE API (Apps conectados) =================
 CREATE TABLE api_chaves (
   id INT AUTO_INCREMENT PRIMARY KEY,
