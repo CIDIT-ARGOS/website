@@ -23,7 +23,14 @@ function conectarBanco() {
 
 // Verifica se um cargo/nível, num dos dois sistemas de login (ikarus37 ou painel),
 // tem determinada permissão. Resultado cacheado por requisição.
-function temPermissao($conexao, $sistema, $cargo, $chave) {
+//
+// $usuarioId (opcional, só existe pra 'painel'): quando informado, a checagem
+// também considera os grupos_acesso de que esse painel_usuario faz parte — uma
+// SEGUNDA fonte de permissão, somada por OR à do cargo, igual o UNIX combina
+// permissão do dono do arquivo com permissão de grupo. $unidadeId (opcional)
+// restringe a checagem via grupo a uma unidade organizacional específica; sem
+// ele, vale qualquer concessão do grupo que não tenha unidade fixada.
+function temPermissao($conexao, $sistema, $cargo, $chave, $usuarioId = null, $unidadeId = null) {
     static $cache = [];
     $chaveCache = "$sistema:$cargo";
 
@@ -35,6 +42,43 @@ function temPermissao($conexao, $sistema, $cargo, $chave) {
             WHERE cp.sistema = ? AND cp.cargo = ?
         ");
         mysqli_stmt_bind_param($stmt, "ss", $sistema, $cargo);
+        mysqli_stmt_execute($stmt);
+        $resultado = mysqli_stmt_get_result($stmt);
+
+        $permissoes = [];
+        while ($linha = mysqli_fetch_assoc($resultado)) {
+            $permissoes[] = $linha['chave'];
+        }
+        $cache[$chaveCache] = $permissoes;
+    }
+
+    if (in_array($chave, $cache[$chaveCache])) {
+        return true;
+    }
+
+    if ($sistema === 'painel' && $usuarioId !== null && is_numeric($usuarioId)) {
+        return _temPermissaoViaGrupoAcesso($conexao, (int) $usuarioId, $chave, $unidadeId);
+    }
+
+    return false;
+}
+
+function _temPermissaoViaGrupoAcesso($conexao, $usuarioId, $chave, $unidadeId = null) {
+    static $cache = [];
+    $chaveCache = "$usuarioId:" . ($unidadeId ?? '');
+
+    if (!isset($cache[$chaveCache])) {
+        $stmt = mysqli_prepare($conexao, "
+            SELECT DISTINCT p.chave
+            FROM grupo_acesso_membros gm
+            JOIN grupo_acesso_permissoes gp ON gp.grupo_acesso_id = gm.grupo_acesso_id
+            JOIN permissoes p ON p.id = gp.permissao_id
+            JOIN grupos_acesso g ON g.id = gm.grupo_acesso_id AND g.ativo = 1
+            WHERE gm.painel_usuario_id = ?
+              AND (gp.unidade_id IS NULL OR gp.unidade_id = ?)
+              AND (gm.unidade_id IS NULL OR gp.unidade_id IS NULL OR gm.unidade_id = gp.unidade_id)
+        ");
+        mysqli_stmt_bind_param($stmt, "ii", $usuarioId, $unidadeId);
         mysqli_stmt_execute($stmt);
         $resultado = mysqli_stmt_get_result($stmt);
 

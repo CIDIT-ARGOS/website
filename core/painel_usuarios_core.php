@@ -2,12 +2,22 @@
 
 // Lógica de negócio dos usuários do painel de comando. Usada tanto pela API
 // (/api/painel_usuarios.php) quanto pela tela painel/usuarios.php.
+//
+// Cargos não são mais uma lista fixa (ENUM) — vêm da tabela `cargos`
+// (core/cargos_core.php), editável no Controle do Domínio de Negócio.
 
-const CARGOS_ESQUADRAO = ['CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'];
-const CARGOS_CA = ['CMD_CA', 'SUBCMD_CA', 'ADMIN_TECNICO', 'AUX_CA'];
+require_once __DIR__ . '/cargos_core.php';
 
-function todosOsCargosPainel() {
-    return array_merge(CARGOS_CA, CARGOS_ESQUADRAO);
+function cargosEsquadrao($conexao) {
+    return listarChavesCargos($conexao, 'painel', 'esquadrao');
+}
+
+function cargosCA($conexao) {
+    return listarChavesCargos($conexao, 'painel', 'ca');
+}
+
+function todosOsCargosPainel($conexao) {
+    return listarChavesCargos($conexao, 'painel');
 }
 
 // Nunca inclui senha_hash — nem a API nem o painel devem expor esse campo.
@@ -43,14 +53,14 @@ function criarUsuarioPainel($conexao, $dados) {
     if ($nome === '' || $usuario === '' || $senha === '') {
         return ['ok' => false, 'erro' => 'Preencha nome, usuário e senha.'];
     }
-    if (!in_array($cargo, todosOsCargosPainel())) {
+    if (!in_array($cargo, todosOsCargosPainel($conexao))) {
         return ['ok' => false, 'erro' => 'Cargo inválido.'];
     }
-    if (in_array($cargo, CARGOS_ESQUADRAO) && $esquadrao === '') {
+    if (in_array($cargo, cargosEsquadrao($conexao)) && $esquadrao === '') {
         return ['ok' => false, 'erro' => 'Cargos de esquadrão exigem informar o esquadrão.'];
     }
 
-    $esquadraoFinal = in_array($cargo, CARGOS_CA) ? null : $esquadrao;
+    $esquadraoFinal = in_array($cargo, cargosCA($conexao)) ? null : $esquadrao;
 
     $stmt = mysqli_prepare($conexao, "SELECT id FROM painel_usuarios WHERE usuario = ?");
     mysqli_stmt_bind_param($stmt, "s", $usuario);
@@ -80,11 +90,11 @@ function atualizarUsuarioPainel($conexao, $id, $dados) {
     if ($alvo['cargo'] === 'CMD_CA' && ($cargo !== 'CMD_CA' || $ativo === 0) && contarCmdCaAtivos($conexao) <= 1) {
         return ['ok' => false, 'erro' => 'Não é possível rebaixar ou desativar o último CMD_CA ativo.'];
     }
-    if (in_array($cargo, CARGOS_ESQUADRAO) && $esquadrao === '') {
+    if (in_array($cargo, cargosEsquadrao($conexao)) && $esquadrao === '') {
         return ['ok' => false, 'erro' => 'Cargos de esquadrão exigem informar o esquadrão.'];
     }
 
-    $esquadraoFinal = in_array($cargo, CARGOS_CA) ? null : $esquadrao;
+    $esquadraoFinal = in_array($cargo, cargosCA($conexao)) ? null : $esquadrao;
     $stmt = mysqli_prepare($conexao, "UPDATE painel_usuarios SET nome = ?, cargo = ?, esquadrao = ?, ativo = ? WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "sssii", $nome, $cargo, $esquadraoFinal, $ativo, $id);
     mysqli_stmt_execute($stmt);

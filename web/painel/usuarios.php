@@ -14,9 +14,9 @@ $meuId = (int)$_SESSION['painel_id'];
 $mensagem = null;
 $erro = null;
 
-$cargosEsquadrao = CARGOS_ESQUADRAO;
-$cargosCA = CARGOS_CA;
-$todosCargos = todosOsCargosPainel();
+$cargosEsquadrao = cargosEsquadrao($conexao);
+$cargosCA = cargosCA($conexao);
+$todosCargosLista = listarCargos($conexao, 'painel');
 
 // ---------- CRIAR ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'criar') {
@@ -101,9 +101,10 @@ $usuarios = listarUsuariosPainel($conexao);
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 <script>
+    const CARGOS_ESQUADRAO = <?= json_encode(array_values($cargosEsquadrao)) ?>;
+
     function alternarEsquadrao(select, campoEsquadrao) {
-        const cargosEsquadrao = ['CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'];
-        campoEsquadrao.style.display = cargosEsquadrao.includes(select.value) ? 'inline-block' : 'none';
+        campoEsquadrao.style.display = CARGOS_ESQUADRAO.includes(select.value) ? 'inline-block' : 'none';
     }
 
     function enviarAcao(campos) {
@@ -153,13 +154,9 @@ $usuarios = listarUsuariosPainel($conexao);
             <input type="text" name="usuario" placeholder="Usuário (login)" required>
             <input type="password" name="senha" placeholder="Senha" required>
             <select name="cargo" onchange="alternarEsquadrao(this, this.form.esquadrao)">
-                <option value="CMD_CA">Comandante do CA</option>
-                <option value="SUBCMD_CA">Subcomandante do CA</option>
-                <option value="ADMIN_TECNICO">Administrador Técnico</option>
-                <option value="AUX_CA">Auxiliar CA</option>
-                <option value="CMD_ESQUADRAO" selected>Comandante de Esquadrão</option>
-                <option value="ENC_ESQUADRAO">Encarregado de Esquadrão</option>
-                <option value="AUX_ESQUADRAO">Auxiliar de Esquadrão</option>
+                <?php foreach ($todosCargosLista as $c): ?>
+                    <option value="<?= htmlspecialchars($c['chave']) ?>" <?= $c['chave'] === 'CMD_ESQUADRAO' ? 'selected' : '' ?>><?= htmlspecialchars($c['nome']) ?></option>
+                <?php endforeach; ?>
             </select>
             <input type="text" name="esquadrao" placeholder="Esquadrão (ex: PRATA)">
             <button type="submit">Criar</button>
@@ -184,8 +181,8 @@ $usuarios = listarUsuariosPainel($conexao);
                     <td><?= htmlspecialchars($u['usuario']) ?><?= $u['id'] == $meuId ? ' <small style="color:var(--text-muted)">(você)</small>' : '' ?></td>
                     <td>
                         <select form="<?= $formId ?>" name="cargo" onchange="alternarEsquadrao(this, document.getElementById('esq_<?= $u['id'] ?>'))">
-                            <?php foreach ($todosCargos as $c): ?>
-                                <option value="<?= $c ?>" <?= $u['cargo'] === $c ? 'selected' : '' ?>><?= $c ?></option>
+                            <?php foreach ($todosCargosLista as $c): ?>
+                                <option value="<?= htmlspecialchars($c['chave']) ?>" <?= $u['cargo'] === $c['chave'] ? 'selected' : '' ?>><?= htmlspecialchars($c['nome']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </td>

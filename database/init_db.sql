@@ -1,3 +1,9 @@
+-- Sem isso, um SQL console/mysql CLI que não abre em utf8mb4 por padrão
+-- corrompe todo acento inserido aqui (double-encoding — o mesmo bug que já
+-- apareceu em produção). SET NAMES manda o SERVIDOR interpretar os bytes que
+-- vêm a seguir como utf8mb4, independente da configuração do cliente.
+SET NAMES utf8mb4;
+
 -- =====================================================================
 -- ARGOS — Script de inicialização completo do banco de dados
 -- Consolida schema_alunos.sql + schema_painel.sql + schema_permissoes.sql
@@ -35,7 +41,7 @@ CREATE TABLE admin_usuarios (
   nome VARCHAR(100) NOT NULL,
   usuario VARCHAR(50) NOT NULL UNIQUE,
   senha_hash VARCHAR(255) NOT NULL,
-  nivel ENUM('super_admin', 'admin', 'suporte') NOT NULL DEFAULT 'admin',
+  nivel VARCHAR(30) NOT NULL DEFAULT 'admin',
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ultimo_login DATETIME NULL
@@ -53,10 +59,7 @@ CREATE TABLE painel_usuarios (
   nome VARCHAR(100) NOT NULL,
   usuario VARCHAR(50) NOT NULL UNIQUE,
   senha_hash VARCHAR(255) NOT NULL,
-  cargo ENUM(
-    'CMD_CA', 'SUBCMD_CA', 'ADMIN_TECNICO', 'AUX_CA',
-    'CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'
-  ) NOT NULL,
+  cargo VARCHAR(30) NOT NULL,
   esquadrao VARCHAR(50) NULL,
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -257,6 +260,130 @@ INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
 SELECT 'painel', 'AUX_ESQUADRAO', id FROM permissoes
 WHERE chave IN ('registrar_retirada');
 -- AUX_ESQUADRAO: só registrar_retirada (faz a chamada), não edita efetivo.
+
+-- ================= CARGOS (catálogo, editável no Controle do Domínio) =================
+-- painel_usuarios.cargo e admin_usuarios.nivel guardam a `chave` daqui como
+-- texto solto (sem FK) — criar um cargo novo não exige deploy, só cadastro
+-- aqui + conceder permissões em cargo_permissoes.
+CREATE TABLE cargos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sistema ENUM('painel', 'ikarus37') NOT NULL,
+  chave VARCHAR(30) NOT NULL,
+  nome VARCHAR(100) NOT NULL,
+  escopo ENUM('ca', 'esquadrao') NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_sistema_chave (sistema, chave)
+);
+
+INSERT INTO cargos (sistema, chave, nome, escopo) VALUES
+('painel', 'CMD_CA', 'Comandante do CA', 'ca'),
+('painel', 'SUBCMD_CA', 'Subcomandante do CA', 'ca'),
+('painel', 'ADMIN_TECNICO', 'Administrador Técnico', 'ca'),
+('painel', 'AUX_CA', 'Auxiliar CA', 'ca'),
+('painel', 'CMD_ESQUADRAO', 'Comandante de Esquadrão', 'esquadrao'),
+('painel', 'ENC_ESQUADRAO', 'Encarregado de Esquadrão', 'esquadrao'),
+('painel', 'AUX_ESQUADRAO', 'Auxiliar de Esquadrão', 'esquadrao'),
+('ikarus37', 'super_admin', 'Super administrador', NULL),
+('ikarus37', 'admin', 'Administrador', NULL),
+('ikarus37', 'suporte', 'Suporte', NULL);
+
+INSERT INTO permissoes (chave, descricao) VALUES
+('gerenciar_cargos', 'Criar, editar e desativar cargos (Controle do Domínio de Negócio)'),
+('acesso_tecnico_avancado', 'Console SQL, backup, exportar/importar tabela e editor de registro cru — ferramentas de emergência, não o uso do dia a dia');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'ikarus37', 'super_admin', id FROM permissoes WHERE chave IN ('gerenciar_cargos', 'acesso_tecnico_avancado');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', cargo, p.id
+FROM (SELECT 'CMD_CA' AS cargo UNION SELECT 'SUBCMD_CA') c
+CROSS JOIN permissoes p
+WHERE p.chave = 'gerenciar_cargos';
+
+-- ================= UNIDADES (árvore organizacional) =================
+-- EEAR { DEF { Galpões }, CA { Doutrina, Esquadrões } }. Junto com grupos_acesso
+-- abaixo, é uma SEGUNDA fonte de permissão (somada por OR à cargo_permissoes
+-- acima) — cargo continua valendo do jeito que já vale; isso serve pra dar
+-- acesso a unidades que não têm nenhum conceito de cargo (DEF, Galpões, Doutrina).
+CREATE TABLE unidades (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL,
+  tipo ENUM('escola', 'divisao', 'galpao', 'ca', 'esquadrao', 'doutrina') NOT NULL,
+  unidade_pai_id INT NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (unidade_pai_id) REFERENCES unidades(id)
+);
+
+-- ================= GRUPOS DE ACESSO (estilo POSIX) =================
+-- Não confundir com a tabela `grupos` acima (agrupamentos de retirada tipo CIDIT).
+CREATE TABLE grupos_acesso (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  nome VARCHAR(100) NOT NULL UNIQUE,
+  descricao VARCHAR(255) NULL,
+  ativo TINYINT(1) NOT NULL DEFAULT 1,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE grupo_acesso_membros (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  grupo_acesso_id INT NOT NULL,
+  painel_usuario_id INT NOT NULL,
+  unidade_id INT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_membro (grupo_acesso_id, painel_usuario_id, unidade_id),
+  FOREIGN KEY (grupo_acesso_id) REFERENCES grupos_acesso(id),
+  FOREIGN KEY (painel_usuario_id) REFERENCES painel_usuarios(id),
+  FOREIGN KEY (unidade_id) REFERENCES unidades(id)
+);
+
+CREATE TABLE grupo_acesso_permissoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  grupo_acesso_id INT NOT NULL,
+  permissao_id INT NOT NULL,
+  unidade_id INT NULL,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uk_permissao (grupo_acesso_id, permissao_id, unidade_id),
+  FOREIGN KEY (grupo_acesso_id) REFERENCES grupos_acesso(id),
+  FOREIGN KEY (permissao_id) REFERENCES permissoes(id),
+  FOREIGN KEY (unidade_id) REFERENCES unidades(id)
+);
+
+INSERT INTO unidades (nome, tipo, unidade_pai_id) VALUES ('EEAR', 'escola', NULL);
+SET @eear = LAST_INSERT_ID();
+
+INSERT INTO unidades (nome, tipo, unidade_pai_id) VALUES
+  ('DEF', 'divisao', @eear),
+  ('CA', 'ca', @eear);
+SET @ca = (SELECT id FROM unidades WHERE nome = 'CA' AND unidade_pai_id = @eear);
+
+INSERT INTO unidades (nome, tipo, unidade_pai_id) VALUES ('Doutrina', 'doutrina', @ca);
+
+-- Esquadrões existentes (se o efetivo já tiver sido semeado) entram como unidade
+-- desde já; numa instalação do zero (alunos ainda vazia) essa consulta não acha
+-- nada, e os esquadrões/galpões são cadastrados pelo Controle do Domínio de Negócio.
+INSERT INTO unidades (nome, tipo, unidade_pai_id)
+SELECT DISTINCT esquadrao, 'esquadrao', @ca FROM alunos WHERE esquadrao IS NOT NULL;
+
+INSERT INTO permissoes (chave, descricao) VALUES
+  ('gerenciar_dominio', 'Acessar o Controle do Domínio de Negócio (CRUD dos objetos do sistema)'),
+  ('gerenciar_unidades', 'Criar, editar e excluir unidades organizacionais (EEAR, DEF, Galpões, CA, Esquadrões, Doutrina)'),
+  ('gerenciar_grupos_acesso', 'Criar grupos de acesso, gerenciar membros e conceder/revogar permissões');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'ikarus37', 'super_admin', id FROM permissoes
+WHERE chave IN ('gerenciar_dominio', 'gerenciar_unidades', 'gerenciar_grupos_acesso');
+
+INSERT INTO cargo_permissoes (sistema, cargo, permissao_id)
+SELECT 'painel', cargo, p.id
+FROM (SELECT 'CMD_CA' AS cargo UNION SELECT 'SUBCMD_CA') c
+CROSS JOIN permissoes p
+WHERE p.chave IN ('gerenciar_dominio', 'gerenciar_unidades', 'gerenciar_grupos_acesso');
 
 -- ================= CHAVES DE API (Apps conectados) =================
 CREATE TABLE api_chaves (

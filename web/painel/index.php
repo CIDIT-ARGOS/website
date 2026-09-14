@@ -158,7 +158,7 @@ $logado = !empty($_SESSION['painel_id']);
 
         <?php $conexao = conectarBanco(); ?>
         <div class="grid">
-            <?php if (temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada')): ?>
+            <?php if (temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())): ?>
             <a href="retiradas.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/clipboard-check.svg')"></span>
                 <h3>Retiradas de falta</h3>
@@ -192,6 +192,13 @@ $logado = !empty($_SESSION['painel_id']);
                 <span class="card-icon" style="--icon-url: url('../images/icons/user-cog.svg')"></span>
                 <h3>Usuários do painel</h3>
                 <p>Cadastro de comandantes, encarregados e auxiliares.</p>
+            </a>
+            <?php endif; ?>
+            <?php if (podeGerenciarDominio()): ?>
+            <a href="dominio.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/sitemap.svg')"></span>
+                <h3>Controle do Domínio de Negócio</h3>
+                <p>Unidades organizacionais e grupos de acesso — sem precisar mexer no banco.</p>
             </a>
             <?php endif; ?>
         </div>

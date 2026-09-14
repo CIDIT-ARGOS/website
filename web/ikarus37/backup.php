@@ -5,6 +5,10 @@ require_once __DIR__ . '/auth.php';
 
 $conexao = conectarBanco();
 
+if (!temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado')) {
+    die("Sua conta não tem a permissão 'acesso_tecnico_avancado'.");
+}
+
 // ---------- Gerar e baixar o backup ----------
 if (isset($_GET['baixar'])) {
     $nomeArquivo = "backup_argos_" . date('Y-m-d_His') . ".sql";

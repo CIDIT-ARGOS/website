@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
+require_once __DIR__ . '/../../core/cargos_core.php';
 
 $conexao = conectarBanco();
 
@@ -30,7 +31,7 @@ if ($souSuperAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?
 
     if ($nome === '' || $usuario === '' || $senha === '') {
         $erro = "Preencha nome, usuário e senha.";
-    } elseif (!in_array($nivel, ['super_admin', 'admin', 'suporte'])) {
+    } elseif (!cargoValido($conexao, 'ikarus37', $nivel)) {
         $erro = "Nível inválido.";
     } else {
         $usuarioEsc = mysqli_real_escape_string($conexao, $usuario);
@@ -112,9 +113,10 @@ if ($resultUsuarios) {
 
 // ===================== USUÁRIOS DO PAINEL (cadeia de comando) =====================
 
-$cargosCA = ['CMD_CA', 'SUBCMD_CA', 'ADMIN_TECNICO', 'AUX_CA'];
-$cargosEsquadrao = ['CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'];
-$todosCargos = array_merge($cargosCA, $cargosEsquadrao);
+$cargosCA = listarChavesCargos($conexao, 'painel', 'ca');
+$cargosEsquadrao = listarChavesCargos($conexao, 'painel', 'esquadrao');
+$todosCargosLista = listarCargos($conexao, 'painel');
+$niveisLista = listarCargos($conexao, 'ikarus37');
 
 $mensagemPainel = null;
 $erroPainel = null;
@@ -134,7 +136,7 @@ if ($podeGerenciarPainel && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ac
 
     if ($nome === '' || $usuario === '' || $senha === '') {
         $erroPainel = "Preencha nome, usuário e senha.";
-    } elseif (!in_array($cargo, $todosCargos)) {
+    } elseif (!cargoValido($conexao, 'painel', $cargo)) {
         $erroPainel = "Cargo inválido.";
     } elseif (in_array($cargo, $cargosEsquadrao) && $esquadrao === '') {
         $erroPainel = "Cargos de esquadrão exigem informar o esquadrão.";
@@ -273,9 +275,9 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                 <input type="text" name="usuario" placeholder="Usuário (login)" required>
                 <input type="password" name="senha" placeholder="Senha" required>
                 <select name="nivel">
-                    <option value="admin">admin</option>
-                    <option value="suporte">suporte</option>
-                    <option value="super_admin">super_admin</option>
+                    <?php foreach ($niveisLista as $n): ?>
+                        <option value="<?= htmlspecialchars($n['chave']) ?>" <?= $n['chave'] === 'admin' ? 'selected' : '' ?>><?= htmlspecialchars($n['nome']) ?></option>
+                    <?php endforeach; ?>
                 </select>
                 <button type="submit">Criar</button>
             </div>
@@ -305,8 +307,8 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                         <td><?= htmlspecialchars($u['usuario']) ?><?= $u['id'] == $meuId ? ' <small style="color:var(--text-muted)">(você)</small>' : '' ?></td>
                         <td>
                             <select form="<?= $formId ?>" name="nivel">
-                                <?php foreach (['admin', 'suporte', 'super_admin'] as $n): ?>
-                                    <option value="<?= $n ?>" <?= $u['nivel'] === $n ? 'selected' : '' ?>><?= $n ?></option>
+                                <?php foreach ($niveisLista as $n): ?>
+                                    <option value="<?= htmlspecialchars($n['chave']) ?>" <?= $u['nivel'] === $n['chave'] ? 'selected' : '' ?>><?= htmlspecialchars($n['nome']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </td>
@@ -363,13 +365,9 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                 <input type="text" name="usuario" placeholder="Usuário (login)" required>
                 <input type="password" name="senha" placeholder="Senha" required>
                 <select name="cargo" onchange="alternarEsquadraoNovo(this)">
-                    <option value="CMD_CA">Comandante do CA</option>
-                    <option value="SUBCMD_CA">Subcomandante do CA</option>
-                    <option value="ADMIN_TECNICO">Administrador Técnico</option>
-                    <option value="AUX_CA">Auxiliar CA</option>
-                    <option value="CMD_ESQUADRAO" selected>Comandante de Esquadrão</option>
-                    <option value="ENC_ESQUADRAO">Encarregado de Esquadrão</option>
-                    <option value="AUX_ESQUADRAO">Auxiliar de Esquadrão</option>
+                    <?php foreach ($todosCargosLista as $c): ?>
+                        <option value="<?= htmlspecialchars($c['chave']) ?>" <?= $c['chave'] === 'CMD_ESQUADRAO' ? 'selected' : '' ?>><?= htmlspecialchars($c['nome']) ?></option>
+                    <?php endforeach; ?>
                 </select>
                 <input type="text" id="novo_esquadrao" name="esquadrao" placeholder="Esquadrão (ex: PRATA)">
                 <button type="submit">Criar</button>
@@ -400,8 +398,8 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
                         <td><?= htmlspecialchars($u['usuario']) ?></td>
                         <td>
                             <select form="<?= $formId ?>" name="cargo" onchange="alternarEsquadraoLinha(this, 'esq_painel_<?= $u['id'] ?>')">
-                                <?php foreach ($todosCargos as $c): ?>
-                                    <option value="<?= $c ?>" <?= $u['cargo'] === $c ? 'selected' : '' ?>><?= $c ?></option>
+                                <?php foreach ($todosCargosLista as $c): ?>
+                                    <option value="<?= htmlspecialchars($c['chave']) ?>" <?= $u['cargo'] === $c['chave'] ? 'selected' : '' ?>><?= htmlspecialchars($c['nome']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </td>
@@ -439,7 +437,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
 </div>
 
 <script>
-    const CARGOS_ESQUADRAO = ['CMD_ESQUADRAO', 'ENC_ESQUADRAO', 'AUX_ESQUADRAO'];
+    const CARGOS_ESQUADRAO = <?= json_encode(array_values($cargosEsquadrao)) ?>;
 
     function alternarEsquadraoNovo(select) {
         document.getElementById('novo_esquadrao').style.display = CARGOS_ESQUADRAO.includes(select.value) ? 'inline-block' : 'none';
