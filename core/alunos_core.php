@@ -5,6 +5,25 @@
 
 const CURSOS_VALIDOS = ['CFS', 'EAGS'];
 
+/**
+ * Identificação padrão do aluno em qualquer listagem/relatório do sistema:
+ * "AL 26/3138 SIN SIMIONI" (posto/graduação de exibição, milhão,
+ * especialidade, nome de guerra). Aceita tanto uma linha com
+ * `posto_exibicao` já resolvido (join com postos_graduacao) quanto uma linha
+ * "crua" (só `posto_graduacao`, sem o join) — nesse caso usa o próprio
+ * código como fallback.
+ */
+function identificacaoAluno($aluno) {
+    $posto = $aluno['posto_exibicao'] ?? $aluno['posto_graduacao'] ?? '';
+    $partes = array_filter([
+        $posto,
+        $aluno['milhao'] ?? '',
+        $aluno['especialidade'] ?? '',
+        $aluno['nome_guerra'] ?? '',
+    ], fn($v) => trim((string) $v) !== '');
+    return implode(' ', $partes);
+}
+
 function validarAluno($dados, $parcial = false) {
     $camposObrigatorios = [
         'posto_graduacao', 'nome_guerra', 'sexo', 'identidade_militar',
@@ -116,6 +135,13 @@ function buscarAlunoPorId($conexao, $id) {
     return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
 }
 
+function buscarAlunoPorMilhao($conexao, $milhao) {
+    $stmt = mysqli_prepare($conexao, "SELECT * FROM alunos WHERE milhao = ? AND ativo = 1");
+    mysqli_stmt_bind_param($stmt, "s", $milhao);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
+}
+
 /**
  * Busca livre por nome/milhão em todo o efetivo ativo, sem respeitar escopo de
  * esquadrão — usada para localizar um aluno de serviço que pode ser de qualquer
@@ -148,6 +174,16 @@ function listarAlunosPorEsquadrilha($conexao, $esquadrao, $esquadrilha) {
     mysqli_stmt_bind_param($stmt, "ss", $esquadrao, $esquadrilha);
     mysqli_stmt_execute($stmt);
     return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+function contarAlunosAtivos($conexao, $esquadrao = null) {
+    if ($esquadrao !== null) {
+        $stmt = mysqli_prepare($conexao, "SELECT COUNT(*) as total FROM alunos WHERE ativo = 1 AND esquadrao = ?");
+        mysqli_stmt_bind_param($stmt, "s", $esquadrao);
+        mysqli_stmt_execute($stmt);
+        return (int) mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['total'];
+    }
+    return (int) mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as total FROM alunos WHERE ativo = 1"))['total'];
 }
 
 function listarEsquadroesDistintos($conexao) {

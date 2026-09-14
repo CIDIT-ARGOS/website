@@ -4,6 +4,8 @@ require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/motivos_core.php';
+require_once __DIR__ . '/../../core/alunos_core.php';
+require_once __DIR__ . '/../../core/dispensas_core.php';
 
 $conexao = conectarBanco();
 
@@ -24,6 +26,25 @@ if ($escopo !== null && $retirada['esquadrao'] !== $escopo) {
 
 $mensagem = null;
 $erro = null;
+$podeLancarDispensa = podeGerenciarDispensas();
+
+// ---------- Lançar dispensa médica direto na chamada ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'lancar_dispensa' && $retirada['status'] === 'pendente' && $podeLancarDispensa) {
+    $alunoId = (int) ($_POST['aluno_id'] ?? 0);
+    $dados = $_POST;
+    $dados['painel_usuario_id'] = idUsuarioPainel();
+
+    $resultado = criarDispensa($conexao, $dados);
+    if ($resultado['ok']) {
+        $motivoDispensa = buscarMotivoPorCodigo($conexao, 'DMED');
+        if ($motivoDispensa) {
+            marcarItem($conexao, $id, $alunoId, 0, $motivoDispensa['id'], null);
+        }
+        $mensagem = "Dispensa lançada e chamada atualizada.";
+    } else {
+        $erro = $resultado['erro'];
+    }
+}
 
 // ---------- Salvar marcações ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['itens']) && $retirada['status'] === 'pendente') {
@@ -97,6 +118,38 @@ $somenteLeitura = $retirada['status'] === 'enviada';
         motivoSel.style.display = falta ? 'inline-block' : 'none';
         linha.classList.toggle('falta-row', falta);
     }
+
+    function alternarDispensa(alunoId) {
+        const linha = document.getElementById('dispensa_' + alunoId);
+        linha.hidden = !linha.hidden;
+    }
+
+    function lancarDispensa(alunoId) {
+        const campos = {
+            acao: 'lancar_dispensa',
+            aluno_id: alunoId,
+            data_inicio: document.getElementById('disp_inicio_' + alunoId).value,
+            data_termino: document.getElementById('disp_termino_' + alunoId).value,
+            numero: document.getElementById('disp_numero_' + alunoId).value,
+            motivo: document.getElementById('disp_motivo_' + alunoId).value,
+            dispensado_de: document.getElementById('disp_dispensado_de_' + alunoId).value,
+        };
+        if (!campos.motivo.trim()) {
+            alert('Informe o motivo da dispensa.');
+            return;
+        }
+        const form = document.createElement('form');
+        form.method = 'post';
+        for (const [nome, valor] of Object.entries(campos)) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = nome;
+            input.value = valor;
+            form.appendChild(input);
+        }
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
 </head>
 <body>
@@ -124,7 +177,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
         <form method="post">
             <div class="scroll-x">
             <table>
-                <tr><th>Presente</th><th>Nome de Guerra</th><th>Milhão</th><th>Motivo (se faltou)</th><th>Observação</th></tr>
+                <tr><th>Presente</th><th>Identificação</th><th>Motivo (se faltou)</th><th>Observação</th><?php if (!$somenteLeitura && $podeLancarDispensa): ?><th>Dispensa</th><?php endif; ?></tr>
                 <?php foreach ($itens as $item): ?>
                     <tr id="linha_<?= $item['aluno_id'] ?>" class="<?= !$item['presente'] ? 'falta-row' : '' ?>">
                         <td>
@@ -133,8 +186,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                                 <?= $somenteLeitura ? 'disabled' : '' ?>
                                 onchange="alternarMotivo(<?= $item['aluno_id'] ?>, this)">
                         </td>
-                        <td><?= htmlspecialchars($item['nome_guerra']) ?></td>
-                        <td><?= htmlspecialchars($item['milhao']) ?></td>
+                        <td><?= htmlspecialchars(identificacaoAluno($item)) ?></td>
                         <td>
                             <select id="motivo_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][motivo_falta_id]"
                                 style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>
@@ -148,7 +200,26 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                             <input type="text" name="itens[<?= $item['aluno_id'] ?>][observacao]"
                                 value="<?= htmlspecialchars($item['observacao'] ?? '') ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>
                         </td>
+                        <?php if (!$somenteLeitura && $podeLancarDispensa): ?>
+                        <td>
+                            <button type="button" onclick="alternarDispensa(<?= $item['aluno_id'] ?>)">Lançar</button>
+                        </td>
+                        <?php endif; ?>
                     </tr>
+                    <?php if (!$somenteLeitura && $podeLancarDispensa): ?>
+                    <tr id="dispensa_<?= $item['aluno_id'] ?>" hidden>
+                        <td colspan="5">
+                            <div class="form-linha" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 0;">
+                                <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" id="disp_inicio_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" id="disp_termino_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Nº <input type="text" id="disp_numero_<?= $item['aluno_id'] ?>" style="width:70px;"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Motivo <input type="text" id="disp_motivo_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Dispensado de <input type="text" id="disp_dispensado_de_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
+                                <button type="button" onclick="lancarDispensa(<?= $item['aluno_id'] ?>)">Salvar dispensa</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <?php endif; ?>
                 <?php endforeach; ?>
             </table>
             </div>

@@ -67,6 +67,10 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
             }
             echo "</select>";
             break;
+        case 'numero':
+            $valorEsc = htmlspecialchars((string) ($valor ?? '0'));
+            echo "<input form=\"$formId\" type=\"number\" name=\"$nome\" value=\"$valorEsc\" style=\"width:70px;\">";
+            break;
         default:
             $valorEsc = htmlspecialchars((string) ($valor ?? ''));
             echo "<input form=\"$formId\" type=\"text\" name=\"$nome\" value=\"$valorEsc\">";
@@ -125,6 +129,14 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
 
     <?php if ($erro): ?><p class="erro"><?= htmlspecialchars($erro) ?></p><?php endif; ?>
     <?php if ($mensagem): ?><p class="ok"><?= htmlspecialchars($mensagem) ?></p><?php endif; ?>
+
+    <?php if ($chaveEntidade === 'grupos_acesso'): ?>
+        <p style="color: var(--text-muted); font-size: 13px;">
+            Pra quando um cargo não serve — DEF, Galpões e Doutrina não têm nenhum cargo no sistema, só CA e Esquadrão têm.
+            Um grupo de acesso dá permissão a alguém dessas áreas sem inventar um cargo artificial só pra encaixar.
+            Se o que você precisa é dar/tirar permissão de um cargo que já existe, isso é na aba <a href="?entidade=cargos" style="color:var(--accent);">Cargos</a>, não aqui.
+        </p>
+    <?php endif; ?>
 
     <?php if ($entidade): ?>
     <div class="card">

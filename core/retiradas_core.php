@@ -3,6 +3,9 @@
 // Lógica de negócio da retirada de falta. Usada tanto pela API (/api/retiradas.php)
 // quanto pelas telas do painel — para não duplicar regra em dois lugares.
 
+require_once __DIR__ . '/dispensas_core.php';
+require_once __DIR__ . '/motivos_core.php';
+
 const TIPOS_RETIRADA_VALIDOS = ['1_jornada', '2_jornada', 'educacao_fisica', 'pernoite'];
 const AGRUPAMENTOS_VALIDOS = ['esquadrilha', 'grupo']; // 'especialidade' ainda não implementado
 
@@ -73,9 +76,23 @@ function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $es
     $retiradaId = mysqli_insert_id($conexao);
 
     // ---------- Cria um item por aluno, presente por padrão ----------
-    $stmtItem = mysqli_prepare($conexao, "INSERT INTO retirada_itens (retirada_id, aluno_id, presente) VALUES (?, ?, 1)");
+    // Exceção: aluno com dispensa médica ativa hoje já nasce marcado como
+    // falta com o motivo DMED — sugestão automática, mas o Xerife pode
+    // sobrepor normalmente na tela de chamada.
+    $motivoDispensa = buscarMotivoPorCodigo($conexao, 'DMED');
+    $hoje = date('Y-m-d');
+
+    $stmtItem = mysqli_prepare($conexao, "INSERT INTO retirada_itens (retirada_id, aluno_id, presente, motivo_falta_id) VALUES (?, ?, ?, ?)");
     foreach ($alunoIds as $alunoId) {
-        mysqli_stmt_bind_param($stmtItem, "ii", $retiradaId, $alunoId);
+        $presente = 1;
+        $motivoFaltaId = null;
+
+        if ($motivoDispensa && dispensaAtivaParaAluno($conexao, $alunoId, $hoje)) {
+            $presente = 0;
+            $motivoFaltaId = $motivoDispensa['id'];
+        }
+
+        mysqli_stmt_bind_param($stmtItem, "iiii", $retiradaId, $alunoId, $presente, $motivoFaltaId);
         mysqli_stmt_execute($stmtItem);
     }
 
@@ -188,11 +205,28 @@ function listarRetiradas($conexao, $filtros = []) {
     return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
 }
 
+/**
+ * Retiradas já enviadas de um esquadrão numa data específica — base do
+ * Livro do Dia (uma retirada por tipo/esquadrilha que tiver sido enviada).
+ */
+function listarRetiradasDoDia($conexao, $esquadrao, $data) {
+    $stmt = mysqli_prepare($conexao, "
+        SELECT * FROM retiradas
+        WHERE esquadrao = ? AND status = 'enviada' AND DATE(data_hora) = ?
+        ORDER BY tipo, agrupamento_valor
+    ");
+    mysqli_stmt_bind_param($stmt, "ss", $esquadrao, $data);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
 function listarItensRetirada($conexao, $retiradaId) {
     $stmt = mysqli_prepare($conexao, "
-        SELECT ri.*, a.nome_guerra, a.milhao, m.nome as motivo_nome
+        SELECT ri.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
+               a.especialidade, a.nome_guerra, a.milhao, m.nome as motivo_nome, m.codigo as motivo_codigo
         FROM retirada_itens ri
         JOIN alunos a ON a.id = ri.aluno_id
+        LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
         WHERE ri.retirada_id = ?
         ORDER BY a.nome_guerra
@@ -284,6 +318,94 @@ function relatorioRetiradas($conexao, $filtros) {
         $where
         GROUP BY r.id
         ORDER BY r.data_hora DESC
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Ausências no período divididas por classificação (falta de verdade vs
+ * ausência justificada) — base do gráfico vermelho/amarelo do Painel Argos.
+ */
+function relatorioPorClassificacao($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT COALESCE(m.classificacao, 'ausente_nao_falta') as classificacao, COUNT(*) as total
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
+        $where AND ri.presente = 0
+        GROUP BY classificacao
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Faltas no período agrupadas por esquadrão — só faz sentido pra quem vê o
+ * CA inteiro (visão de esquadrão já é implicitamente 1 linha só).
+ */
+function relatorioPorEsquadrao($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT a.esquadrao, COUNT(*) as total_itens, SUM(1 - ri.presente) as faltas
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        $where
+        GROUP BY a.esquadrao
+        ORDER BY faltas DESC
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Faltas no período agrupadas por esquadrilha — usado quando o usuário já
+ * está restrito a um único esquadrão (relatorioPorEsquadrao não ajudaria,
+ * seria uma barra só).
+ */
+function relatorioPorEsquadrilha($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT a.esquadrilha, COUNT(*) as total_itens, SUM(1 - ri.presente) as faltas
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        $where
+        GROUP BY a.esquadrilha
+        ORDER BY a.esquadrilha
+    ";
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
+/**
+ * Taxa de presença por dia no período — base do gráfico de linha (tendência).
+ */
+function evolucaoDiariaPresenca($conexao, $filtros) {
+    [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
+
+    $sql = "
+        SELECT DATE(r.data_hora) as dia, COUNT(*) as total_itens, SUM(ri.presente) as presentes
+        FROM retirada_itens ri
+        JOIN retiradas r ON r.id = ri.retirada_id
+        JOIN alunos a ON a.id = ri.aluno_id
+        $where
+        GROUP BY dia
+        ORDER BY dia
     ";
     $stmt = mysqli_prepare($conexao, $sql);
     mysqli_stmt_bind_param($stmt, $tipos, ...$params);

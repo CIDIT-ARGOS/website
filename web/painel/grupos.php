@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/grupos_core.php';
+require_once __DIR__ . '/../../core/alunos_core.php';
 
 $conexao = conectarBanco();
 
@@ -192,11 +193,10 @@ if ($grupoAtual && $buscaNome !== '') {
 
             <?php if (!empty($candidatos)): ?>
                 <table>
-                    <tr><th>Nome</th><th>Milhão</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
+                    <tr><th>Identificação</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
                     <?php foreach ($candidatos as $c): ?>
                         <tr>
-                            <td><?= htmlspecialchars($c['nome_guerra']) ?></td>
-                            <td><?= htmlspecialchars($c['milhao']) ?></td>
+                            <td><?= htmlspecialchars(identificacaoAluno($c)) ?></td>
                             <td><?= htmlspecialchars($c['esquadrao']) ?> / <?= htmlspecialchars($c['esquadrilha']) ?></td>
                             <td>
                                 <form method="post" style="display:inline;">
@@ -217,11 +217,10 @@ if ($grupoAtual && $buscaNome !== '') {
         <div class="card">
             <h4>Membros atuais (<?= count($membros) ?>)</h4>
             <table>
-                <tr><th>Nome</th><th>Milhão</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
+                <tr><th>Identificação</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
                 <?php foreach ($membros as $m): ?>
                     <tr>
-                        <td><?= htmlspecialchars($m['nome_guerra']) ?></td>
-                        <td><?= htmlspecialchars($m['milhao']) ?></td>
+                        <td><?= htmlspecialchars(identificacaoAluno($m)) ?></td>
                         <td><?= htmlspecialchars($m['esquadrao']) ?> / <?= htmlspecialchars($m['esquadrilha']) ?></td>
                         <td>
                             <form method="post" onsubmit="return confirm('Remover do grupo?');">
