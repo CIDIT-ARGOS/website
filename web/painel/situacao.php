@@ -56,8 +56,10 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
     .kpi .rotulo { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 999px; }
     .badge.presente { background: #d9f2e3; color: var(--ok); }
-    .badge.ausente { background: #fbe0e0; color: var(--danger); }
+    .badge.ausente-falta { background: #fbe0e0; color: var(--danger); }
+    .badge.ausente-justificada { background: #fdf1c8; color: #8a6100; }
     .badge.sem-registro { background: #eef1f6; color: var(--text-muted); }
+    .motivo-tag { border-bottom: 1px dotted var(--text-muted); cursor: help; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
@@ -130,8 +132,13 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                     } elseif ((int) $a['presente'] === 1) {
                         $statusClasse = 'presente';
                         $statusRotulo = 'presente';
+                    } elseif ($a['motivo_classificacao'] === 'falta') {
+                        // Falta de verdade (conta como aula perdida) — vermelho.
+                        $statusClasse = 'ausente-falta';
+                        $statusRotulo = 'falta';
                     } else {
-                        $statusClasse = 'ausente';
+                        // Ausência justificada (serviço, dispensa, comissão...) — amarelo, não é falta de verdade.
+                        $statusClasse = 'ausente-justificada';
                         $statusRotulo = 'ausente';
                     }
                 ?>
@@ -139,7 +146,14 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
                     <td><?= htmlspecialchars(identificacaoAluno($a)) ?></td>
                     <td><?= htmlspecialchars($a['esquadrao']) ?> / <?= htmlspecialchars($a['esquadrilha']) ?></td>
                     <td><span class="badge <?= $statusClasse ?>"><?= $statusRotulo ?></span></td>
-                    <td><?= htmlspecialchars($a['motivo_codigo'] ?? $a['motivo_nome'] ?? '—') ?></td>
+                    <td>
+                        <?php if ($a['motivo_codigo'] || $a['motivo_nome']): ?>
+                            <span class="motivo-tag" title="<?= htmlspecialchars($a['motivo_nome'] ?? '') ?>"
+                                onclick="alert('<?= htmlspecialchars(addslashes($a['motivo_nome'] ?? ''), ENT_QUOTES) ?>')"><?= htmlspecialchars($a['motivo_codigo'] ?? $a['motivo_nome']) ?></span>
+                        <?php else: ?>
+                            —
+                        <?php endif; ?>
+                    </td>
                     <td>
                         <?php if ($a['retirada_data_hora']): ?>
                             <?= htmlspecialchars($tiposRetirada[$a['retirada_tipo']] ?? $a['retirada_tipo']) ?> — <?= htmlspecialchars($a['retirada_data_hora']) ?>
