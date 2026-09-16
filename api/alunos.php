@@ -1,51 +1,15 @@
 <?php
 
 require_once __DIR__ . '/bootstrap.php';
+require_once __DIR__ . '/Database/DbConnection.php';
+require_once __DIR__ . '../Validation/StudentValidate.php';
+
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 
-$camposObrigatorios = [
-    'posto_graduacao', 'nome_guerra', 'sexo', 'identidade_militar',
-    'milhao', 'esquadrao', 'esquadrilha', 'curso', 'serie'
-];
-
-$cursosValidos = ['CFS', 'EAGS'];
-
-function validarAluno($dados) {
-    global $camposObrigatorios, $cursosValidos;
-
-    foreach ($camposObrigatorios as $campo) {
-        if (empty($dados[$campo])) {
-            return "Campo obrigatório ausente: $campo";
-        }
-    }
-
-    if (!in_array($dados['sexo'], ['M', 'F'])) {
-        return "Campo sexo inválido. Use M ou F.";
-    }
-
-    if (!in_array($dados['curso'], $cursosValidos)) {
-        return "Curso inválido. Use CFS ou EAGS.";
-    }
-
-    if ($dados['curso'] === 'EAGS' && $dados['serie'] !== 'EAGS') {
-        return "Para o curso EAGS, a série deve ser 'EAGS'.";
-    }
-
-    if ($dados['curso'] === 'CFS' && !in_array($dados['serie'], ['1', '2', '3', '4'])) {
-        return "Para o curso CFS, a série deve ser 1, 2, 3 ou 4.";
-    }
-
-    if (!empty($dados['qrcode_hash']) && !preg_match('/^[a-f0-9]{64}$/i', $dados['qrcode_hash'])) {
-        return "qrcode_hash inválido: deve ser um hash sha256 (64 caracteres hexadecimais).";
-    }
-
-    return null;
-}
 
 switch ($metodo) {
-
     // ---------- LISTAR / BUSCAR ----------
     case 'GET':
         if ($id) {
@@ -114,7 +78,7 @@ switch ($metodo) {
     // ---------- CRIAR ----------
     case 'POST':
         $dados = corpoJson();
-        $mensagemErro = validarAluno($dados);
+        $mensagemErro = studentValidate($dados);
         if ($mensagemErro) {
             erro($mensagemErro);
         }
@@ -130,10 +94,25 @@ switch ($metodo) {
         $qrcodeHash = $dados['qrcode_hash'] ?? null;
 
         mysqli_stmt_bind_param(
-            $stmt, "sssssssssssssssss",
-            $dados['posto_graduacao'], $dados['quadro'], $dados['especialidade'], $dados['sub_especialidade'], $dados['nome_guerra'], $dados['sexo'],
-            $dados['identidade_militar'], $dados['organizacao_militar'], $dados['setor'], $dados['secao'], $dados['ramal'], $qrcodeHash,
-            $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie']
+            $stmt,
+            "sssssssssssssssss",
+            $dados['posto_graduacao'],
+            $dados['quadro'],
+            $dados['especialidade'],
+            $dados['sub_especialidade'],
+            $dados['nome_guerra'],
+            $dados['sexo'],
+            $dados['identidade_militar'],
+            $dados['organizacao_militar'],
+            $dados['setor'],
+            $dados['secao'],
+            $dados['ramal'],
+            $qrcodeHash,
+            $dados['milhao'],
+            $dados['esquadrao'],
+            $dados['esquadrilha'],
+            $dados['curso'],
+            $dados['serie']
         );
 
         if (!mysqli_stmt_execute($stmt)) {
@@ -153,7 +132,7 @@ switch ($metodo) {
         }
 
         $dados = corpoJson();
-        $mensagemErro = validarAluno($dados);
+        $mensagemErro = studentValidate($dados);
         if ($mensagemErro) {
             erro($mensagemErro);
         }
@@ -169,10 +148,26 @@ switch ($metodo) {
         $qrcodeHash = $dados['qrcode_hash'] ?? null;
 
         mysqli_stmt_bind_param(
-            $stmt, "sssssssssssssssssi",
-            $dados['posto_graduacao'], $dados['quadro'], $dados['especialidade'], $dados['sub_especialidade'], $dados['nome_guerra'], $dados['sexo'],
-            $dados['identidade_militar'], $dados['organizacao_militar'], $dados['setor'], $dados['secao'], $dados['ramal'], $qrcodeHash,
-            $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $id
+            $stmt,
+            "sssssssssssssssssi",
+            $dados['posto_graduacao'],
+            $dados['quadro'],
+            $dados['especialidade'],
+            $dados['sub_especialidade'],
+            $dados['nome_guerra'],
+            $dados['sexo'],
+            $dados['identidade_militar'],
+            $dados['organizacao_militar'],
+            $dados['setor'],
+            $dados['secao'],
+            $dados['ramal'],
+            $qrcodeHash,
+            $dados['milhao'],
+            $dados['esquadrao'],
+            $dados['esquadrilha'],
+            $dados['curso'],
+            $dados['serie'],
+            $id
         );
 
         if (!mysqli_stmt_execute($stmt)) {
