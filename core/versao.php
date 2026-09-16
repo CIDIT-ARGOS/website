@@ -6,6 +6,6 @@
 
 return [
     'versao' => 'v1',
-    'commit' => 'c6606a7',
+    'commit' => '62b5232',
     'data' => '2026-09-16',
 ];
