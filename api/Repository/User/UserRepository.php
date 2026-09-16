@@ -20,10 +20,24 @@ class UserRepository
             mysqli_stmt_bind_param($stmt, "s", $escapeUser);
             mysqli_stmt_execute($stmt);
             $result = mysqli_stmt_get_result($stmt);
-            $userIsFind = $result ? mysqli_fetch_assoc($result) : null;
-            return $userIsFind;
+            return $result ? mysqli_fetch_assoc($result) : null;;
         } catch (\Exception $e) {
             throw new \Exception("Erro ao buscar usuário: " . $e->getMessage());
+        }
+    }
+
+
+    public function getById(DbConnection $db, int $userId)
+    {
+        try {
+            $connection = $db->getConnection();
+            $stmt = mysqli_prepare($connection, UserConstants::GET_BY_STUDENT_ID);
+            mysqli_stmt_bind_param($stmt, "i", $userId);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            return $result ? mysqli_fetch_assoc($result) : null;
+        } catch (\Exception $e) {
+            throw new \Exception("Erro ao buscar usuário por ID: " . $e->getMessage());
         }
     }
 
