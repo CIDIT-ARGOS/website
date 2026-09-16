@@ -266,5 +266,6 @@ $podeTecnicoAvancado = $logado && temPermissao(conectarBanco(), 'ikarus37', $_SE
 
 <?php endif; ?>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>

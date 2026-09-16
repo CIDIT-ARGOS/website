@@ -242,5 +242,6 @@ $logado = !empty($_SESSION['painel_id']);
 
 <?php endif; ?>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>

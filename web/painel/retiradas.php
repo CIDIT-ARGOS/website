@@ -107,6 +107,7 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
     </div>
 </div>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>
 <?php mysqli_close($conexao); ?>

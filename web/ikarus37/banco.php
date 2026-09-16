@@ -237,6 +237,7 @@ if ($tabelaSelecionada && in_array($tabelaSelecionada, array_column($tabelas, 'n
     </div>
 </div>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>
 <?php mysqli_close($conexao); ?>

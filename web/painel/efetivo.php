@@ -118,6 +118,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     </div>
 </div>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>
 <?php mysqli_close($conexao); ?>

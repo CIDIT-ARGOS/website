@@ -186,6 +186,7 @@ foreach ($esquadroesParaMontar as $esq) {
     <?php endforeach; ?>
 </div>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>
 <?php mysqli_close($conexao); ?>

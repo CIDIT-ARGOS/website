@@ -190,6 +190,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
     </div>
 </div>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>
 <?php mysqli_close($conexao); ?>

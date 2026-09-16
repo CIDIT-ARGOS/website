@@ -317,6 +317,7 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
     </div>
 </div>
 
+<?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
 </html>
 <?php mysqli_close($conexao); ?>
