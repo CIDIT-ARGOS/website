@@ -73,6 +73,8 @@ $itens = listarItensRetirada($conexao, $id);
 
 $motivos = listarMotivos($conexao);
 $tiposDispensa = $podeLancarDispensa ? listarDispensaTipos($conexao) : [];
+$dataInicioMin = date('Y-m-d', strtotime('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days'));
+$dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days'));
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 $somenteLeitura = $retirada['status'] === 'enviada';
@@ -222,7 +224,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                     <tr id="dispensa_<?= $item['aluno_id'] ?>" hidden>
                         <td colspan="5">
                             <div class="form-linha" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 0;">
-                                <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" id="disp_inicio_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" id="disp_inicio_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" id="disp_termino_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Nº <input type="text" id="disp_numero_<?= $item['aluno_id'] ?>" style="width:70px;"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Motivo <input type="text" id="disp_motivo_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>

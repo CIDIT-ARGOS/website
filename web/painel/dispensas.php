@@ -69,6 +69,8 @@ if ($escopo !== null) {
 }
 $alunos = listarAlunos($conexao, $filtrosAlunos);
 $tiposDispensa = listarDispensaTipos($conexao);
+$dataInicioMin = date('Y-m-d', strtotime('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days'));
+$dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days'));
 
 ?>
 <!DOCTYPE html>
@@ -135,7 +137,7 @@ $tiposDispensa = listarDispensaTipos($conexao);
                     <option value="<?= htmlspecialchars($a['milhao']) ?>"><?= htmlspecialchars(identificacaoAluno($a)) ?> — <?= htmlspecialchars($a['esquadrao']) ?>/<?= htmlspecialchars($a['esquadrilha']) ?></option>
                 <?php endforeach; ?>
             </datalist>
-            <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" name="data_inicio" required></label>
+            <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" name="data_inicio" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>" required></label>
             <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" name="data_termino" required></label>
             <input type="text" name="numero" placeholder="Nº da dispensa">
             <input type="text" name="motivo" placeholder="Motivo" required style="min-width:180px;">
@@ -174,7 +176,7 @@ $tiposDispensa = listarDispensaTipos($conexao);
                 <tr id="<?= $detalheId ?>" hidden>
                     <td colspan="3">
                         <div class="form-linha" style="padding:10px 0;">
-                            <label style="font-size:12px; color:var(--text-muted);">Início <input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Início <input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Término <input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Nº <input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Motivo <input form="<?= $formId ?>" type="text" name="motivo" value="<?= htmlspecialchars($d['motivo']) ?>" style="min-width:180px;"></label>
