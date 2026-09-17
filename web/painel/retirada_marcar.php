@@ -6,6 +6,8 @@ require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/motivos_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 require_once __DIR__ . '/../../core/dispensas_core.php';
+require_once __DIR__ . '/../../core/servicos_core.php';
+
 
 $conexao = conectarBanco();
 
@@ -76,6 +78,8 @@ $tiposDispensa = $podeLancarDispensa ? listarDispensaTipos($conexao) : [];
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 $somenteLeitura = $retirada['status'] === 'enviada';
 
+$servicos = listarServicos($conexao);
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -117,10 +121,14 @@ $somenteLeitura = $retirada['status'] === 'enviada';
     function alternarMotivo(alunoId, presenteCheckbox) {
         const linha = document.getElementById('linha_' + alunoId);
         const motivoSel = document.getElementById('motivo_' + alunoId);
+        const postoServ = document.getElementById('servico_' + alunoId);
+
         const falta = !presenteCheckbox.checked;
         motivoSel.style.display = falta ? 'inline-block' : 'none';
+        postoServ.style.display = falta ? 'inline-block' : 'none';
         linha.classList.toggle('falta-row', falta);
     }
+
 
     function alternarDispensa(alunoId) {
         const linha = document.getElementById('dispensa_' + alunoId);
@@ -203,6 +211,15 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                                 <option value="">—</option>
                                 <?php foreach ($motivos as $m): ?>
                                     <option value="<?= $m['id'] ?>" <?= $item['motivo_falta_id'] == $m['id'] ? 'selected' : '' ?>><?= htmlspecialchars($m['nome']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+
+
+                            <select id="servico_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][servico_id]"
+                                style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>
+                                <option value="">—</option>
+                                <?php foreach ($servicos as $s): ?>
+                                    <option value="<?= $s['id'] ?>" <?= $item['id'] == $s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['nome']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </td>
