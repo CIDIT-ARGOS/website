@@ -60,6 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
     label { display: block; font-size: 12px; color: var(--text-muted); margin-top: 12px; margin-bottom: 4px; }
     input, select { width: 100%; padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     input[readonly] { color: var(--text-muted); }
     button { padding: 9px 18px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; margin-top: 18px; }
     .erro { color: var(--danger); font-size: 13px; }

@@ -101,6 +101,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
     th { background: var(--azul-eear); color: #ffffff; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     select, input[type=text] { padding: 6px 8px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; }
+    select { max-width: 220px; }
     button { padding: 9px 18px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; margin-top: 14px; margin-right: 8px; }
     button.enviar { background: var(--ok); }
     .erro { color: var(--danger); font-size: 13px; }

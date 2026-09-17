@@ -102,11 +102,13 @@ if ($grupoAtual && $buscaNome !== '') {
     .container { padding: 24px; max-width: 900px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 7px 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 12px; cursor: pointer; }
     button.danger { background: var(--danger); }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
     th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
     th { background: var(--azul-eear); color: #ffffff; }
+    .scroll-x { overflow-x: auto; min-width: 0; }
     .erro { color: var(--danger); font-size: 13px; }
     .ok { color: var(--ok); font-size: 13px; }
     .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -192,6 +194,7 @@ if ($grupoAtual && $buscaNome !== '') {
             </form>
 
             <?php if (!empty($candidatos)): ?>
+                <div class="scroll-x">
                 <table>
                     <tr><th>Identificação</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
                     <?php foreach ($candidatos as $c): ?>
@@ -209,6 +212,7 @@ if ($grupoAtual && $buscaNome !== '') {
                         </tr>
                     <?php endforeach; ?>
                 </table>
+                </div>
             <?php elseif ($buscaNome !== ''): ?>
                 <p style="color: var(--text-muted); font-size: 13px;">Nenhum aluno encontrado.</p>
             <?php endif; ?>
@@ -216,6 +220,7 @@ if ($grupoAtual && $buscaNome !== '') {
 
         <div class="card">
             <h4>Membros atuais (<?= count($membros) ?>)</h4>
+            <div class="scroll-x">
             <table>
                 <tr><th>Identificação</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
                 <?php foreach ($membros as $m): ?>
@@ -233,6 +238,7 @@ if ($grupoAtual && $buscaNome !== '') {
                     </tr>
                 <?php endforeach; ?>
             </table>
+            </div>
         </div>
     <?php else: ?>
         <div class="card">

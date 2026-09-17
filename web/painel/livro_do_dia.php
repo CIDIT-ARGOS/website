@@ -86,6 +86,7 @@ foreach ($esquadroesParaMontar as $esq) {
     .container { padding: 24px; max-width: 900px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 9px 16px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     .filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .scroll-x { overflow-x: auto; min-width: 0; }

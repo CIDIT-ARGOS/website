@@ -83,6 +83,7 @@ $usuarios = listarUsuariosPainel($conexao);
     .container { padding: 24px; max-width: 1100px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     button.danger { background: var(--danger); }
     button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
