@@ -5,9 +5,17 @@
 
 require_once __DIR__ . '/dispensas_core.php';
 require_once __DIR__ . '/motivos_core.php';
+require_once __DIR__ . '/validacao_core.php';
 
 const TIPOS_RETIRADA_VALIDOS = ['1_jornada', '2_jornada', 'educacao_fisica', 'pernoite'];
 const AGRUPAMENTOS_VALIDOS = ['esquadrilha', 'grupo']; // 'especialidade' ainda não implementado
+
+// Limites batendo com o VARCHAR de retiradas (database/init_db.sql). A
+// observação de um item é TEXT no banco (até 64KB), mas uma observação de
+// verdade é uma frase — sem limite aqui, dava pra lotar o banco com um
+// arquivo gigante por item marcado (issue #25).
+const RETIRADA_LIMITES_CAMPOS = ['responsavel_nome' => 100, 'agrupamento_valor' => 50, 'esquadrao' => 50];
+const RETIRADA_ITEM_LIMITE_OBSERVACAO = 500;
 
 /**
  * Abre uma nova retirada e já cria os itens (um por aluno do grupo), todos como "presente"
@@ -25,6 +33,14 @@ const AGRUPAMENTOS_VALIDOS = ['esquadrilha', 'grupo']; // 'especialidade' ainda 
 function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $esquadrao, $responsavelNome, $painelUsuarioId = null, $alunoServicoId = null) {
     if (trim($responsavelNome ?? '') === '') {
         return ['ok' => false, 'erro' => 'Responsável pela retirada não identificado.'];
+    }
+
+    $erroComprimento = validarComprimentos(
+        ['responsavel_nome' => $responsavelNome, 'agrupamento_valor' => $agrupamentoValor, 'esquadrao' => $esquadrao],
+        RETIRADA_LIMITES_CAMPOS
+    );
+    if ($erroComprimento) {
+        return ['ok' => false, 'erro' => $erroComprimento];
     }
 
     if (!in_array($tipo, TIPOS_RETIRADA_VALIDOS)) {
@@ -104,6 +120,14 @@ function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $es
  */
 function marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, $observacao) {
     $motivoFaltaId = $presente ? null : $motivoFaltaId;
+
+    // observacao é TEXT no banco (até 64KB) — sem limite aqui, dava pra
+    // lotar o banco mandando um arquivo gigante por item marcado numa
+    // chamada (issue #25). Corta em vez de rejeitar: é nota de texto
+    // livre, não tem por que travar o envio da chamada por causa disso.
+    if ($observacao !== null) {
+        $observacao = mb_substr((string) $observacao, 0, RETIRADA_ITEM_LIMITE_OBSERVACAO);
+    }
 
     $stmt = mysqli_prepare($conexao, "
         UPDATE retirada_itens SET presente = ?, motivo_falta_id = ?, observacao = ?

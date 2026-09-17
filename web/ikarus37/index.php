@@ -20,10 +20,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
 
     $ipRequisicao = $_SERVER['REMOTE_ADDR'] ?? '';
     $usuarioBruto = mb_substr(trim($_POST['usuario']), 0, 50);
-    $bloqueadoAte = loginIpBloqueado($conexao, $ipRequisicao)
-        ?? loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto);
 
-    if ($bloqueadoAte) {
+    // Corta ANTES de qualquer consulta ou password_verify() — um POST bruto
+    // (fora do <input maxlength> do HTML) pode mandar uma senha de
+    // megabytes só pra gastar processamento do servidor (issue #25).
+    $senhaOversized = strlen($_POST['senha']) > 200;
+
+    $bloqueadoAte = $senhaOversized ? null : (loginIpBloqueado($conexao, $ipRequisicao)
+        ?? loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto));
+
+    if ($senhaOversized) {
+        loginRegistrarFalhaIp($conexao, $ipRequisicao);
+        $erroLogin = "Usuário ou senha inválidos.";
+    } elseif ($bloqueadoAte) {
         $erroLogin = "Muitas tentativas erradas. Tente de novo depois de " . htmlspecialchars($bloqueadoAte) . ".";
     } else {
         $usuarioDigitado = mysqli_real_escape_string($conexao, $usuarioBruto);
