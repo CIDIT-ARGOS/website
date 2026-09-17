@@ -17,6 +17,8 @@ $filtros = [
 ];
 $alunos = listarAlunos($conexao, $filtros);
 $totalAtivos = contarAlunosAtivos($conexao, $escopo);
+$quantitativoEsquadrao = quantitativoPorEsquadraoEsquadrilha($conexao, $escopo);
+$quantitativoEspecialidade = quantitativoPorEspecialidade($conexao, $escopo);
 
 // listas para os filtros (dentro do escopo)
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
@@ -53,6 +55,19 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     .kpi .valor { font-size: 26px; font-weight: 700; }
     .kpi .rotulo { color: var(--text-muted); font-size: 12px; margin-top: 4px; }
     .link-btn { color: var(--accent); text-decoration: none; font-size: 12px; }
+    h3.subtitulo { font-size: 13px; text-transform: uppercase; letter-spacing: .03em; color: var(--text-muted); margin: 0 0 4px; }
+    .badge-esq { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 1px solid transparent; }
+    .badge-esq.amarelo { background: #fdf1c8; color: #8a6100; border-color: #f0d98a; }
+    .badge-esq.azul { background: #dbe8fd; color: #1d4ed8; border-color: #b6d0fa; }
+    .badge-esq.branco { background: #eef1f6; color: #33404f; border-color: var(--border); }
+    .badge-esq.prata { background: #e4e7ec; color: #33404f; border-color: #cfd4dc; }
+    .badge-esq.verde { background: #d9f2e3; color: var(--ok); border-color: #b3e2c3; }
+    .badge-esq.outro { background: #eef1f6; color: var(--text-muted); border-color: var(--border); }
+    .badge-mf { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+    .badge-mf.m { background: #dbe8fd; color: #1d4ed8; }
+    .badge-mf.f { background: #fbe0ef; color: #be185d; }
+    td.num, th.num { text-align: center; }
+    tr.linha-total { background: var(--bg); font-weight: 600; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
@@ -69,6 +84,62 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     <div class="card">
         <div class="kpis">
             <div class="kpi"><div class="valor"><?= $totalAtivos ?></div><div class="rotulo">Total de alunos na ativa<?= $escopo ? '' : ' (todos os esquadrões)' ?></div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3 class="subtitulo">Quantitativo por esquadrão / esquadrilha</h3>
+        <div class="scroll-x">
+        <table>
+            <tr>
+                <th>Esquadrão</th>
+                <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><th class="num"><?= $letra ?></th><?php endforeach; ?>
+                <th class="num">Total</th>
+                <th>M / F</th>
+            </tr>
+            <?php
+                $totalGeralEsquadrilhas = array_fill_keys(ESQUADRILHAS_PADRAO, 0);
+                $totalGeralM = 0;
+                $totalGeralF = 0;
+            ?>
+            <?php foreach ($quantitativoEsquadrao as $esq => $linha): ?>
+                <?php
+                    $classeCor = ['AMARELO' => 'amarelo', 'AZUL' => 'azul', 'BRANCO' => 'branco', 'PRATA' => 'prata', 'VERDE' => 'verde'][$esq] ?? 'outro';
+                    foreach (ESQUADRILHAS_PADRAO as $letra) { $totalGeralEsquadrilhas[$letra] += $linha['esquadrilhas'][$letra]; }
+                    $totalGeralM += $linha['m'];
+                    $totalGeralF += $linha['f'];
+                ?>
+                <tr>
+                    <td><span class="badge-esq <?= $classeCor ?>"><?= htmlspecialchars($esq) ?></span></td>
+                    <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><td class="num"><?= $linha['esquadrilhas'][$letra] ?></td><?php endforeach; ?>
+                    <td class="num"><strong><?= $linha['total'] ?></strong></td>
+                    <td><span class="badge-mf m">M <?= $linha['m'] ?></span><span class="badge-mf f">F <?= $linha['f'] ?></span></td>
+                </tr>
+            <?php endforeach; ?>
+            <?php if (empty($quantitativoEsquadrao)): ?>
+                <tr><td colspan="7" style="color: var(--text-muted);">Nenhum aluno ativo.</td></tr>
+            <?php else: ?>
+                <tr class="linha-total">
+                    <td>Total</td>
+                    <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><td class="num"><?= $totalGeralEsquadrilhas[$letra] ?></td><?php endforeach; ?>
+                    <td class="num"><?= $totalAtivos ?></td>
+                    <td><span class="badge-mf m">M <?= $totalGeralM ?></span><span class="badge-mf f">F <?= $totalGeralF ?></span></td>
+                </tr>
+            <?php endif; ?>
+        </table>
+        </div>
+
+        <h3 class="subtitulo" style="margin-top:18px;">Quantitativo por especialidade</h3>
+        <div class="scroll-x">
+        <table>
+            <tr><th>Especialidade</th><th class="num">Total</th></tr>
+            <?php foreach ($quantitativoEspecialidade as $e): ?>
+                <tr><td><?= htmlspecialchars($e['especialidade']) ?></td><td class="num"><?= $e['total'] ?></td></tr>
+            <?php endforeach; ?>
+            <?php if (empty($quantitativoEspecialidade)): ?>
+                <tr><td colspan="2" style="color: var(--text-muted);">Nenhum aluno ativo.</td></tr>
+            <?php endif; ?>
+        </table>
         </div>
     </div>
 

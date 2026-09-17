@@ -221,6 +221,72 @@ function listarEsquadroesDistintos($conexao) {
     return $esquadroes;
 }
 
+const ESQUADRILHAS_PADRAO = ['A', 'B', 'C', 'D'];
+
+/**
+ * Quadro "Quantitativo por Esquadrão / Esquadrilha": uma linha por esquadrão
+ * com a contagem em cada esquadrilha (A/B/C/D), total e masculino/feminino.
+ * Não é afetado pelos filtros de busca da tela — é o retrato geral do
+ * efetivo ativo (dentro do escopo de quem está vendo).
+ *
+ * @return array<string, array{esquadrilhas: array<string,int>, total: int, m: int, f: int}>
+ */
+function quantitativoPorEsquadraoEsquadrilha($conexao, $escopo = null) {
+    $sql = "SELECT esquadrao, esquadrilha, sexo, COUNT(*) as total FROM alunos WHERE ativo = 1";
+    $params = [];
+    $tipos = "";
+    if ($escopo !== null) {
+        $sql .= " AND esquadrao = ?";
+        $params[] = $escopo;
+        $tipos .= "s";
+    }
+    $sql .= " GROUP BY esquadrao, esquadrilha, sexo";
+
+    $stmt = mysqli_prepare($conexao, $sql);
+    if ($params) {
+        mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    }
+    mysqli_stmt_execute($stmt);
+    $linhas = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+
+    $porEsquadrao = [];
+    foreach ($linhas as $l) {
+        $esq = $l['esquadrao'];
+        if (!isset($porEsquadrao[$esq])) {
+            $porEsquadrao[$esq] = ['esquadrilhas' => array_fill_keys(ESQUADRILHAS_PADRAO, 0), 'total' => 0, 'm' => 0, 'f' => 0];
+        }
+        $total = (int) $l['total'];
+        $porEsquadrao[$esq]['esquadrilhas'][$l['esquadrilha']] = ($porEsquadrao[$esq]['esquadrilhas'][$l['esquadrilha']] ?? 0) + $total;
+        $porEsquadrao[$esq]['total'] += $total;
+        $porEsquadrao[$esq][$l['sexo'] === 'F' ? 'f' : 'm'] += $total;
+    }
+    ksort($porEsquadrao);
+    return $porEsquadrao;
+}
+
+/**
+ * Quantidade de alunos ativos por especialidade, dentro do escopo. Usado no
+ * mesmo card de quantitativo da tela de efetivo.
+ */
+function quantitativoPorEspecialidade($conexao, $escopo = null) {
+    $sql = "SELECT COALESCE(especialidade, 'Sem especialidade') as especialidade, COUNT(*) as total FROM alunos WHERE ativo = 1";
+    $params = [];
+    $tipos = "";
+    if ($escopo !== null) {
+        $sql .= " AND esquadrao = ?";
+        $params[] = $escopo;
+        $tipos .= "s";
+    }
+    $sql .= " GROUP BY especialidade ORDER BY total DESC";
+
+    $stmt = mysqli_prepare($conexao, $sql);
+    if ($params) {
+        mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    }
+    mysqli_stmt_execute($stmt);
+    return mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
+}
+
 /**
  * @return array{ok: bool, erro?: string, id?: int}
  */
