@@ -1,3 +1,6 @@
 Options -Indexes
-IndexIgnore *
 DirectoryIndex index.php
+
+<IfModule mod_autoindex.c>
+    IndexIgnore *
+</IfModule>
