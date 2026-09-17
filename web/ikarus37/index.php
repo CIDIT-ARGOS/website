@@ -18,8 +18,10 @@ if (isset($_GET['logout'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['senha'])) {
     $conexao = conectarBanco();
 
+    $ipRequisicao = $_SERVER['REMOTE_ADDR'] ?? '';
     $usuarioBruto = mb_substr(trim($_POST['usuario']), 0, 50);
-    $bloqueadoAte = loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto);
+    $bloqueadoAte = loginIpBloqueado($conexao, $ipRequisicao)
+        ?? loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto);
 
     if ($bloqueadoAte) {
         $erroLogin = "Muitas tentativas erradas. Tente de novo depois de " . htmlspecialchars($bloqueadoAte) . ".";
@@ -35,6 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
             $_SESSION['admin_nivel'] = $admin['nivel'];
 
             loginResetarTentativas($conexao, 'admin_usuarios', $admin['id']);
+            loginResetarTentativasIp($conexao, $ipRequisicao);
             mysqli_query($conexao, "UPDATE admin_usuarios SET ultimo_login = NOW() WHERE id = " . (int)$admin['id']);
 
             mysqli_close($conexao);
@@ -44,6 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
             if ($admin) {
                 loginRegistrarFalha($conexao, 'admin_usuarios', $admin['usuario']);
             }
+            loginRegistrarFalhaIp($conexao, $ipRequisicao);
             $erroLogin = "Usuário ou senha inválidos.";
         }
     }

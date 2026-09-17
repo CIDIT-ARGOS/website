@@ -16,8 +16,10 @@ if (isset($_GET['logout'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['senha'])) {
     $conexao = conectarBanco();
 
+    $ipRequisicao = $_SERVER['REMOTE_ADDR'] ?? '';
     $usuarioBruto = mb_substr(trim($_POST['usuario']), 0, 50);
-    $bloqueadoAte = loginContaBloqueada($conexao, 'painel_usuarios', $usuarioBruto)
+    $bloqueadoAte = loginIpBloqueado($conexao, $ipRequisicao)
+        ?? loginContaBloqueada($conexao, 'painel_usuarios', $usuarioBruto)
         ?? loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto);
 
     if ($bloqueadoAte) {
@@ -37,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
             $_SESSION['painel_origem'] = 'painel_usuarios';
 
             loginResetarTentativas($conexao, 'painel_usuarios', $usuario['id']);
+            loginResetarTentativasIp($conexao, $ipRequisicao);
             mysqli_query($conexao, "UPDATE painel_usuarios SET ultimo_login = NOW() WHERE id = " . (int)$usuario['id']);
 
             mysqli_close($conexao);
@@ -56,6 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
                 $_SESSION['painel_origem'] = 'ikarus37';
 
                 loginResetarTentativas($conexao, 'admin_usuarios', $admin['id']);
+                loginResetarTentativasIp($conexao, $ipRequisicao);
                 mysqli_close($conexao);
                 header("Location: index.php");
                 exit;
@@ -66,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
             } elseif ($admin) {
                 loginRegistrarFalha($conexao, 'admin_usuarios', $admin['usuario']);
             }
+            loginRegistrarFalhaIp($conexao, $ipRequisicao);
             $erroLogin = "Usuário ou senha inválidos.";
         }
 

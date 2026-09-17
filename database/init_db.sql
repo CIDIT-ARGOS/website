@@ -25,6 +25,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- é exatamente a lista desatualizada que causou o incidente de 2026-09-17
 -- (init_db.sql rodado em produção travou no meio, apagando algumas tabelas
 -- sem recriar, porque "dispensas" e outras 7 tabelas não estavam aqui).
+DROP TABLE IF EXISTS login_ip_tentativas;
 DROP TABLE IF EXISTS api_logs;
 DROP TABLE IF EXISTS api_chaves;
 DROP TABLE IF EXISTS grupo_acesso_permissoes;
@@ -537,4 +538,15 @@ CREATE TABLE api_logs (
 
   INDEX idx_criado_em (criado_em),
   FOREIGN KEY (api_chave_id) REFERENCES api_chaves(id)
+);
+
+-- ================= BLOQUEIO DE LOGIN POR IP =================
+-- Complementa tentativas_login/bloqueado_ate de admin_usuarios/painel_usuarios
+-- (que travam por CONTA) — isso aqui trava por IP de origem, pra cobrir
+-- password-spray (1 senha comum testada em muitos usuários diferentes).
+CREATE TABLE login_ip_tentativas (
+  ip VARCHAR(45) PRIMARY KEY,
+  tentativas INT NOT NULL DEFAULT 0,
+  bloqueado_ate DATETIME NULL,
+  atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
