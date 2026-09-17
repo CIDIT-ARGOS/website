@@ -121,14 +121,39 @@ $servicos = listarServicos($conexao);
     function alternarMotivo(alunoId, presenteCheckbox) {
         const linha = document.getElementById('linha_' + alunoId);
         const motivoSel = document.getElementById('motivo_' + alunoId);
-        const postoServ = document.getElementById('servico_' + alunoId);
 
         const falta = !presenteCheckbox.checked;
         motivoSel.style.display = falta ? 'inline-block' : 'none';
-        postoServ.style.display = falta ? 'inline-block' : 'none';
         linha.classList.toggle('falta-row', falta);
+
+        // Valida o estado do select de serviço
+        verificarServico(alunoId);
     }
 
+    function verificarServico(alunoId) {
+        const motivoSel = document.getElementById('motivo_' + alunoId);
+        const postoServ = document.getElementById('servico_' + alunoId);
+        
+        // Pega o texto da opção atualmente selecionada no motivo
+        const textoSelecionado = motivoSel.options[motivoSel.selectedIndex] 
+            ? motivoSel.options[motivoSel.selectedIndex].text.trim() 
+            : '';
+
+        // Exibe o select de serviços se o motivo for "Serviço" E o select de motivos estiver visível
+        if (textoSelecionado.toLowerCase() === 'serviço' && motivoSel.style.display !== 'none') {
+            postoServ.style.display = 'inline-block';
+        } else {
+            postoServ.style.display = 'none';
+            postoServ.value = ''; // Limpa a seleção ao esconder
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[id^="motivo_"]').forEach(selectMotivo => {
+            const alunoId = selectMotivo.id.replace('motivo_', '');
+            verificarServico(alunoId);
+        });
+    });
 
     function alternarDispensa(alunoId) {
         const linha = document.getElementById('dispensa_' + alunoId);
@@ -207,7 +232,7 @@ $servicos = listarServicos($conexao);
                         <td><?= htmlspecialchars(identificacaoAluno($item)) ?></td>
                         <td>
                             <select id="motivo_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][motivo_falta_id]"
-                                style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>
+                                style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?> onchange="verificarServico(<?= $item['aluno_id'] ?>)">
                                 <option value="">—</option>
                                 <?php foreach ($motivos as $m): ?>
                                     <option value="<?= $m['id'] ?>" <?= $item['motivo_falta_id'] == $m['id'] ? 'selected' : '' ?>><?= htmlspecialchars($m['nome']) ?></option>
@@ -219,7 +244,9 @@ $servicos = listarServicos($conexao);
                                 style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>
                                 <option value="">—</option>
                                 <?php foreach ($servicos as $s): ?>
-                                    <option value="<?= $s['id'] ?>" <?= $item['id'] == $s['id'] ? 'selected' : '' ?>><?= htmlspecialchars($s['nome']) ?></option>
+                                    <option value="<?= $s['id'] ?>" <?= isset($item['servico_id']) && $item['servico_id'] == $s['id'] ? 'selected' : '' ?>>
+                                    <?= htmlspecialchars($s['nome']) ?>
+                                </option>
                                 <?php endforeach; ?>
                             </select>
                         </td>
