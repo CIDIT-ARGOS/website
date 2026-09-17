@@ -183,7 +183,7 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
                         <button type="button" onclick="alternarEdicaoTurma('<?= $formId ?>')">Editar</button>
                         <button type="button" class="danger" <?= $inativa ? 'disabled' : '' ?>
                             onclick="if(confirm(<?= htmlspecialchars(json_encode($confirmacao), ENT_QUOTES) ?>)) document.getElementById('form_formar_<?= $t['id'] ?>').submit();">
-                            Formar turma
+                            <span class="i" style="--icon-url:url('../images/icons/3sgt.svg')"></span>Formar turma
                         </button>
                     </td>
                 </tr>
