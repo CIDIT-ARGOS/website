@@ -440,3 +440,70 @@ function atribuirTurmaEmLote($conexao, array $alunoIds, $turmaId, $escopo = null
 
     return ['ok' => true, 'atualizados' => mysqli_stmt_affected_rows($stmt)];
 }
+
+function listarPostosGraduacao($conexao) {
+    $r = mysqli_query($conexao, "SELECT codigo, exibicao FROM postos_graduacao ORDER BY exibicao");
+    return mysqli_fetch_all($r, MYSQLI_ASSOC);
+}
+
+/**
+ * Cadastra uma leva inteira de alunos novos de uma vez, um por linha de
+ * texto colada (formato planilha: campos separados por TAB ou ";"), todos
+ * com curso/série/turma_id em comum — usado pela tela de "cadastrar alunos
+ * da turma" (issue #32), pra não depender de cadastrar um por um.
+ *
+ * Formato de cada linha: Posto;Nome de Guerra;Sexo;Identidade Militar;
+ * Milhão;Esquadrilha;Especialidade (opcional);Sub-especialidade (opcional)
+ *
+ * @return array{sucesso: int, erros: array<array{linha:int, texto:string, erro:string}>}
+ */
+function cadastrarAlunosEmLote($conexao, $textoLinhas, $camposComuns) {
+    $sucesso = 0;
+    $erros = [];
+    $numeroLinha = 0;
+
+    foreach (preg_split('/\r\n|\r|\n/', (string) $textoLinhas) as $linha) {
+        $numeroLinha++;
+        $linha = trim($linha);
+        if ($linha === '') {
+            continue;
+        }
+
+        $campos = preg_split('/\t|;/', $linha);
+        $campos = array_map('trim', $campos);
+
+        if (count($campos) < 5) {
+            $erros[] = ['linha' => $numeroLinha, 'texto' => $linha, 'erro' => 'Linha incompleta — informe ao menos Posto, Nome de Guerra, Sexo, Identidade Militar e Milhão.'];
+            continue;
+        }
+
+        [$posto, $nomeGuerra, $sexo, $identidadeMilitar, $milhao] = array_slice($campos, 0, 5);
+        $esquadrilha = $campos[5] ?? '';
+        $especialidade = $campos[6] ?? '';
+        $subEspecialidade = $campos[7] ?? '';
+
+        $dados = array_merge(
+            ['quadro' => null, 'organizacao_militar' => null, 'setor' => null, 'secao' => null, 'ramal' => null, 'qrcode_hash' => null],
+            $camposComuns,
+            [
+                'posto_graduacao' => $posto !== '' ? $posto : 'GS',
+                'nome_guerra' => $nomeGuerra,
+                'sexo' => strtoupper($sexo),
+                'identidade_militar' => $identidadeMilitar,
+                'milhao' => $milhao,
+                'esquadrilha' => $esquadrilha,
+                'especialidade' => $especialidade ?: null,
+                'sub_especialidade' => $subEspecialidade ?: null,
+            ]
+        );
+
+        $resultado = criarAluno($conexao, $dados);
+        if ($resultado['ok']) {
+            $sucesso++;
+        } else {
+            $erros[] = ['linha' => $numeroLinha, 'texto' => $linha, 'erro' => $resultado['erro']];
+        }
+    }
+
+    return ['sucesso' => $sucesso, 'erros' => $erros];
+}

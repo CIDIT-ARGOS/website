@@ -177,6 +177,9 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
                     <td><?= (int) $t['alunos_ativos'] ?></td>
                     <td><span class="badge <?= $inativa ? 'formada' : 'ativa' ?>"><?= $inativa ? 'formada' : 'ativa' ?></span></td>
                     <td style="white-space:nowrap;">
+                        <?php if (podeEditarEfetivo() && !$inativa): ?>
+                            <a href="turma_cadastrar_alunos.php?turma_id=<?= $t['id'] ?>" class="link-btn" style="font-size:12px; color:var(--accent); margin-right:8px;">Cadastrar alunos</a>
+                        <?php endif; ?>
                         <button type="button" onclick="alternarEdicaoTurma('<?= $formId ?>')">Editar</button>
                         <button type="button" class="danger" <?= $inativa ? 'disabled' : '' ?>
                             onclick="if(confirm(<?= htmlspecialchars(json_encode($confirmacao), ENT_QUOTES) ?>)) document.getElementById('form_formar_<?= $t['id'] ?>').submit();">
