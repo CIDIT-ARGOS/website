@@ -216,12 +216,20 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
         <h4>Documentação dos endpoints</h4>
         <p style="color: var(--text-muted); font-size: 13px;">
             Base: <code class="rota">https://sigsaeear.com/cidit/projetos/11/api/</code><br>
-            Toda requisição precisa do header <code>X-API-Key: &lt;sua chave&gt;</code>. Corpo em JSON, respostas em JSON.
+            Toda requisição precisa do header <code>X-API-Key: &lt;sua chave&gt;</code>. Corpo em JSON, respostas em JSON.<br>
+            <strong>Endpoints marcados "requer sessão"</strong> também exigem o header <code>X-Session-Token: &lt;token&gt;</code>, obtido em <code>POST /sessao.php</code> — a chave sozinha só identifica o aplicativo, a sessão identifica o aluno (issue #26). Sem sessão válida, essas rotas respondem 401.
         </p>
 
         <div class="endpoint">
-            <span class="metodo-tag metodo-get">GET</span><code class="rota">alunos.php</code> — lista alunos
-            <p style="color: var(--text-muted); font-size: 12px;">Filtros opcionais: <code>?esquadrilha=</code>, <code>?especialidade=</code>, <code>?esquadrao=</code>, <code>?curso=</code>, <code>?qrcode_hash=</code>, <code>?id=</code> (um só), <code>?incluir_inativos</code></p>
+            <span class="metodo-tag metodo-post">POST</span><code class="rota">sessao.php</code> — login do app do aluno via QR code
+            <details><summary>ver exemplo de corpo</summary>
+<pre>{ "qrcode_hash": "hash sha256 (64 hex) do QR code do aluno" }</pre>
+            </details>
+            <p style="color: var(--text-muted); font-size: 12px;">Devolve <code>token</code> (válido por 16h) + os dados do aluno. Use o token no header <code>X-Session-Token</code> nas rotas marcadas "requer sessão" abaixo.</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">alunos.php</code> — lista o efetivo <strong>do próprio esquadrão</strong> da sessão (requer sessão)
+            <p style="color: var(--text-muted); font-size: 12px;">Filtros opcionais: <code>?esquadrilha=</code>, <code>?especialidade=</code>, <code>?curso=</code>, <code>?id=</code> (um só, precisa ser do mesmo esquadrão). <code>?esquadrao=</code> é ignorado — o escopo é sempre o esquadrão da sessão.</p>
         </div>
         <div class="endpoint">
             <span class="metodo-tag metodo-post">POST</span><code class="rota">alunos.php</code> — cria aluno
@@ -240,36 +248,35 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
             <span class="metodo-tag metodo-delete">DELETE</span><code class="rota">alunos.php?id=X</code> — inativa aluno (soft delete)
         </div>
         <div class="endpoint">
-            <span class="metodo-tag metodo-get">GET</span><code class="rota">motivos.php</code> — lista motivos de falta ativos
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">motivos.php</code> — lista motivos de falta ativos (requer sessão)
         </div>
         <div class="endpoint">
             <span class="metodo-tag metodo-get">GET</span><code class="rota">retiradas.php</code> — lista retiradas
             <p style="color: var(--text-muted); font-size: 12px;">Filtros: <code>?esquadrao=</code>, <code>?status=</code>, <code>?tipo=</code>, <code>?id=</code></p>
         </div>
         <div class="endpoint">
-            <span class="metodo-tag metodo-post">POST</span><code class="rota">retiradas.php</code> — abre uma retirada (já cria os itens, todos "presente")
+            <span class="metodo-tag metodo-post">POST</span><code class="rota">retiradas.php</code> — abre uma retirada (já cria os itens, todos "presente") (requer sessão)
             <details><summary>ver exemplo de corpo</summary>
 <pre>{
   "tipo": "1_jornada",
   "agrupamento_tipo": "esquadrilha",
   "agrupamento_valor": "A",
-  "esquadrao": "PRATA",
-  "responsavel_nome": "AL 26/3138 SIN SIMIONI"
+  "esquadrao": "PRATA"
 }</pre>
             </details>
-            <p style="color: var(--text-muted); font-size: 12px;"><code>responsavel_nome</code> é obrigatório — a API ainda não tem login de usuário, então quem chama é responsável por informar quem de fato está abrindo a retirada (isso muda quando o app tiver autenticação própria). <code>aluno_servico_id</code> é opcional e legado.</p>
+            <p style="color: var(--text-muted); font-size: 12px;"><code>responsavel_nome</code> não é mais um campo do corpo — é sempre derivado do aluno da sessão, pra não dar pra abrir uma retirada e atribuí-la a outra pessoa. <code>esquadrao</code> precisa ser o mesmo esquadrão da sessão (senão 403).</p>
         </div>
         <div class="endpoint">
-            <span class="metodo-tag metodo-put">PUT</span><code class="rota">retiradas.php?id=X&acao=enviar</code> — fecha a retirada e gera protocolo
+            <span class="metodo-tag metodo-put">PUT</span><code class="rota">retiradas.php?id=X&acao=enviar</code> — fecha a retirada e gera protocolo (requer sessão do mesmo esquadrão da retirada)
         </div>
         <div class="endpoint">
             <span class="metodo-tag metodo-delete">DELETE</span><code class="rota">retiradas.php?id=X</code> — exclui a retirada e seus itens
         </div>
         <div class="endpoint">
-            <span class="metodo-tag metodo-get">GET</span><code class="rota">retirada_itens.php?retirada_id=X</code> — lista o efetivo da retirada com status atual
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">retirada_itens.php?retirada_id=X</code> — lista o efetivo da retirada com status atual (requer sessão do mesmo esquadrão)
         </div>
         <div class="endpoint">
-            <span class="metodo-tag metodo-put">PUT</span><code class="rota">retirada_itens.php?retirada_id=X&aluno_id=Y</code> — marca presença/falta de um aluno
+            <span class="metodo-tag metodo-put">PUT</span><code class="rota">retirada_itens.php?retirada_id=X&aluno_id=Y</code> — marca presença/falta de um aluno (requer sessão do mesmo esquadrão)
             <details><summary>ver exemplo de corpo</summary>
 <pre>{ "presente": 0, "motivo_falta_id": 1, "observacao": "opcional" }</pre>
             </details>

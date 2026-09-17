@@ -5,7 +5,7 @@ require_once __DIR__ . '/../core/config.php';
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, X-API-Key');
+header('Access-Control-Allow-Headers: Content-Type, X-API-Key, X-Session-Token');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -85,3 +85,24 @@ if (!$chaveEncontrada) {
 
 $GLOBALS['__api_chave_id'] = (int) $chaveEncontrada['id'];
 mysqli_query($conexao, "UPDATE api_chaves SET ultimo_uso = NOW() WHERE id = " . (int)$chaveEncontrada['id']);
+
+// ---------- Sessão de aluno (login via QR code) — issue #26 ----------
+// A chave sozinha só prova "é um app confiável", não "é este aluno
+// específico". Rotas do fluxo do app do aluno (efetivo, motivos, abrir/
+// marcar/enviar retirada) chamam exigirSessaoAluno() pra exigir também um
+// token válido de POST /api/sessao.php. Endpoints administrativos (CRUD
+// de alunos/painel_usuarios/grupos, relatórios) continuam só com a chave
+// — não fazem parte do fluxo do aluno, e travar atrás de sessão dele
+// criaria escalonamento de privilégio, não corrigiria um.
+function exigirSessaoAluno($conexao) {
+    require_once __DIR__ . '/../core/api_sessoes_core.php';
+
+    $token = $_SERVER['HTTP_X_SESSION_TOKEN'] ?? '';
+    $aluno = validarSessaoAluno($conexao, $token);
+
+    if (!$aluno) {
+        erro('Sessão inválida ou expirada. Faça login de novo (POST /api/sessao.php) e envie o token em X-Session-Token.', 401);
+    }
+
+    return $aluno;
+}

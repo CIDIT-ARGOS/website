@@ -7,23 +7,43 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 
 switch ($metodo) {
 
-    // ---------- LISTAR ITENS DE UMA RETIRADA ----------
+    // ---------- LISTAR ITENS DE UMA RETIRADA (exige sessão de aluno) ----------
     case 'GET':
+        $alunoSessao = exigirSessaoAluno($conexao);
+
         $retiradaId = isset($_GET['retirada_id']) ? (int) $_GET['retirada_id'] : null;
         if (!$retiradaId) {
             erro("Informe retirada_id (?retirada_id=).");
         }
 
+        $retiradaAlvo = buscarRetiradaPorId($conexao, $retiradaId);
+        if (!$retiradaAlvo) {
+            erro("Retirada não encontrada.", 404);
+        }
+        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao']) {
+            erro("Você só pode ver retiradas do seu próprio esquadrão.", 403);
+        }
+
         responder(listarItensRetirada($conexao, $retiradaId));
         break;
 
-    // ---------- MARCAR PRESENÇA/FALTA DE UM ALUNO ----------
+    // ---------- MARCAR PRESENÇA/FALTA DE UM ALUNO (exige sessão de aluno) ----------
     case 'PUT':
+        $alunoSessao = exigirSessaoAluno($conexao);
+
         $retiradaId = isset($_GET['retirada_id']) ? (int) $_GET['retirada_id'] : null;
         $alunoId = isset($_GET['aluno_id']) ? (int) $_GET['aluno_id'] : null;
 
         if (!$retiradaId || !$alunoId) {
             erro("Informe retirada_id e aluno_id na query string.");
+        }
+
+        $retiradaAlvo = buscarRetiradaPorId($conexao, $retiradaId);
+        if (!$retiradaAlvo) {
+            erro("Retirada não encontrada.", 404);
+        }
+        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao']) {
+            erro("Você só pode marcar retiradas do seu próprio esquadrão.", 403);
         }
 
         $dados = corpoJson();
