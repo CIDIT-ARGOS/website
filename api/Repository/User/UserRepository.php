@@ -52,4 +52,23 @@ class UserRepository
             throw new \Exception("Erro ao atualizar último login: " . $e->getMessage());
         }
     }
+
+    public function getAll(
+        string $sql,
+        string $types,
+        array $params,
+        DbConnection $db
+    ) {
+        try {
+            $connection = $db->getConnection();
+            $stmt = mysqli_prepare($connection, $sql);
+            if ($types && $params) {
+                mysqli_stmt_bind_param($stmt, $types, ...$params);
+            }
+            mysqli_stmt_execute($stmt);
+            return mysqli_stmt_get_result($stmt);
+        } catch (\Exception $e) {
+            throw new \Exception("Erro ao buscar usuários: " . $e->getMessage());
+        }
+    }
 }

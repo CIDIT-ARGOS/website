@@ -3,55 +3,63 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/Database/DbConnection.php';
 require_once __DIR__ . '../Validation/StudentValidate.php';
+require_once __DIR__ . './Repository/User/UserRepository.php';
 
+use api\Repository\User\UserRepository;
+use api\Database\DbConnection\DbConnection;
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 
+$userRepository = new UserRepository();
+
+$db = new DbConnection(
+    "localhost",
+    "argos",
+    "argos",
+    "argos"
+);
 
 switch ($metodo) {
     // ---------- LISTAR / BUSCAR ----------
     case 'GET':
         if ($id) {
-            $stmt = mysqli_prepare($conexao, "SELECT * FROM alunos WHERE id = ?");
-            mysqli_stmt_bind_param($stmt, "i", $id);
-            mysqli_stmt_execute($stmt);
-            $aluno = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-
-            if (!$aluno) {
+            $student = $userRepository->getById($db, $id);
+            if (!$student) {
                 erro("Aluno não encontrado.", 404);
             }
-            responder($aluno);
+            responder($student);
         }
 
         $filtros = [];
         $params = [];
         $tipos = "";
 
+        // TODO: tipos repetidos, refatorar para função
         if (!empty($_GET['esquadrilha'])) {
             $filtros[] = "esquadrilha = ?";
             $params[] = $_GET['esquadrilha'];
-            $tipos .= "s";
+            //$tipos .= "s";
         }
         if (!empty($_GET['especialidade'])) {
             $filtros[] = "especialidade = ?";
             $params[] = $_GET['especialidade'];
-            $tipos .= "s";
+            //$tipos .= "s";
         }
         if (!empty($_GET['esquadrao'])) {
             $filtros[] = "esquadrao = ?";
             $params[] = $_GET['esquadrao'];
-            $tipos .= "s";
+            //$tipos .= "s";
         }
         if (!empty($_GET['curso'])) {
             $filtros[] = "curso = ?";
             $params[] = $_GET['curso'];
-            $tipos .= "s";
+            //$tipos .= "s";
         }
         if (!empty($_GET['qrcode_hash'])) {
             $filtros[] = "qrcode_hash = ?";
             $params[] = $_GET['qrcode_hash'];
-            $tipos .= "s";
+            //$tipos .= "s";
         }
         if (!isset($_GET['incluir_inativos'])) {
             $filtros[] = "ativo = 1";
@@ -62,6 +70,10 @@ switch ($metodo) {
 
         $stmt = mysqli_prepare($conexao, $sql);
         if ($params) {
+            //TODO: validar!
+            if (isset($_GET['incluir_inativos'])) {
+                $tipos .= "s";
+            }
             mysqli_stmt_bind_param($stmt, $tipos, ...$params);
         }
         mysqli_stmt_execute($stmt);
