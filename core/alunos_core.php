@@ -143,13 +143,13 @@ function listarAlunos($conexao, $filtros = []) {
     $orderBy = $filtros['order_by'] ?? "a.nome_guerra ASC";
 
     $selectPosto = !empty($filtros['com_posto_exibicao'])
-        ? "a.*, COALESCE(p.exibicao, a.posto_graduacao) as posto_exibicao"
-        : "a.*";
+        ? "a.*, COALESCE(p.exibicao, a.posto_graduacao) as posto_exibicao, t.nome AS turma_nome"
+        : "a.*, t.nome AS turma_nome";
     $joinPosto = !empty($filtros['com_posto_exibicao'])
         ? "LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao"
         : "";
 
-    $sql = "SELECT $selectPosto FROM alunos a $joinPosto $where ORDER BY $orderBy";
+    $sql = "SELECT $selectPosto FROM alunos a $joinPosto LEFT JOIN turmas t ON t.id = a.turma_id $where ORDER BY $orderBy";
 
     $stmt = mysqli_prepare($conexao, $sql);
     if ($params) {
@@ -400,4 +400,43 @@ function inativarAluno($conexao, $id) {
     $stmt = mysqli_prepare($conexao, "UPDATE alunos SET ativo = 0 WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "i", $id);
     return mysqli_stmt_execute($stmt);
+}
+
+/**
+ * Atribui (ou remove, se $turmaId for null) uma turma a vários alunos de uma
+ * vez — usada pela ação em lote da tela de Efetivo, pra não depender de
+ * editar aluno por aluno quando uma turma inteira precisa ser vinculada.
+ * $escopo (esquadrão), quando informado, é reforçado na query — mesmo que o
+ * POST venha manipulado, só afeta alunos dentro do esquadrão de quem está
+ * autenticado.
+ *
+ * @return array{ok: bool, erro?: string, atualizados?: int}
+ */
+function atribuirTurmaEmLote($conexao, array $alunoIds, $turmaId, $escopo = null) {
+    $alunoIds = array_values(array_unique(array_filter(array_map('intval', $alunoIds))));
+    if (empty($alunoIds)) {
+        return ['ok' => false, 'erro' => 'Selecione ao menos um aluno.'];
+    }
+
+    $marcadores = implode(',', array_fill(0, count($alunoIds), '?'));
+    $tipos = str_repeat('i', count($alunoIds));
+    $valores = $alunoIds;
+
+    $sql = "UPDATE alunos SET turma_id = ? WHERE ativo = 1 AND id IN ($marcadores)";
+    array_unshift($valores, $turmaId);
+    $tipos = 'i' . $tipos;
+
+    if ($escopo !== null) {
+        $sql .= " AND esquadrao = ?";
+        $valores[] = $escopo;
+        $tipos .= 's';
+    }
+
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$valores);
+    if (!mysqli_stmt_execute($stmt)) {
+        return ['ok' => false, 'erro' => 'Erro ao atribuir turma: ' . mysqli_error($conexao)];
+    }
+
+    return ['ok' => true, 'atualizados' => mysqli_stmt_affected_rows($stmt)];
 }
