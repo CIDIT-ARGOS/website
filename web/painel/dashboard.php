@@ -36,10 +36,13 @@ $porAgrupamento = $escopo === null
     : relatorioPorEsquadrilha($conexao, $filtros);
 
 $faltasReais = 0;
+$dispensasMedicasPeriodo = 0;
 $ausenciasJustificadas = 0;
 foreach ($porClassificacao as $c) {
-    if ($c['classificacao'] === 'falta') {
+    if ($c['categoria'] === 'falta') {
         $faltasReais = (int) $c['total'];
+    } elseif ($c['categoria'] === 'dispensa_medica') {
+        $dispensasMedicasPeriodo = (int) $c['total'];
     } else {
         $ausenciasJustificadas += (int) $c['total'];
     }
@@ -137,8 +140,8 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 
     <div class="graficos">
         <div class="card">
-            <h4 style="margin-top:0;">Ausências no período: falta x justificada</h4>
-            <?php if ($faltasReais + $ausenciasJustificadas === 0): ?>
+            <h4 style="margin-top:0;">Ausências no período: falta x dispensa médica x justificada</h4>
+            <?php if ($faltasReais + $dispensasMedicasPeriodo + $ausenciasJustificadas === 0): ?>
                 <p class="vazio">Nenhuma ausência registrada no período.</p>
             <?php else: ?>
                 <div class="grafico-wrap"><canvas id="graficoClassificacao"></canvas></div>
@@ -193,14 +196,14 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
     Chart.defaults.font.size = 12;
 
-    <?php if ($faltasReais + $ausenciasJustificadas > 0): ?>
+    <?php if ($faltasReais + $dispensasMedicasPeriodo + $ausenciasJustificadas > 0): ?>
     new Chart(document.getElementById('graficoClassificacao'), {
         type: 'doughnut',
         data: {
-            labels: ['Falta', 'Ausência justificada'],
+            labels: ['Falta', 'Dispensa médica', 'Ausência justificada'],
             datasets: [{
-                data: [<?= $faltasReais ?>, <?= $ausenciasJustificadas ?>],
-                backgroundColor: ['#c0392b', '#e0b84c'],
+                data: [<?= $faltasReais ?>, <?= $dispensasMedicasPeriodo ?>, <?= $ausenciasJustificadas ?>],
+                backgroundColor: ['#c0392b', '#2f6fed', '#e0b84c'],
             }],
         },
         options: { responsive: true, maintainAspectRatio: false },
