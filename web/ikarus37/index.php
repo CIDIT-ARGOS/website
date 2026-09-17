@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/login_seguranca_core.php';
 
 session_start();
 
@@ -17,23 +18,34 @@ if (isset($_GET['logout'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['senha'])) {
     $conexao = conectarBanco();
 
-    $usuarioDigitado = mysqli_real_escape_string($conexao, $_POST['usuario']);
-    $resultado = mysqli_query($conexao, "SELECT id, nome, usuario, senha_hash, nivel, ativo FROM admin_usuarios WHERE usuario = '$usuarioDigitado' LIMIT 1");
-    $admin = $resultado ? mysqli_fetch_assoc($resultado) : null;
+    $usuarioBruto = mb_substr(trim($_POST['usuario']), 0, 50);
+    $bloqueadoAte = loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto);
 
-    if ($admin && (int)$admin['ativo'] === 1 && password_verify($_POST['senha'], $admin['senha_hash'])) {
-        $_SESSION['admin_id'] = $admin['id'];
-        $_SESSION['admin_nome'] = $admin['nome'];
-        $_SESSION['admin_usuario'] = $admin['usuario'];
-        $_SESSION['admin_nivel'] = $admin['nivel'];
-
-        mysqli_query($conexao, "UPDATE admin_usuarios SET ultimo_login = NOW() WHERE id = " . (int)$admin['id']);
-
-        mysqli_close($conexao);
-        header("Location: index.php");
-        exit;
+    if ($bloqueadoAte) {
+        $erroLogin = "Muitas tentativas erradas. Tente de novo depois de " . htmlspecialchars($bloqueadoAte) . ".";
     } else {
-        $erroLogin = "Usuário ou senha inválidos.";
+        $usuarioDigitado = mysqli_real_escape_string($conexao, $usuarioBruto);
+        $resultado = mysqli_query($conexao, "SELECT id, nome, usuario, senha_hash, nivel, ativo FROM admin_usuarios WHERE usuario = '$usuarioDigitado' LIMIT 1");
+        $admin = $resultado ? mysqli_fetch_assoc($resultado) : null;
+
+        if ($admin && (int)$admin['ativo'] === 1 && password_verify($_POST['senha'], $admin['senha_hash'])) {
+            $_SESSION['admin_id'] = $admin['id'];
+            $_SESSION['admin_nome'] = $admin['nome'];
+            $_SESSION['admin_usuario'] = $admin['usuario'];
+            $_SESSION['admin_nivel'] = $admin['nivel'];
+
+            loginResetarTentativas($conexao, 'admin_usuarios', $admin['id']);
+            mysqli_query($conexao, "UPDATE admin_usuarios SET ultimo_login = NOW() WHERE id = " . (int)$admin['id']);
+
+            mysqli_close($conexao);
+            header("Location: index.php");
+            exit;
+        } else {
+            if ($admin) {
+                loginRegistrarFalha($conexao, 'admin_usuarios', $admin['usuario']);
+            }
+            $erroLogin = "Usuário ou senha inválidos.";
+        }
     }
 
     mysqli_close($conexao);
@@ -194,9 +206,9 @@ $podeTecnicoAvancado = $logado && temPermissao(conectarBanco(), 'ikarus37', $_SE
             <p class="sub">Painel administrativo — Projeto Argos</p>
             <?php if ($erroLogin): ?><p class="erro"><?= htmlspecialchars($erroLogin) ?></p><?php endif; ?>
             <form method="post">
-                <input type="text" name="usuario" placeholder="Usuário" autofocus required>
+                <input type="text" name="usuario" placeholder="Usuário" maxlength="50" autofocus required>
                 <div class="campo-senha">
-                    <input type="password" name="senha" id="campo_senha_login" placeholder="Senha" required>
+                    <input type="password" name="senha" id="campo_senha_login" placeholder="Senha" maxlength="200" required>
                     <button type="button" class="toggle-senha" onclick="alternarSenha('campo_senha_login', this)" aria-label="Mostrar senha">
                         <span class="i" style="--icon-url:url('../images/icons/eye.svg'); margin:0;"></span>
                     </button>

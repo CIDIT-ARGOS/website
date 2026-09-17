@@ -5,6 +5,11 @@
 // Usada pela tela de gestão (dispensas.php), pela sugestão automática na
 // chamada (retiradas_core.php::abrirRetirada) e pelo Livro do Dia.
 
+require_once __DIR__ . '/validacao_core.php';
+
+// Limites batendo com o VARCHAR de dispensas (database/init_db.sql).
+const DISPENSA_LIMITES_CAMPOS = ['numero' => 20, 'motivo' => 255, 'dispensado_de' => 255];
+
 function listarDispensaTipos($conexao) {
     $resultado = mysqli_query($conexao, "SELECT * FROM dispensa_tipos WHERE ativo = 1 ORDER BY ordem");
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
@@ -146,6 +151,10 @@ function criarDispensa($conexao, $dados) {
     if ($motivo === '') {
         return ['ok' => false, 'erro' => 'Informe o motivo da dispensa.'];
     }
+    $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
+    if ($erroComprimento) {
+        return ['ok' => false, 'erro' => $erroComprimento];
+    }
 
     $stmt = mysqli_prepare($conexao, "
         INSERT INTO dispensas (aluno_id, data_inicio, data_termino, numero, motivo, dispensado_de, painel_usuario_id)
@@ -175,6 +184,10 @@ function atualizarDispensa($conexao, $id, $dados) {
     }
     if ($motivo === '') {
         return ['ok' => false, 'erro' => 'Informe o motivo da dispensa.'];
+    }
+    $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
+    if ($erroComprimento) {
+        return ['ok' => false, 'erro' => $erroComprimento];
     }
 
     $stmt = mysqli_prepare($conexao, "

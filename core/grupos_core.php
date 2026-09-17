@@ -4,8 +4,12 @@
 // Usada tanto pela API (/api/grupos.php) quanto pelas telas do painel.
 
 require_once __DIR__ . '/motivos_core.php';
+require_once __DIR__ . '/validacao_core.php';
 
 const CATEGORIAS_GRUPO_VALIDAS = ['clube', 'servico', 'comissao'];
+
+// grupos.nome é VARCHAR(50) (database/init_db.sql).
+const GRUPO_LIMITE_NOME = 50;
 
 function listarGrupos($conexao, $incluirInativos = false) {
     $where = $incluirInativos ? "" : "WHERE ativo = 1";
@@ -37,6 +41,9 @@ function criarGrupo($conexao, $nome, $categoria) {
     }
     if (!in_array($categoria, CATEGORIAS_GRUPO_VALIDAS)) {
         return ['ok' => false, 'erro' => 'Categoria inválida.'];
+    }
+    if (mb_strlen($nome) > GRUPO_LIMITE_NOME) {
+        return ['ok' => false, 'erro' => "Nome excede o tamanho máximo permitido (" . GRUPO_LIMITE_NOME . " caracteres)."];
     }
     if (buscarGrupoPorNome($conexao, $nome)) {
         return ['ok' => false, 'erro' => 'Já existe um grupo com esse nome.'];

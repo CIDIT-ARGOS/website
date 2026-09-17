@@ -46,6 +46,30 @@ function corpoJson() {
     return is_array($dados) ? $dados : [];
 }
 
+// ---------- Rate limit por IP contra força bruta de chave ----------
+// A chave em si (256 bits aleatórios) é inviável de adivinhar por força
+// bruta pura, mas nada impedia um script martelar tentativas indefinidamente
+// — isso aqui trava temporariamente um IP que já errou demais, reaproveitando
+// o api_logs que já existe (sem tabela nova).
+const API_RATE_LIMITE_MAX_ERROS = 20;
+const API_RATE_LIMITE_JANELA_MINUTOS = 5;
+
+$ipRequisicao = $_SERVER['REMOTE_ADDR'] ?? '';
+if ($ipRequisicao !== '') {
+    $stmt = mysqli_prepare($conexao, "
+        SELECT COUNT(*) as total FROM api_logs
+        WHERE ip = ? AND status_code = 401 AND criado_em >= DATE_SUB(NOW(), INTERVAL ? MINUTE)
+    ");
+    $janelaMinutos = API_RATE_LIMITE_JANELA_MINUTOS;
+    mysqli_stmt_bind_param($stmt, "si", $ipRequisicao, $janelaMinutos);
+    mysqli_stmt_execute($stmt);
+    $totalErros401 = (int) (mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['total'] ?? 0);
+
+    if ($totalErros401 >= API_RATE_LIMITE_MAX_ERROS) {
+        erro('Muitas tentativas com chave inválida a partir deste IP. Tente novamente mais tarde.', 429);
+    }
+}
+
 // ---------- Autenticação por API key (validada contra o banco, não mais fixa) ----------
 $chaveRecebida = $_SERVER['HTTP_X_API_KEY'] ?? '';
 $chaveHash = hash('sha256', $chaveRecebida);

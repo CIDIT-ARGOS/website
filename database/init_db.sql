@@ -58,7 +58,9 @@ CREATE TABLE admin_usuarios (
   nivel VARCHAR(30) NOT NULL DEFAULT 'admin',
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  ultimo_login DATETIME NULL
+  ultimo_login DATETIME NULL,
+  tentativas_login INT NOT NULL DEFAULT 0,
+  bloqueado_ate DATETIME NULL
 );
 
 -- Admin básico pra conseguir entrar no /ikarus37 assim que o init terminar.
@@ -77,7 +79,9 @@ CREATE TABLE painel_usuarios (
   esquadrao VARCHAR(50) NULL,
   ativo TINYINT(1) NOT NULL DEFAULT 1,
   criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  ultimo_login DATETIME NULL
+  ultimo_login DATETIME NULL,
+  tentativas_login INT NOT NULL DEFAULT 0,
+  bloqueado_ate DATETIME NULL
 );
 -- Regra "esquadrao obrigatório só para cargos de esquadrão" é validada em PHP
 -- (ikarus37/usuarios.php e painel/usuarios.php), não via CHECK — evita

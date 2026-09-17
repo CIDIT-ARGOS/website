@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/login_seguranca_core.php';
 
 session_start();
 
@@ -15,45 +16,61 @@ if (isset($_GET['logout'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['senha'])) {
     $conexao = conectarBanco();
 
-    $usuarioDigitado = mysqli_real_escape_string($conexao, $_POST['usuario']);
-    $resultado = mysqli_query($conexao, "SELECT id, nome, usuario, senha_hash, cargo, esquadrao, ativo FROM painel_usuarios WHERE usuario = '$usuarioDigitado' LIMIT 1");
-    $usuario = $resultado ? mysqli_fetch_assoc($resultado) : null;
+    $usuarioBruto = mb_substr(trim($_POST['usuario']), 0, 50);
+    $bloqueadoAte = loginContaBloqueada($conexao, 'painel_usuarios', $usuarioBruto)
+        ?? loginContaBloqueada($conexao, 'admin_usuarios', $usuarioBruto);
 
-    if ($usuario && (int)$usuario['ativo'] === 1 && password_verify($_POST['senha'], $usuario['senha_hash'])) {
-        $_SESSION['painel_id'] = $usuario['id'];
-        $_SESSION['painel_nome'] = $usuario['nome'];
-        $_SESSION['painel_usuario'] = $usuario['usuario'];
-        $_SESSION['painel_cargo'] = $usuario['cargo'];
-        $_SESSION['painel_esquadrao'] = $usuario['esquadrao'];
-        $_SESSION['painel_origem'] = 'painel_usuarios';
-
-        mysqli_query($conexao, "UPDATE painel_usuarios SET ultimo_login = NOW() WHERE id = " . (int)$usuario['id']);
-
+    if ($bloqueadoAte) {
+        $erroLogin = "Muitas tentativas erradas. Tente de novo depois de " . htmlspecialchars($bloqueadoAte) . ".";
         mysqli_close($conexao);
-        header("Location: index.php");
-        exit;
     } else {
-        // Ponte: quem tem conta técnica no Ikarus37 também acessa o painel, como Administrador Técnico.
-        $resultadoAdmin = mysqli_query($conexao, "SELECT id, nome, usuario, senha_hash, ativo FROM admin_usuarios WHERE usuario = '$usuarioDigitado' LIMIT 1");
-        $admin = $resultadoAdmin ? mysqli_fetch_assoc($resultadoAdmin) : null;
+        $usuarioDigitado = mysqli_real_escape_string($conexao, $usuarioBruto);
+        $resultado = mysqli_query($conexao, "SELECT id, nome, usuario, senha_hash, cargo, esquadrao, ativo FROM painel_usuarios WHERE usuario = '$usuarioDigitado' LIMIT 1");
+        $usuario = $resultado ? mysqli_fetch_assoc($resultado) : null;
 
-        if ($admin && (int)$admin['ativo'] === 1 && password_verify($_POST['senha'], $admin['senha_hash'])) {
-            $_SESSION['painel_id'] = 'admin_' . $admin['id'];
-            $_SESSION['painel_nome'] = $admin['nome'];
-            $_SESSION['painel_usuario'] = $admin['usuario'];
-            $_SESSION['painel_cargo'] = 'ADMIN_TECNICO';
-            $_SESSION['painel_esquadrao'] = null;
-            $_SESSION['painel_origem'] = 'ikarus37';
+        if ($usuario && (int)$usuario['ativo'] === 1 && password_verify($_POST['senha'], $usuario['senha_hash'])) {
+            $_SESSION['painel_id'] = $usuario['id'];
+            $_SESSION['painel_nome'] = $usuario['nome'];
+            $_SESSION['painel_usuario'] = $usuario['usuario'];
+            $_SESSION['painel_cargo'] = $usuario['cargo'];
+            $_SESSION['painel_esquadrao'] = $usuario['esquadrao'];
+            $_SESSION['painel_origem'] = 'painel_usuarios';
+
+            loginResetarTentativas($conexao, 'painel_usuarios', $usuario['id']);
+            mysqli_query($conexao, "UPDATE painel_usuarios SET ultimo_login = NOW() WHERE id = " . (int)$usuario['id']);
 
             mysqli_close($conexao);
             header("Location: index.php");
             exit;
+        } else {
+            // Ponte: quem tem conta técnica no Ikarus37 também acessa o painel, como Administrador Técnico.
+            $resultadoAdmin = mysqli_query($conexao, "SELECT id, nome, usuario, senha_hash, ativo FROM admin_usuarios WHERE usuario = '$usuarioDigitado' LIMIT 1");
+            $admin = $resultadoAdmin ? mysqli_fetch_assoc($resultadoAdmin) : null;
+
+            if ($admin && (int)$admin['ativo'] === 1 && password_verify($_POST['senha'], $admin['senha_hash'])) {
+                $_SESSION['painel_id'] = 'admin_' . $admin['id'];
+                $_SESSION['painel_nome'] = $admin['nome'];
+                $_SESSION['painel_usuario'] = $admin['usuario'];
+                $_SESSION['painel_cargo'] = 'ADMIN_TECNICO';
+                $_SESSION['painel_esquadrao'] = null;
+                $_SESSION['painel_origem'] = 'ikarus37';
+
+                loginResetarTentativas($conexao, 'admin_usuarios', $admin['id']);
+                mysqli_close($conexao);
+                header("Location: index.php");
+                exit;
+            }
+
+            if ($usuario) {
+                loginRegistrarFalha($conexao, 'painel_usuarios', $usuario['usuario']);
+            } elseif ($admin) {
+                loginRegistrarFalha($conexao, 'admin_usuarios', $admin['usuario']);
+            }
+            $erroLogin = "Usuário ou senha inválidos.";
         }
 
-        $erroLogin = "Usuário ou senha inválidos.";
+        mysqli_close($conexao);
     }
-
-    mysqli_close($conexao);
 }
 
 require_once __DIR__ . '/auth_helpers.php';
@@ -140,9 +157,9 @@ $logado = !empty($_SESSION['painel_id']);
             <p class="sub">Painel de comando — Corpo de Alunos</p>
             <?php if ($erroLogin): ?><p class="erro"><?= htmlspecialchars($erroLogin) ?></p><?php endif; ?>
             <form method="post">
-                <input type="text" name="usuario" placeholder="Usuário" autofocus required>
+                <input type="text" name="usuario" placeholder="Usuário" maxlength="50" autofocus required>
                 <div class="campo-senha">
-                    <input type="password" name="senha" id="campo_senha_login" placeholder="Senha" required>
+                    <input type="password" name="senha" id="campo_senha_login" placeholder="Senha" maxlength="200" required>
                     <button type="button" class="toggle-senha" onclick="alternarSenha('campo_senha_login', this)" aria-label="Mostrar senha">
                         <span class="i" style="--icon-url:url('../images/icons/eye.svg'); margin:0;"></span>
                     </button>

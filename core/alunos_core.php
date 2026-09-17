@@ -3,7 +3,28 @@
 // Lógica de negócio do efetivo (alunos). Usada tanto pela API (/api/alunos.php)
 // quanto pelas telas do painel — para não duplicar consulta/regra em dois lugares.
 
+require_once __DIR__ . '/validacao_core.php';
+
 const CURSOS_VALIDOS = ['CFS', 'EAGS'];
+
+// Limites de caracteres batendo com o VARCHAR de cada coluna em alunos
+// (database/init_db.sql) — validarAluno() barra antes de qualquer query.
+const ALUNO_LIMITES_CAMPOS = [
+    'posto_graduacao' => 10,
+    'quadro' => 50,
+    'especialidade' => 50,
+    'sub_especialidade' => 50,
+    'nome_guerra' => 50,
+    'identidade_militar' => 30,
+    'organizacao_militar' => 100,
+    'setor' => 50,
+    'secao' => 50,
+    'ramal' => 10,
+    'milhao' => 20,
+    'esquadrao' => 50,
+    'esquadrilha' => 50,
+    'serie' => 10,
+];
 
 /**
  * Identificação padrão do aluno em qualquer listagem/relatório do sistema:
@@ -36,6 +57,11 @@ function validarAluno($dados, $parcial = false) {
                 return "Campo obrigatório ausente: $campo";
             }
         }
+    }
+
+    $erroComprimento = validarComprimentos($dados, ALUNO_LIMITES_CAMPOS);
+    if ($erroComprimento) {
+        return $erroComprimento;
     }
 
     if (isset($dados['sexo']) && !in_array($dados['sexo'], ['M', 'F'])) {

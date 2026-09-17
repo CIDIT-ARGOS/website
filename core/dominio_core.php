@@ -11,6 +11,7 @@
 // partir de nome de coluna vindo de fora (só o array fixo, escrito em código).
 
 require_once __DIR__ . '/unidades_core.php';
+require_once __DIR__ . '/validacao_core.php';
 
 function dominioEntidades() {
     return [
@@ -21,7 +22,7 @@ function dominioEntidades() {
             'permissao' => 'gerenciar_unidades',
             'ordem_por' => 'tipo, nome',
             'campos' => [
-                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 100],
                 ['nome' => 'tipo', 'rotulo' => 'Tipo', 'tipo' => 'select', 'obrigatorio' => true, 'opcoes' => [
                     'escola' => 'Escola', 'divisao' => 'Divisão', 'galpao' => 'Galpão',
                     'ca' => 'Corpo de Alunos', 'esquadrao' => 'Esquadrão', 'doutrina' => 'Doutrina',
@@ -37,8 +38,8 @@ function dominioEntidades() {
             'permissao' => 'gerenciar_grupos_acesso',
             'ordem_por' => 'nome',
             'campos' => [
-                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true],
-                ['nome' => 'descricao', 'rotulo' => 'Descrição', 'tipo' => 'texto'],
+                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 100],
+                ['nome' => 'descricao', 'rotulo' => 'Descrição', 'tipo' => 'texto', 'max' => 255],
                 ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
             ],
         ],
@@ -52,8 +53,8 @@ function dominioEntidades() {
                 ['nome' => 'sistema', 'rotulo' => 'Sistema', 'tipo' => 'select', 'obrigatorio' => true, 'opcoes' => [
                     'painel' => 'Painel', 'ikarus37' => 'Ikarus37',
                 ]],
-                ['nome' => 'chave', 'rotulo' => 'Chave (usada no código — evite renomear)', 'tipo' => 'texto', 'obrigatorio' => true],
-                ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'chave', 'rotulo' => 'Chave (usada no código — evite renomear)', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 30],
+                ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 100],
                 ['nome' => 'escopo', 'rotulo' => 'Escopo (só painel)', 'tipo' => 'select', 'opcoes' => [
                     '' => '— nenhum —', 'ca' => 'CA (não exige esquadrão)', 'esquadrao' => 'Esquadrão (exige esquadrão)',
                 ]],
@@ -67,8 +68,8 @@ function dominioEntidades() {
             'permissao' => 'gerenciar_motivos',
             'ordem_por' => 'ordem',
             'campos' => [
-                ['nome' => 'codigo', 'rotulo' => 'Código', 'tipo' => 'texto', 'obrigatorio' => true],
-                ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'codigo', 'rotulo' => 'Código', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 10],
+                ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 150],
                 ['nome' => 'classificacao', 'rotulo' => 'Classificação', 'tipo' => 'select', 'obrigatorio' => true, 'opcoes' => [
                     'presente' => 'Presente',
                     'ausente_nao_falta' => 'Ausente (não é falta)',
@@ -86,7 +87,7 @@ function dominioEntidades() {
             'permissao' => 'gerenciar_motivos',
             'ordem_por' => 'ordem',
             'campos' => [
-                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true],
+                ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 50],
                 ['nome' => 'ordem', 'rotulo' => 'Ordem', 'tipo' => 'numero'],
                 ['nome' => 'ativo', 'rotulo' => 'Ativo', 'tipo' => 'checkbox'],
             ],
@@ -139,6 +140,9 @@ function _dominioValidar($entidade, $dados) {
             if (!array_key_exists($dados[$campo['nome']], $campo['opcoes'])) {
                 return "Valor inválido para {$campo['rotulo']}.";
             }
+        }
+        if (isset($campo['max']) && isset($dados[$campo['nome']]) && mb_strlen((string) $dados[$campo['nome']]) > $campo['max']) {
+            return "{$campo['rotulo']} excede o tamanho máximo permitido ({$campo['max']} caracteres).";
         }
     }
     return null;

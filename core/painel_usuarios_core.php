@@ -7,6 +7,18 @@
 // (core/cargos_core.php), editável no Controle do Domínio de Negócio.
 
 require_once __DIR__ . '/cargos_core.php';
+require_once __DIR__ . '/validacao_core.php';
+
+// Limites batendo com o VARCHAR de painel_usuarios (database/init_db.sql).
+// 'senha' não é coluna de banco (vira hash de tamanho fixo), mas limita
+// mesmo assim — sem isso, nada impede mandar uma senha de megabytes só pra
+// gastar CPU no bcrypt.
+const PAINEL_USUARIO_LIMITES_CAMPOS = [
+    'nome' => 100,
+    'usuario' => 50,
+    'esquadrao' => 50,
+    'senha' => 200,
+];
 
 function cargosEsquadrao($conexao) {
     return listarChavesCargos($conexao, 'painel', 'esquadrao');
@@ -53,6 +65,10 @@ function criarUsuarioPainel($conexao, $dados) {
     if ($nome === '' || $usuario === '' || $senha === '') {
         return ['ok' => false, 'erro' => 'Preencha nome, usuário e senha.'];
     }
+    $erroComprimento = validarComprimentos($dados, PAINEL_USUARIO_LIMITES_CAMPOS);
+    if ($erroComprimento) {
+        return ['ok' => false, 'erro' => $erroComprimento];
+    }
     if (!in_array($cargo, todosOsCargosPainel($conexao))) {
         return ['ok' => false, 'erro' => 'Cargo inválido.'];
     }
@@ -83,6 +99,11 @@ function atualizarUsuarioPainel($conexao, $id, $dados) {
     $esquadrao = trim($dados['esquadrao'] ?? '');
     $ativo = !empty($dados['ativo']) ? 1 : 0;
 
+    $erroComprimento = validarComprimentos($dados, PAINEL_USUARIO_LIMITES_CAMPOS);
+    if ($erroComprimento) {
+        return ['ok' => false, 'erro' => $erroComprimento];
+    }
+
     $alvo = buscarUsuarioPainelPorId($conexao, $id);
     if (!$alvo) {
         return ['ok' => false, 'erro' => 'Usuário não encontrado.'];
@@ -105,6 +126,9 @@ function atualizarUsuarioPainel($conexao, $id, $dados) {
 function resetarSenhaUsuarioPainel($conexao, $id, $novaSenha) {
     if (strlen($novaSenha) < 6) {
         return ['ok' => false, 'erro' => 'A nova senha precisa ter pelo menos 6 caracteres.'];
+    }
+    if (mb_strlen($novaSenha) > 200) {
+        return ['ok' => false, 'erro' => 'A nova senha excede o tamanho máximo permitido (200 caracteres).'];
     }
     $hash = password_hash($novaSenha, PASSWORD_BCRYPT);
     $stmt = mysqli_prepare($conexao, "UPDATE painel_usuarios SET senha_hash = ? WHERE id = ?");

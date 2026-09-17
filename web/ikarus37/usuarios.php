@@ -3,6 +3,11 @@
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/cargos_core.php';
+require_once __DIR__ . '/../../core/validacao_core.php';
+
+// Limites batendo com o VARCHAR de admin_usuarios/painel_usuarios (database/init_db.sql).
+const ADMIN_USUARIO_LIMITES_CAMPOS = ['nome' => 100, 'usuario' => 50, 'senha' => 200, 'nova_senha' => 200];
+const PAINEL_USUARIO_LIMITES_CAMPOS_LOCAL = ['nome' => 100, 'usuario' => 50, 'esquadrao' => 50, 'senha' => 200];
 
 $conexao = conectarBanco();
 
@@ -29,8 +34,12 @@ if ($souSuperAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?
     $senha = $_POST['senha'] ?? '';
     $nivel = $_POST['nivel'] ?? 'admin';
 
+    $erroComprimento = validarComprimentos(['nome' => $nome, 'usuario' => $usuario, 'senha' => $senha], ADMIN_USUARIO_LIMITES_CAMPOS);
+
     if ($nome === '' || $usuario === '' || $senha === '') {
         $erro = "Preencha nome, usuário e senha.";
+    } elseif ($erroComprimento) {
+        $erro = $erroComprimento;
     } elseif (!cargoValido($conexao, 'ikarus37', $nivel)) {
         $erro = "Nível inválido.";
     } else {
@@ -57,9 +66,12 @@ if ($souSuperAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?
     $ativo = isset($_POST['ativo']) ? 1 : 0;
 
     $alvo = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM admin_usuarios WHERE id = $id"));
+    $erroComprimento = validarComprimentos(['nome' => $nome], ADMIN_USUARIO_LIMITES_CAMPOS);
 
     if (!$alvo) {
         $erro = "Usuário não encontrado.";
+    } elseif ($erroComprimento) {
+        $erro = $erroComprimento;
     } elseif ($alvo['nivel'] === 'super_admin' && ($nivel !== 'super_admin' || $ativo === 0) && contarSuperAdminsAtivos($conexao) <= 1) {
         $erro = "Não é possível rebaixar ou desativar o último super_admin ativo.";
     } else {
@@ -77,6 +89,8 @@ if ($souSuperAdmin && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?
 
     if (strlen($novaSenha) < 6) {
         $erro = "A nova senha precisa ter pelo menos 6 caracteres.";
+    } elseif (mb_strlen($novaSenha) > 200) {
+        $erro = "A nova senha excede o tamanho máximo permitido (200 caracteres).";
     } else {
         $hash = password_hash($novaSenha, PASSWORD_BCRYPT);
         $stmt = mysqli_prepare($conexao, "UPDATE admin_usuarios SET senha_hash = ? WHERE id = ?");
@@ -134,8 +148,15 @@ if ($podeGerenciarPainel && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ac
     $cargo = $_POST['cargo'] ?? '';
     $esquadrao = trim($_POST['esquadrao'] ?? '');
 
+    $erroComprimentoPainel = validarComprimentos(
+        ['nome' => $nome, 'usuario' => $usuario, 'senha' => $senha, 'esquadrao' => $esquadrao],
+        PAINEL_USUARIO_LIMITES_CAMPOS_LOCAL
+    );
+
     if ($nome === '' || $usuario === '' || $senha === '') {
         $erroPainel = "Preencha nome, usuário e senha.";
+    } elseif ($erroComprimentoPainel) {
+        $erroPainel = $erroComprimentoPainel;
     } elseif (!cargoValido($conexao, 'painel', $cargo)) {
         $erroPainel = "Cargo inválido.";
     } elseif (in_array($cargo, $cargosEsquadrao) && $esquadrao === '') {
@@ -166,9 +187,12 @@ if ($podeGerenciarPainel && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ac
     $ativo = isset($_POST['ativo']) ? 1 : 0;
 
     $alvo = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT * FROM painel_usuarios WHERE id = $id"));
+    $erroComprimentoPainel = validarComprimentos(['nome' => $nome, 'esquadrao' => $esquadrao], PAINEL_USUARIO_LIMITES_CAMPOS_LOCAL);
 
     if (!$alvo) {
         $erroPainel = "Usuário do painel não encontrado.";
+    } elseif ($erroComprimentoPainel) {
+        $erroPainel = $erroComprimentoPainel;
     } elseif ($alvo['cargo'] === 'CMD_CA' && ($cargo !== 'CMD_CA' || $ativo === 0) && contarCmdCaAtivos($conexao) <= 1) {
         $erroPainel = "Não é possível rebaixar ou desativar o último CMD_CA ativo.";
     } elseif (in_array($cargo, $cargosEsquadrao) && $esquadrao === '') {
@@ -189,6 +213,8 @@ if ($podeGerenciarPainel && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['ac
 
     if (strlen($novaSenha) < 6) {
         $erroPainel = "A nova senha precisa ter pelo menos 6 caracteres.";
+    } elseif (mb_strlen($novaSenha) > 200) {
+        $erroPainel = "A nova senha excede o tamanho máximo permitido (200 caracteres).";
     } else {
         $hash = password_hash($novaSenha, PASSWORD_BCRYPT);
         $stmt = mysqli_prepare($conexao, "UPDATE painel_usuarios SET senha_hash = ? WHERE id = ?");
