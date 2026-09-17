@@ -358,28 +358,20 @@ function relatorioRetiradas($conexao, $filtros) {
 }
 
 /**
- * Ausências no período divididas em falta de verdade, dispensa médica e
- * demais ausências justificadas — base do gráfico de três fatias do
- * Painel Argos. Dispensa médica sai da "ausência justificada" genérica
- * porque tem peso/rotina própria (Ocorrências Médicas no Livro do Dia).
+ * Ausências no período divididas por classificação (falta de verdade vs
+ * ausência justificada) — base do gráfico vermelho/amarelo do Painel Argos.
  */
 function relatorioPorClassificacao($conexao, $filtros) {
     [$where, $params, $tipos] = _filtroRelatorioRetiradas($filtros);
 
     $sql = "
-        SELECT
-            CASE
-                WHEN m.classificacao = 'falta' THEN 'falta'
-                WHEN m.codigo = 'DMED' THEN 'dispensa_medica'
-                ELSE 'ausente_nao_falta'
-            END as categoria,
-            COUNT(*) as total
+        SELECT COALESCE(m.classificacao, 'ausente_nao_falta') as classificacao, COUNT(*) as total
         FROM retirada_itens ri
         JOIN retiradas r ON r.id = ri.retirada_id
         JOIN alunos a ON a.id = ri.aluno_id
         LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
         $where AND ri.presente = 0
-        GROUP BY categoria
+        GROUP BY classificacao
     ";
     $stmt = mysqli_prepare($conexao, $sql);
     mysqli_stmt_bind_param($stmt, $tipos, ...$params);
