@@ -118,6 +118,11 @@ function listarAlunos($conexao, $filtros = []) {
         $params[] = $filtros['curso'];
         $tipos .= "s";
     }
+    if (!empty($filtros['turma_id'])) {
+        $condicoes[] = "a.turma_id = ?";
+        $params[] = (int) $filtros['turma_id'];
+        $tipos .= "i";
+    }
     if (!empty($filtros['qrcode_hash'])) {
         $condicoes[] = "a.qrcode_hash = ?";
         $params[] = $filtros['qrcode_hash'];
@@ -300,17 +305,18 @@ function criarAluno($conexao, $dados) {
         INSERT INTO alunos (
             posto_graduacao, quadro, especialidade, sub_especialidade, nome_guerra, sexo,
             identidade_militar, organizacao_militar, setor, secao, ramal, qrcode_hash,
-            milhao, esquadrao, esquadrilha, curso, serie
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            milhao, esquadrao, esquadrilha, curso, serie, turma_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $qrcodeHash = $dados['qrcode_hash'] ?? null;
+    $turmaId = !empty($dados['turma_id']) ? (int) $dados['turma_id'] : null;
 
     mysqli_stmt_bind_param(
-        $stmt, "sssssssssssssssss",
+        $stmt, "sssssssssssssssssi",
         $dados['posto_graduacao'], $dados['quadro'], $dados['especialidade'], $dados['sub_especialidade'], $dados['nome_guerra'], $dados['sexo'],
         $dados['identidade_militar'], $dados['organizacao_militar'], $dados['setor'], $dados['secao'], $dados['ramal'], $qrcodeHash,
-        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie']
+        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $turmaId
     );
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -336,17 +342,18 @@ function atualizarAluno($conexao, $id, $dados) {
         UPDATE alunos SET
             posto_graduacao = ?, quadro = ?, especialidade = ?, sub_especialidade = ?, nome_guerra = ?, sexo = ?,
             identidade_militar = ?, organizacao_militar = ?, setor = ?, secao = ?, ramal = ?, qrcode_hash = ?,
-            milhao = ?, esquadrao = ?, esquadrilha = ?, curso = ?, serie = ?
+            milhao = ?, esquadrao = ?, esquadrilha = ?, curso = ?, serie = ?, turma_id = ?
         WHERE id = ?
     ");
 
     $qrcodeHash = $dados['qrcode_hash'] ?? null;
+    $turmaId = !empty($dados['turma_id']) ? (int) $dados['turma_id'] : null;
 
     mysqli_stmt_bind_param(
-        $stmt, "sssssssssssssssssi",
+        $stmt, "sssssssssssssssssii",
         $dados['posto_graduacao'], $dados['quadro'], $dados['especialidade'], $dados['sub_especialidade'], $dados['nome_guerra'], $dados['sexo'],
         $dados['identidade_militar'], $dados['organizacao_militar'], $dados['setor'], $dados['secao'], $dados['ramal'], $qrcodeHash,
-        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $id
+        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $turmaId, $id
     );
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -358,8 +365,8 @@ function atualizarAluno($conexao, $id, $dados) {
 
 /**
  * Atualização parcial (sexo, curso, série, esquadrilha, especialidade,
- * sub_especialidade, ativo) — o subconjunto de campos editável pelo painel,
- * que não mexe nos dados de identificação vindos da planilha oficial.
+ * sub_especialidade, turma, ativo) — o subconjunto de campos editável pelo
+ * painel, que não mexe nos dados de identificação vindos da planilha oficial.
  */
 function atualizarAlunoParcial($conexao, $id, $dados) {
     $sexo = $dados['sexo'] ?? '';
@@ -368,6 +375,7 @@ function atualizarAlunoParcial($conexao, $id, $dados) {
     $esquadrilha = trim($dados['esquadrilha'] ?? '');
     $especialidade = trim($dados['especialidade'] ?? '');
     $subEspecialidade = trim($dados['sub_especialidade'] ?? '');
+    $turmaId = !empty($dados['turma_id']) ? (int) $dados['turma_id'] : null;
     $ativo = !empty($dados['ativo']) ? 1 : 0;
 
     $mensagemErro = validarAluno(['sexo' => $sexo, 'curso' => $curso, 'serie' => $serie], true);
@@ -376,10 +384,10 @@ function atualizarAlunoParcial($conexao, $id, $dados) {
     }
 
     $stmt = mysqli_prepare($conexao, "
-        UPDATE alunos SET sexo = ?, curso = ?, serie = ?, esquadrilha = ?, especialidade = ?, sub_especialidade = ?, ativo = ?
+        UPDATE alunos SET sexo = ?, curso = ?, serie = ?, esquadrilha = ?, especialidade = ?, sub_especialidade = ?, turma_id = ?, ativo = ?
         WHERE id = ?
     ");
-    mysqli_stmt_bind_param($stmt, "ssssssii", $sexo, $curso, $serie, $esquadrilha, $especialidade, $subEspecialidade, $ativo, $id);
+    mysqli_stmt_bind_param($stmt, "ssssssiii", $sexo, $curso, $serie, $esquadrilha, $especialidade, $subEspecialidade, $turmaId, $ativo, $id);
 
     if (!mysqli_stmt_execute($stmt)) {
         return ['ok' => false, 'erro' => 'Erro ao atualizar: ' . mysqli_stmt_error($stmt), 'codigo' => 500];
