@@ -1,6 +1,0 @@
-Options -Indexes
-DirectoryIndex index.php
-
-<IfModule mod_autoindex.c>
-    IndexIgnore *
-</IfModule>

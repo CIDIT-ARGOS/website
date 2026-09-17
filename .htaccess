@@ -1,21 +1,12 @@
-Options -Indexes
-
 <IfModule mod_rewrite.c>
-    RewriteEngine On
+RewriteEngine On
 
-    # Força HTTPS
-    RewriteCond %{HTTPS} off
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-    # api/, core/ e database/ são pastas reais na raiz — nunca passam pelo
-    # redirecionamento pra web/ abaixo (core/ e database/ têm seu próprio
-    # .htaccess bloqueando qualquer acesso direto).
-    RewriteCond %{REQUEST_URI} ^/(api|core|database)(/|$)
-    RewriteRule ^ - [L]
+RewriteCond %{REQUEST_URI} ^/(api|core|database)(/|$)
+RewriteRule ^ - [L]
 
-    # Só existe uma pasta pública de verdade (web/) com o site, o painel e o
-    # ikarus37 — mas ela fica invisível na URL: /painel/ continua sendo
-    # /painel/ pra quem acessa, e por baixo o Apache serve web/painel/.
-    RewriteCond %{REQUEST_URI} !^/web/
-    RewriteRule ^(.*)$ web/$1 [L]
+RewriteCond %{REQUEST_URI} !^/web/
+RewriteRule ^(.*)$ web/$1 [L]
 </IfModule>
