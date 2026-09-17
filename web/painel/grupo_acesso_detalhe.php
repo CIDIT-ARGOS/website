@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/grupos_acesso_core.php';
 require_once __DIR__ . '/../../core/unidades_core.php';
@@ -9,7 +10,7 @@ $usuarioId = idUsuarioPainel();
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'gerenciar_grupos_acesso', $usuarioId)) {
-    die("Seu cargo não tem a permissão 'gerenciar_grupos_acesso'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_grupos_acesso'.");
 }
 
 $grupoId = (int) ($_GET['id'] ?? 0);

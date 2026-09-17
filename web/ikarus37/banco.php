@@ -1,12 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado')) {
-    die("Sua conta não tem a permissão 'acesso_tecnico_avancado'.");
+    exibirAcessoNegado("Sua conta não tem a permissão 'acesso_tecnico_avancado'.");
 }
 
 // ---------- Executar SQL livre ----------

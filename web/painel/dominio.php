@@ -1,12 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/dominio_core.php';
 require_once __DIR__ . '/../../core/unidades_core.php';
 
 if (!podeGerenciarDominio()) {
-    die("Seu cargo não tem a permissão 'gerenciar_dominio'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_dominio'.");
 }
 
 $conexao = conectarBanco();
@@ -119,6 +120,8 @@ function dominioCampoInput($campo, $valor, $formId, $unidadesDisponiveis) {
     .tabs a.ativo { background: var(--accent); color: #fff; border-color: var(--accent); }
     .form-linha { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .scroll-x { overflow-x: auto; min-width: 0; }
+    tr.inativo { opacity: 0.55; }
+    .badge-inativo { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: var(--danger); color: #fff; font-size: 11px; vertical-align: middle; }
     .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
 </style>
 </head>
@@ -187,17 +190,27 @@ function dominioCampoInput($campo, $valor, $formId, $unidadesDisponiveis) {
                 <th>Ações</th>
             </tr>
             <?php foreach ($registros as $r): ?>
-                <?php $formId = 'form_edit_' . $r['id']; ?>
-                <tr>
-                    <?php foreach ($entidade['campos'] as $campo): ?>
-                        <td><?php dominioCampoInput($campo, $r[$campo['nome']] ?? null, $formId, $unidadesDisponiveis); ?></td>
+                <?php
+                    $formId = 'form_edit_' . $r['id'];
+                    $estaInativo = $temAtivo && empty($r['ativo']);
+                    $textoAcao = $temAtivo ? 'Desativar' : 'Excluir';
+                    $confirmacao = $temAtivo
+                        ? 'Desativar este registro? Ele para de aparecer nas listas normais (pode ser reativado depois marcando \'Ativo\' e salvando), mas não é apagado do banco.'
+                        : 'Excluir permanentemente este registro? Essa ação não pode ser desfeita.';
+                ?>
+                <tr class="<?= $estaInativo ? 'inativo' : '' ?>">
+                    <?php foreach ($entidade['campos'] as $i => $campo): ?>
+                        <td>
+                            <?php dominioCampoInput($campo, $r[$campo['nome']] ?? null, $formId, $unidadesDisponiveis); ?>
+                            <?php if ($i === 0 && $estaInativo): ?><span class="badge-inativo">inativo</span><?php endif; ?>
+                        </td>
                     <?php endforeach; ?>
                     <td style="white-space:nowrap;">
                         <button type="submit" form="<?= $formId ?>">Salvar</button>
                         <?php if ($chaveEntidade === 'grupos_acesso'): ?>
                             <a href="grupo_acesso_detalhe.php?id=<?= $r['id'] ?>"><span class="i" style="--icon-url:url('../images/icons/users-group.svg')"></span>membros/permissões</a>
                         <?php endif; ?>
-                        <button type="button" class="danger" onclick="if(confirm('Excluir este registro?')) document.getElementById('form_excluir_<?= $r['id'] ?>').submit();"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
+                        <button type="button" class="danger" onclick="if(confirm(<?= htmlspecialchars(json_encode($confirmacao), ENT_QUOTES) ?>)) document.getElementById('form_excluir_<?= $r['id'] ?>').submit();"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span><?= $textoAcao ?></button>
                     </td>
                 </tr>
                 <form id="<?= $formId ?>" method="post">

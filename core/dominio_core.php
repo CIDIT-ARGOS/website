@@ -37,6 +37,7 @@ function dominioEntidades() {
             'rotulo_singular' => 'Grupo de acesso',
             'permissao' => 'gerenciar_grupos_acesso',
             'ordem_por' => 'nome',
+            'unicos' => [['nome']],
             'campos' => [
                 ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 100],
                 ['nome' => 'descricao', 'rotulo' => 'Descrição', 'tipo' => 'texto', 'max' => 255],
@@ -49,6 +50,7 @@ function dominioEntidades() {
             'rotulo_singular' => 'Cargo',
             'permissao' => 'gerenciar_cargos',
             'ordem_por' => 'sistema, escopo, nome',
+            'unicos' => [['sistema', 'chave']],
             'campos' => [
                 ['nome' => 'sistema', 'rotulo' => 'Sistema', 'tipo' => 'select', 'obrigatorio' => true, 'opcoes' => [
                     'painel' => 'Painel', 'ikarus37' => 'Ikarus37',
@@ -67,6 +69,7 @@ function dominioEntidades() {
             'rotulo_singular' => 'Motivo',
             'permissao' => 'gerenciar_motivos',
             'ordem_por' => 'ordem',
+            'unicos' => [['nome'], ['ordem']],
             'campos' => [
                 ['nome' => 'codigo', 'rotulo' => 'Código', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 10],
                 ['nome' => 'nome', 'rotulo' => 'Nome de exibição', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 150],
@@ -86,6 +89,7 @@ function dominioEntidades() {
             'rotulo_singular' => 'Tipo de dispensa',
             'permissao' => 'gerenciar_motivos',
             'ordem_por' => 'ordem',
+            'unicos' => [['nome'], ['ordem']],
             'campos' => [
                 ['nome' => 'nome', 'rotulo' => 'Nome', 'tipo' => 'texto', 'obrigatorio' => true, 'max' => 50],
                 ['nome' => 'ordem', 'rotulo' => 'Ordem', 'tipo' => 'numero'],
@@ -149,10 +153,62 @@ function _dominioValidar($entidade, $dados) {
 }
 
 /**
+ * Checa, antes de gravar, se algum grupo de colunas marcado como único em
+ * 'unicos' já existe em outro registro — evita depender do erro cru do banco
+ * (mysqli_error) pra avisar o usuário sobre chave/nome/ordem duplicados.
+ * $idAtual: id do próprio registro, pra ignorá-lo numa atualização.
+ */
+function _dominioValidarUnicos($conexao, $entidade, $dados, $idAtual = null) {
+    if (empty($entidade['unicos'])) {
+        return null;
+    }
+
+    $rotulosPorCampo = [];
+    foreach ($entidade['campos'] as $campo) {
+        $rotulosPorCampo[$campo['nome']] = $campo['rotulo'];
+    }
+
+    $tabela = $entidade['tabela'];
+    foreach ($entidade['unicos'] as $colunas) {
+        $condicoes = [];
+        $valores = [];
+        $tipos = "";
+        foreach ($colunas as $coluna) {
+            $condicoes[] = "`$coluna` = ?";
+            $valores[] = trim((string) ($dados[$coluna] ?? ''));
+            $tipos .= "s";
+        }
+
+        $sql = "SELECT id FROM `$tabela` WHERE " . implode(" AND ", $condicoes);
+        if ($idAtual !== null) {
+            $sql .= " AND id != ?";
+            $valores[] = $idAtual;
+            $tipos .= "i";
+        }
+        $sql .= " LIMIT 1";
+
+        $stmt = mysqli_prepare($conexao, $sql);
+        mysqli_stmt_bind_param($stmt, $tipos, ...$valores);
+        mysqli_stmt_execute($stmt);
+        $existe = mysqli_stmt_get_result($stmt)->fetch_row();
+
+        if ($existe) {
+            $rotulos = implode(' + ', array_map(fn($c) => $rotulosPorCampo[$c] ?? $c, $colunas));
+            return "Já existe {$entidade['rotulo_singular']} com esse(a) {$rotulos}. Escolha outro valor.";
+        }
+    }
+    return null;
+}
+
+/**
  * @return array{ok: bool, erro?: string, id?: int}
  */
 function dominioCriar($conexao, $entidade, $dados) {
     $erro = _dominioValidar($entidade, $dados);
+    if ($erro) {
+        return ['ok' => false, 'erro' => $erro];
+    }
+    $erro = _dominioValidarUnicos($conexao, $entidade, $dados);
     if ($erro) {
         return ['ok' => false, 'erro' => $erro];
     }
@@ -176,13 +232,17 @@ function dominioCriar($conexao, $entidade, $dados) {
     mysqli_stmt_bind_param($stmt, $tipos, ...$valores);
 
     if (!mysqli_stmt_execute($stmt)) {
-        return ['ok' => false, 'erro' => 'Erro ao criar: ' . mysqli_error($conexao)];
+        return ['ok' => false, 'erro' => _dominioErroAmigavel($conexao, $entidade)];
     }
     return ['ok' => true, 'id' => mysqli_insert_id($conexao)];
 }
 
 function dominioAtualizar($conexao, $entidade, $id, $dados) {
     $erro = _dominioValidar($entidade, $dados);
+    if ($erro) {
+        return ['ok' => false, 'erro' => $erro];
+    }
+    $erro = _dominioValidarUnicos($conexao, $entidade, $dados, $id);
     if ($erro) {
         return ['ok' => false, 'erro' => $erro];
     }
@@ -206,9 +266,21 @@ function dominioAtualizar($conexao, $entidade, $id, $dados) {
     mysqli_stmt_bind_param($stmt, $tipos, ...$valores);
 
     if (!mysqli_stmt_execute($stmt)) {
-        return ['ok' => false, 'erro' => 'Erro ao atualizar: ' . mysqli_error($conexao)];
+        return ['ok' => false, 'erro' => _dominioErroAmigavel($conexao, $entidade)];
     }
     return ['ok' => true];
+}
+
+/**
+ * Traduz o erro cru do mysqli pra uma mensagem amigável — rede de segurança
+ * pra qualquer restrição do banco (ex: UNIQUE) que não esteja coberta por
+ * 'unicos' na config da entidade. Erro 1062 = "Duplicate entry".
+ */
+function _dominioErroAmigavel($conexao, $entidade) {
+    if (mysqli_errno($conexao) === 1062) {
+        return "Já existe {$entidade['rotulo_singular']} com esses dados. Verifique os campos que precisam ser únicos (nome, chave, ordem etc.).";
+    }
+    return "Não foi possível salvar {$entidade['rotulo_singular']}. Tente novamente ou avise o suporte técnico.";
 }
 
 function dominioExcluir($conexao, $entidade, $id) {
@@ -231,7 +303,7 @@ function dominioExcluir($conexao, $entidade, $id) {
     mysqli_stmt_bind_param($stmt, "i", $id);
 
     if (!mysqli_stmt_execute($stmt)) {
-        return ['ok' => false, 'erro' => 'Erro ao excluir: ' . mysqli_error($conexao)];
+        return ['ok' => false, 'erro' => "Não foi possível excluir {$entidade['rotulo_singular']}: ele ainda está em uso por outro registro do sistema."];
     }
     return ['ok' => true];
 }
