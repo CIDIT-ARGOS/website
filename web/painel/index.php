@@ -268,6 +268,13 @@ $logado = !empty($_SESSION['painel_id']);
                 <p>Unidades organizacionais e grupos de acesso — sem precisar mexer no banco.</p>
             </a>
             <?php endif; ?>
+            <?php if (podeGerenciarTurmas()): ?>
+            <a href="turmas.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/school.svg')"></span>
+                <h3>Turmas</h3>
+                <p>Cadastrar turmas novas e formar (desativar) as que saem da escola.</p>
+            </a>
+            <?php endif; ?>
         </div>
         <?php mysqli_close($conexao); ?>
     </div>

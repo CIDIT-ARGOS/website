@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
+require_once __DIR__ . '/../../core/turmas_core.php';
 
 if (!podeEditarEfetivo()) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'editar_efetivo'.");
@@ -38,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erro = $resultado['erro'];
     }
 }
+
+$turmasDisponiveis = listarTurmas($conexao, true);
 
 ?>
 <!DOCTYPE html>
@@ -115,6 +118,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <label>Sub-especialidade</label>
             <input type="text" name="sub_especialidade" value="<?= htmlspecialchars($aluno['sub_especialidade'] ?? '') ?>">
+
+            <label>Turma</label>
+            <select name="turma_id">
+                <option value="">— nenhuma —</option>
+                <?php foreach ($turmasDisponiveis as $t): ?>
+                    <option value="<?= $t['id'] ?>" <?= (int) $aluno['turma_id'] === (int) $t['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($t['nome']) ?><?= empty($t['ativo']) ? ' (formada)' : '' ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
 
             <label style="display:flex; align-items:center; gap:6px; margin-top:16px;">
                 <input type="checkbox" name="ativo" style="width:auto;" <?= $aluno['ativo'] ? 'checked' : '' ?>> Ativo
