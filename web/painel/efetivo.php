@@ -3,15 +3,31 @@
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
+require_once __DIR__ . '/../../core/turmas_core.php';
 
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao(); // null = CA inteiro, senão string do esquadrão
+
+$mensagem = null;
+$erro = null;
+
+// ---------- Atribuir turma em lote ----------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'atribuir_turma' && podeEditarEfetivo()) {
+    $turmaId = !empty($_POST['turma_id']) ? (int) $_POST['turma_id'] : null;
+    $resultado = atribuirTurmaEmLote($conexao, $_POST['alunos'] ?? [], $turmaId, $escopo);
+    if ($resultado['ok']) {
+        $mensagem = $resultado['atualizados'] . " aluno(s) atualizado(s).";
+    } else {
+        $erro = $resultado['erro'];
+    }
+}
 
 $filtros = [
     'esquadrao' => $escopo ?? ($_GET['esquadrao'] ?? null),
     'esquadrilha' => $_GET['esquadrilha'] ?? null,
     'especialidade' => $_GET['especialidade'] ?? null,
     'busca' => $_GET['busca'] ?? null,
+    'turma_id' => $_GET['turma_id'] ?? null,
     'com_posto_exibicao' => true,
     'order_by' => 'a.esquadrilha, a.nome_guerra',
 ];
@@ -22,6 +38,7 @@ $quantitativoEspecialidade = quantitativoPorEspecialidade($conexao, $escopo);
 
 // listas para os filtros (dentro do escopo)
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
+$turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
 
 ?>
 <!DOCTYPE html>
@@ -157,21 +174,52 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
             <input type="text" name="esquadrilha" placeholder="Esquadrilha (A/B/C/D)" value="<?= htmlspecialchars($_GET['esquadrilha'] ?? '') ?>">
             <input type="text" name="especialidade" placeholder="Especialidade (SIN, BET...)" value="<?= htmlspecialchars($_GET['especialidade'] ?? '') ?>">
             <input type="text" name="busca" placeholder="Nome ou milhão" value="<?= htmlspecialchars($_GET['busca'] ?? '') ?>">
+            <?php if (podeEditarEfetivo()): ?>
+                <select name="turma_id">
+                    <option value="">Todas as turmas</option>
+                    <?php foreach ($turmasDisponiveis as $t): ?>
+                        <option value="<?= $t['id'] ?>" <?= ((string) ($_GET['turma_id'] ?? '')) === (string) $t['id'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($t['nome']) ?><?= empty($t['ativo']) ? ' (formada)' : '' ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            <?php endif; ?>
             <button type="submit"><span class="i" style="--icon-url:url('../images/icons/filter.svg')"></span>Filtrar</button>
         </form>
     </div>
 
+    <?php if ($erro): ?><p class="erro"><?= htmlspecialchars($erro) ?></p><?php endif; ?>
+    <?php if ($mensagem): ?><p class="ok"><?= htmlspecialchars($mensagem) ?></p><?php endif; ?>
+
     <div class="card">
         <p style="color: var(--text-muted); font-size: 13px;"><?= count($alunos) ?> aluno(s) encontrado(s).</p>
+        <form method="post" id="form_atribuir_turma">
+        <input type="hidden" name="acao" value="atribuir_turma">
+        <?php if (podeEditarEfetivo() && !empty($alunos)): ?>
+            <div class="form-linha" style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+                <span style="font-size:12px; color:var(--text-muted);">Com os selecionados:</span>
+                <select name="turma_id">
+                    <option value="">— remover da turma —</option>
+                    <?php foreach ($turmasDisponiveis as $t): ?>
+                        <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nome']) ?><?= empty($t['ativo']) ? ' (formada)' : '' ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="submit" onclick="return confirm('Atribuir essa turma aos alunos selecionados?');">Atribuir turma</button>
+            </div>
+        <?php endif; ?>
         <div class="scroll-x">
         <table>
             <tr>
+                <?php if (podeEditarEfetivo() && !empty($alunos)): ?><th><input type="checkbox" onclick="document.querySelectorAll('.chk-aluno').forEach(c => c.checked = this.checked)"></th><?php endif; ?>
                 <th>Posto</th><th>Nome de Guerra</th><th>Sexo</th><th>Milhão</th>
-                <th>Esquadrão</th><th>Esquadrilha</th><th>Especialidade</th><th>Curso/Série</th>
+                <th>Esquadrão</th><th>Esquadrilha</th><th>Especialidade</th><th>Curso/Série</th><th>Turma</th>
                 <?php if (podeEditarEfetivo()): ?><th>Ações</th><?php endif; ?>
             </tr>
             <?php foreach ($alunos as $a): ?>
                 <tr>
+                    <?php if (podeEditarEfetivo() && !empty($alunos)): ?>
+                        <td><input type="checkbox" class="chk-aluno" name="alunos[]" value="<?= $a['id'] ?>"></td>
+                    <?php endif; ?>
                     <td><?= htmlspecialchars($a['posto_exibicao']) ?></td>
                     <td><?= htmlspecialchars($a['nome_guerra']) ?></td>
                     <td><?= htmlspecialchars($a['sexo']) ?></td>
@@ -180,6 +228,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
                     <td><?= htmlspecialchars($a['esquadrilha']) ?></td>
                     <td><?= htmlspecialchars($a['especialidade'] ?? '—') ?></td>
                     <td><?= htmlspecialchars($a['curso']) ?> / <?= htmlspecialchars($a['serie']) ?></td>
+                    <td><?= htmlspecialchars($a['turma_nome'] ?? '—') ?></td>
                     <?php if (podeEditarEfetivo()): ?>
                         <td><a href="efetivo_editar.php?id=<?= $a['id'] ?>" class="link-btn"><span class="i" style="--icon-url:url('../images/icons/pencil.svg')"></span>editar</a></td>
                     <?php endif; ?>
@@ -187,6 +236,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
             <?php endforeach; ?>
         </table>
         </div>
+        </form>
     </div>
 </div>
 
