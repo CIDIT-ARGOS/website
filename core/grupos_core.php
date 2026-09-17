@@ -45,8 +45,27 @@ function criarGrupo($conexao, $nome, $categoria) {
     if (mb_strlen($nome) > GRUPO_LIMITE_NOME) {
         return ['ok' => false, 'erro' => "Nome excede o tamanho máximo permitido (" . GRUPO_LIMITE_NOME . " caracteres)."];
     }
-    if (buscarGrupoPorNome($conexao, $nome)) {
-        return ['ok' => false, 'erro' => 'Já existe um grupo com esse nome.'];
+    $existente = buscarGrupoPorNome($conexao, $nome);
+    if ($existente) {
+        if ((int) $existente['ativo'] === 1) {
+            return ['ok' => false, 'erro' => 'Já existe um grupo ativo com esse nome.'];
+        }
+
+        // Existe um grupo com esse nome, mas foi excluído (soft delete) —
+        // "nome" é UNIQUE no banco, então um INSERT novo nunca funcionaria
+        // mesmo se a checagem acima não existisse. Reativa o registro com a
+        // categoria nova em vez de travar, e começa sem membros (era
+        // exatamente pra corrigir a categoria que o grupo foi excluído).
+        $stmt = mysqli_prepare($conexao, "UPDATE grupos SET categoria = ?, ativo = 1 WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, "si", $categoria, $existente['id']);
+        mysqli_stmt_execute($stmt);
+
+        $stmtMembros = mysqli_prepare($conexao, "DELETE FROM grupo_membros WHERE grupo_id = ?");
+        mysqli_stmt_bind_param($stmtMembros, "i", $existente['id']);
+        mysqli_stmt_execute($stmtMembros);
+
+        criarMotivoSeNaoExiste($conexao, $nome);
+        return ['ok' => true, 'id' => $existente['id']];
     }
 
     $stmt = mysqli_prepare($conexao, "INSERT INTO grupos (nome, categoria) VALUES (?, ?)");
@@ -61,7 +80,16 @@ function criarGrupo($conexao, $nome, $categoria) {
     return ['ok' => true, 'id' => $grupoId];
 }
 
+/**
+ * Soft delete: desativa o grupo e remove os membros. Membresia não fica
+ * "presa" a um grupo excluído — se o grupo for recriado depois (mesmo
+ * nome), começa do zero.
+ */
 function excluirGrupo($conexao, $id) {
+    $stmt = mysqli_prepare($conexao, "DELETE FROM grupo_membros WHERE grupo_id = ?");
+    mysqli_stmt_bind_param($stmt, "i", $id);
+    mysqli_stmt_execute($stmt);
+
     $stmt = mysqli_prepare($conexao, "UPDATE grupos SET ativo = 0 WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "i", $id);
     return mysqli_stmt_execute($stmt);
