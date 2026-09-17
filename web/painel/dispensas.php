@@ -1,12 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/dispensas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
 if (!podeGerenciarDispensas()) {
-    die("Seu cargo não tem a permissão 'gerenciar_dispensas'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_dispensas'.");
 }
 
 $conexao = conectarBanco();

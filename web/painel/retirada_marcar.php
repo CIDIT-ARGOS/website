@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/motivos_core.php';
@@ -10,7 +11,7 @@ require_once __DIR__ . '/../../core/dispensas_core.php';
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())) {
-    die("Seu cargo não tem a permissão 'registrar_retirada'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'registrar_retirada'.");
 }
 
 $escopo = escopoEsquadrao();
@@ -21,7 +22,7 @@ if (!$retirada) {
     die("Retirada não encontrada.");
 }
 if ($escopo !== null && $retirada['esquadrao'] !== $escopo) {
-    die("Você não tem permissão para ver retiradas fora do Esquadrão $escopo.");
+    exibirAcessoNegado("Você não tem permissão para ver retiradas fora do Esquadrão $escopo.");
 }
 
 $mensagem = null;

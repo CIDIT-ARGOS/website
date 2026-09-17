@@ -1,11 +1,12 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
 if (!podeEditarEfetivo()) {
-    die("Seu cargo não tem a permissão 'editar_efetivo'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'editar_efetivo'.");
 }
 
 $conexao = conectarBanco();
@@ -22,7 +23,7 @@ if (!$aluno) {
 }
 
 if ($escopo !== null && $aluno['esquadrao'] !== $escopo) {
-    die("Você não tem permissão para editar alunos fora do Esquadrão $escopo.");
+    exibirAcessoNegado("Você não tem permissão para editar alunos fora do Esquadrão $escopo.");
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

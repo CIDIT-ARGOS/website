@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/grupos_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
@@ -8,7 +9,7 @@ require_once __DIR__ . '/../../core/alunos_core.php';
 $conexao = conectarBanco();
 
 if (escopoEsquadrao() !== null) {
-    die("Grupos são geridos por cargos com visão de todo o CA.");
+    exibirAcessoNegado("Grupos são geridos por cargos com visão de todo o CA.");
 }
 
 $mensagem = null;
