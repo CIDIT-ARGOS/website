@@ -4,6 +4,7 @@ config.php
 # ===== Dados reais (alunos, hashes de senha) — nunca versionar =====
 seed_db.sql
 backup_*.sql
+reparo_producao_*.sql
 *.sql.bak
 
 # ===== Ferramentas temporárias/perigosas (não devem existir em produção nem no repo) =====

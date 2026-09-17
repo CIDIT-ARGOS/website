@@ -19,12 +19,26 @@ SET NAMES utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- Lista completa de TODAS as tabelas criadas por este script, nessa ordem
+-- ou não (FOREIGN_KEY_CHECKS=0 torna a ordem irrelevante aqui). Ao criar uma
+-- tabela nova neste arquivo, adicione o DROP correspondente aqui também —
+-- é exatamente a lista desatualizada que causou o incidente de 2026-09-17
+-- (init_db.sql rodado em produção travou no meio, apagando algumas tabelas
+-- sem recriar, porque "dispensas" e outras 7 tabelas não estavam aqui).
 DROP TABLE IF EXISTS api_logs;
 DROP TABLE IF EXISTS api_chaves;
-DROP TABLE IF EXISTS grupo_membros;
-DROP TABLE IF EXISTS grupos;
+DROP TABLE IF EXISTS grupo_acesso_permissoes;
+DROP TABLE IF EXISTS grupo_acesso_membros;
+DROP TABLE IF EXISTS grupos_acesso;
+DROP TABLE IF EXISTS unidades;
+DROP TABLE IF EXISTS cargos;
 DROP TABLE IF EXISTS cargo_permissoes;
 DROP TABLE IF EXISTS permissoes;
+DROP TABLE IF EXISTS dispensa_dispensa_tipos;
+DROP TABLE IF EXISTS dispensa_tipos;
+DROP TABLE IF EXISTS dispensas;
+DROP TABLE IF EXISTS grupo_membros;
+DROP TABLE IF EXISTS grupos;
 DROP TABLE IF EXISTS retirada_itens;
 DROP TABLE IF EXISTS retiradas;
 DROP TABLE IF EXISTS motivos_falta;
