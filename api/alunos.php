@@ -8,11 +8,16 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 
 switch ($metodo) {
 
-    // ---------- LISTAR / BUSCAR ----------
+    // ---------- LISTAR / BUSCAR (exige sessão de aluno — issue #26) ----------
+    // Escopo sempre travado no próprio esquadrão da sessão: o app do aluno
+    // usa isso pra montar o efetivo da chamada, não pra consultar o CA
+    // inteiro. esquadrao da query string é ignorado de propósito.
     case 'GET':
+        $alunoSessao = exigirSessaoAluno($conexao);
+
         if ($id) {
             $aluno = buscarAlunoPorId($conexao, $id);
-            if (!$aluno) {
+            if (!$aluno || $aluno['esquadrao'] !== $alunoSessao['esquadrao']) {
                 erro("Aluno não encontrado.", 404);
             }
             responder($aluno);
@@ -21,10 +26,8 @@ switch ($metodo) {
         $filtros = [
             'esquadrilha' => $_GET['esquadrilha'] ?? null,
             'especialidade' => $_GET['especialidade'] ?? null,
-            'esquadrao' => $_GET['esquadrao'] ?? null,
+            'esquadrao' => $alunoSessao['esquadrao'],
             'curso' => $_GET['curso'] ?? null,
-            'qrcode_hash' => $_GET['qrcode_hash'] ?? null,
-            'incluir_inativos' => isset($_GET['incluir_inativos']),
         ];
 
         responder(listarAlunos($conexao, $filtros));

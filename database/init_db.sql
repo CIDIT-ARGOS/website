@@ -25,6 +25,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- é exatamente a lista desatualizada que causou o incidente de 2026-09-17
 -- (init_db.sql rodado em produção travou no meio, apagando algumas tabelas
 -- sem recriar, porque "dispensas" e outras 7 tabelas não estavam aqui).
+DROP TABLE IF EXISTS api_sessoes;
 DROP TABLE IF EXISTS login_ip_tentativas;
 DROP TABLE IF EXISTS api_logs;
 DROP TABLE IF EXISTS api_chaves;
@@ -549,4 +550,24 @@ CREATE TABLE login_ip_tentativas (
   tentativas INT NOT NULL DEFAULT 0,
   bloqueado_ate DATETIME NULL,
   atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ================= SESSÃO DE API POR ALUNO (login via QR code) =================
+-- Segunda camada de autenticação pras rotas que fazem parte do fluxo do
+-- app do aluno (efetivo, motivos, abrir/marcar/enviar retirada) — além da
+-- chave do aplicativo, exige um token de sessão obtido via POST
+-- /api/sessao.php com o qrcode_hash do aluno. Ver issue #26.
+CREATE TABLE api_sessoes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  aluno_id INT NOT NULL,
+  api_chave_id INT NULL,
+  token_hash CHAR(64) NOT NULL UNIQUE,
+  criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expira_em DATETIME NOT NULL,
+  ultimo_uso DATETIME NULL,
+  ip VARCHAR(45) NULL,
+
+  INDEX idx_expira_em (expira_em),
+  FOREIGN KEY (aluno_id) REFERENCES alunos(id),
+  FOREIGN KEY (api_chave_id) REFERENCES api_chaves(id)
 );
