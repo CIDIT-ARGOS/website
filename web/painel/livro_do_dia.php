@@ -104,6 +104,7 @@ foreach ($esquadroesParaMontar as $esq) {
     .livro ul { margin: 4px 0; padding-left: 20px; font-size: 13px; }
     .dispensa-bloco { font-size: 13px; margin-bottom: 12px; }
     .dispensa-bloco strong { display: block; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 
     @media print {
         body { background: #fff; }
@@ -118,8 +119,8 @@ foreach ($esquadroesParaMontar as $esq) {
 <div class="topbar">
     <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div>
-        <button onclick="window.print()">Baixar PDF</button>
-        <a href="index.php?logout=1">sair</a>
+        <button onclick="window.print()"><span class="i" style="--icon-url:url('../images/icons/printer.svg')"></span>Baixar PDF</button>
+        <a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
     </div>
 </div>
 
@@ -136,7 +137,7 @@ foreach ($esquadroesParaMontar as $esq) {
                     <?php endforeach; ?>
                 </select>
             <?php endif; ?>
-            <button type="submit">Gerar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/refresh.svg')"></span>Gerar</button>
         </form>
     </div>
 

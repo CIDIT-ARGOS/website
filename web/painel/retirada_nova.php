@@ -75,7 +75,7 @@ $grupos = listarGrupos($conexao);
     legend { font-size: 12px; color: var(--text-muted); padding: 0 6px; }
     .responsavel { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
     .responsavel .rotulo { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <script>
     function alternarTipo() {
@@ -180,7 +180,7 @@ $grupos = listarGrupos($conexao);
                 <?= htmlspecialchars($responsavelNome) ?> · <?= htmlspecialchars(nomeCargo($_SESSION['painel_cargo'])) ?>
             </div>
 
-            <button type="submit">Abrir retirada</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Abrir retirada</button>
         </form>
     </div>
 </div>

@@ -59,7 +59,7 @@ foreach ($cargos as $c) {
     .ok { color: var(--ok); font-size: 13px; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     .descricao { color: var(--text-muted); font-size: 12px; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -102,7 +102,7 @@ foreach ($cargos as $c) {
                 <?php endforeach; ?>
             </table>
             <div style="margin-top:14px;">
-                <button type="submit">Salvar permissões</button>
+                <button type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar permissões</button>
             </div>
         </form>
         </div>

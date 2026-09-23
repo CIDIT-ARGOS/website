@@ -88,7 +88,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
     .ok { color: var(--ok); font-size: 13px; }
     .form-linha { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .scroll-x { overflow-x: auto; min-width: 0; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -121,7 +121,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
                     <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['tipo']) ?>)</option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit">Adicionar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/user-plus.svg')"></span>Adicionar</button>
         </form>
 
         <div class="scroll-x">
@@ -165,7 +165,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
                     <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['tipo']) ?>)</option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit">Conceder</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/shield-check.svg')"></span>Conceder</button>
         </form>
 
         <div class="scroll-x">
