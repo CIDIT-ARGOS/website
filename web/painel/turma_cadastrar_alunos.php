@@ -79,7 +79,7 @@ $postosDisponiveis = listarPostosGraduacao($conexao);
     th { background: var(--azul-eear); color: #ffffff; }
     code { background: #eef1f6; padding: 1px 5px; border-radius: 4px; font-size: 12px; }
     .exemplo { background: #f8fafc; border: 1px dashed var(--border); border-radius: 6px; padding: 10px 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; white-space: pre; overflow-x: auto; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -137,7 +137,7 @@ GS;SOUZA;F;12345678901;26/3201;B;BCT;SPEC</div>
             <label>Alunos (uma linha por aluno)</label>
             <textarea name="linhas" placeholder="Cole aqui..." required><?= htmlspecialchars($linhasEnviadas) ?></textarea>
 
-            <button type="submit">Cadastrar leva</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/user-plus.svg')"></span>Cadastrar leva</button>
         </form>
     </div>
 </div>

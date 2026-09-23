@@ -108,7 +108,7 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
     .badge.encerrada { background: #eef1f6; color: var(--text-muted); }
     .tag-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #eef1f6; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
     .tag-check input { margin: 0; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -141,7 +141,7 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
             <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" name="data_termino" required></label>
             <input type="text" name="numero" placeholder="Nº da dispensa">
             <input type="text" name="motivo" placeholder="Motivo" required style="min-width:180px;">
-            <button type="submit">Cadastrar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Cadastrar</button>
             <div style="width:100%; display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:4px;">
                 <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
                 <?php foreach ($tiposDispensa as $t): ?>
@@ -187,7 +187,7 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
                                 <label class="tag-check"><input form="<?= $formId ?>" type="checkbox" name="dispensa_tipo_ids[]" value="<?= $t['id'] ?>" <?= in_array($t['id'], $tagsIdsAtuais) ? 'checked' : '' ?>> <?= htmlspecialchars($t['nome']) ?></label>
                             <?php endforeach; ?>
                             <input form="<?= $formId ?>" type="text" name="dispensado_de" value="<?= htmlspecialchars($d['dispensado_de'] ?? '') ?>" placeholder="Específico (opcional)" style="min-width:180px;">
-                            <button type="submit" form="<?= $formId ?>">Salvar</button>
+                            <button type="submit" form="<?= $formId ?>"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
                         </div>
                     </td>
                 </tr>

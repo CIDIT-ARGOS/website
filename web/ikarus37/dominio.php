@@ -112,7 +112,7 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
     .scroll-x { overflow-x: auto; min-width: 0; }
     tr.inativo { opacity: 0.5; }
     .badge-inativo { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: var(--danger); color: #fff; font-size: 11px; vertical-align: middle; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -154,7 +154,7 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
                     <?php dominioCampoInputIkarus($campo, $campo['tipo'] === 'checkbox' ? 1 : '', 'form_novo', $unidadesDisponiveis); ?>
                 </label>
             <?php endforeach; ?>
-            <button type="submit">Criar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Criar</button>
         </form>
     </div>
 
@@ -193,7 +193,7 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
                         </td>
                     <?php endforeach; ?>
                     <td style="white-space:nowrap;">
-                        <button type="submit" form="<?= $formId ?>">Salvar</button>
+                        <button type="submit" form="<?= $formId ?>"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
                         <?php if ($chaveEntidade === 'grupos_acesso'): ?>
                             <a href="grupo_acesso_detalhe.php?id=<?= $r['id'] ?>" style="color:var(--accent); font-size:13px;">membros/permissões</a>
                         <?php endif; ?>

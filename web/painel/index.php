@@ -159,7 +159,7 @@ $logado = !empty($_SESSION['painel_id']);
     }
     .card h3 { margin: 0 0 6px; font-size: 15px; }
     .card p { margin: 0; color: var(--text-muted); font-size: 13px; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -179,7 +179,7 @@ $logado = !empty($_SESSION['painel_id']);
                         <span class="i" style="--icon-url:url('../images/icons/eye.svg'); margin:0;"></span>
                     </button>
                 </div>
-                <button type="submit">Entrar</button>
+                <button type="submit"><span class="i" style="--icon-url:url('../images/icons/login.svg')"></span>Entrar</button>
             </form>
             <script>
                 function alternarSenha(id, botao) {

@@ -126,7 +126,7 @@ if ($grupoAtual && $buscaNome !== '') {
         .layout { grid-template-columns: 1fr; }
         .lista-grupos { max-height: 300px; }
     }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -170,7 +170,7 @@ if ($grupoAtual && $buscaNome !== '') {
                 <option value="servico">Serviço</option>
                 <option value="comissao">Comissão</option>
             </select>
-            <button type="submit">Criar grupo</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Criar grupo</button>
         </form>
         <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px; margin-bottom: 0;">
             O grupo passa a existir como agrupamento próprio (retirada de falta separada) e também
@@ -185,7 +185,7 @@ if ($grupoAtual && $buscaNome !== '') {
                 <form method="post" onsubmit="return confirm('Excluir o grupo \'<?= htmlspecialchars($grupoAtual['nome'], ENT_QUOTES) ?>\'? Os membros são desvinculados, mas o histórico de retiradas já feitas continua.');">
                     <input type="hidden" name="acao" value="excluir_grupo">
                     <input type="hidden" name="grupo_id" value="<?= $grupoAtual['id'] ?>">
-                    <button type="submit" class="danger">Excluir grupo</button>
+                    <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir grupo</button>
                 </form>
             </div>
             <form method="get">
@@ -207,7 +207,7 @@ if ($grupoAtual && $buscaNome !== '') {
                                     <input type="hidden" name="acao" value="adicionar">
                                     <input type="hidden" name="grupo" value="<?= htmlspecialchars($grupoAtual['nome']) ?>">
                                     <input type="hidden" name="aluno_id" value="<?= $c['id'] ?>">
-                                    <button type="submit">Adicionar</button>
+                                    <button type="submit"><span class="i" style="--icon-url:url('../images/icons/user-plus.svg')"></span>Adicionar</button>
                                 </form>
                             </td>
                         </tr>
@@ -233,7 +233,7 @@ if ($grupoAtual && $buscaNome !== '') {
                                 <input type="hidden" name="acao" value="remover">
                                 <input type="hidden" name="grupo_id" value="<?= $grupoAtual['id'] ?>">
                                 <input type="hidden" name="aluno_id" value="<?= $m['id'] ?>">
-                                <button type="submit" class="danger">Remover</button>
+                                <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Remover</button>
                             </form>
                         </td>
                     </tr>

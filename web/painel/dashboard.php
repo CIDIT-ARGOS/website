@@ -83,7 +83,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     th { background: var(--azul-eear); color: #ffffff; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     .vazio { color: var(--text-muted); font-size: 13px; padding: 20px 0; text-align: center; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 
     @media print {
         body { background: #fff; }
@@ -98,8 +98,8 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 <div class="topbar">
     <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div>
-        <button onclick="window.print()">Baixar PDF</button>
-        <a href="index.php?logout=1">sair</a>
+        <button onclick="window.print()"><span class="i" style="--icon-url:url('../images/icons/printer.svg')"></span>Baixar PDF</button>
+        <a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
     </div>
 </div>
 

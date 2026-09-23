@@ -86,7 +86,7 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
     .badge-mf.f { background: #fbe0ef; color: #be185d; }
     td.num, th.num { text-align: center; }
     tr.linha-total { background: var(--bg); font-weight: 600; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -204,7 +204,7 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
                         <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nome']) ?><?= empty($t['ativo']) ? ' (formada)' : '' ?></option>
                     <?php endforeach; ?>
                 </select>
-                <button type="submit" onclick="return confirm('Atribuir essa turma aos alunos selecionados?');">Atribuir turma</button>
+                <button type="submit" onclick="return confirm('Atribuir essa turma aos alunos selecionados?');"><span class="i" style="--icon-url:url('../images/icons/school.svg')"></span>Atribuir turma</button>
             </div>
         <?php endif; ?>
         <div class="scroll-x">

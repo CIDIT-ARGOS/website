@@ -115,7 +115,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
     .badge.enviada { background: #d9f2e3; color: var(--ok); }
     .tag-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #eef1f6; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
     .tag-check input { margin: 0; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <script>
     function alternarMotivo(alunoId, presenteCheckbox) {
@@ -216,7 +216,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                         </td>
                         <?php if (!$somenteLeitura && $podeLancarDispensa): ?>
                         <td>
-                            <button type="button" onclick="alternarDispensa(<?= $item['aluno_id'] ?>)">Lançar</button>
+                            <button type="button" onclick="alternarDispensa(<?= $item['aluno_id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/medical-cross.svg')"></span>Lançar</button>
                         </td>
                         <?php endif; ?>
                     </tr>
@@ -235,7 +235,7 @@ $somenteLeitura = $retirada['status'] === 'enviada';
                                     <label class="tag-check"><input type="checkbox" class="disp_tipo_<?= $item['aluno_id'] ?>" value="<?= $t['id'] ?>"> <?= htmlspecialchars($t['nome']) ?></label>
                                 <?php endforeach; ?>
                                 <input type="text" id="disp_dispensado_de_<?= $item['aluno_id'] ?>" placeholder="Específico (opcional)" style="min-width:160px;">
-                                <button type="button" onclick="lancarDispensa(<?= $item['aluno_id'] ?>)">Salvar dispensa</button>
+                                <button type="button" onclick="lancarDispensa(<?= $item['aluno_id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar dispensa</button>
                             </div>
                         </td>
                     </tr>
@@ -245,8 +245,8 @@ $somenteLeitura = $retirada['status'] === 'enviada';
             </div>
 
             <?php if (!$somenteLeitura): ?>
-                <button type="submit">Salvar</button>
-                <button type="submit" name="enviar" value="1" class="enviar" onclick="return confirm('Enviar a chamada? Depois de enviada não dá mais pra editar.');">Salvar e enviar chamada</button>
+                <button type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
+                <button type="submit" name="enviar" value="1" class="enviar" onclick="return confirm('Enviar a chamada? Depois de enviada não dá mais pra editar.');"><span class="i" style="--icon-url:url('../images/icons/send.svg')"></span>Salvar e enviar chamada</button>
             <?php endif; ?>
         </form>
     </div>

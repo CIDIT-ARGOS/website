@@ -80,7 +80,7 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
     .badge.ativa { background: #d9f2e3; color: var(--ok); }
     .badge.formada { background: #eef1f6; color: var(--text-muted); }
     tr.inativa { opacity: 0.55; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -145,7 +145,7 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
                 Esquadrão atual (opcional)
                 <input type="text" name="esquadrao_atual" placeholder="Ex: Esquadrão Azul" style="min-width:140px;">
             </label>
-            <button type="submit">Cadastrar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Cadastrar</button>
         </form>
     </div>
 
@@ -178,9 +178,9 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
                     <td><span class="badge <?= $inativa ? 'formada' : 'ativa' ?>"><?= $inativa ? 'formada' : 'ativa' ?></span></td>
                     <td style="white-space:nowrap;">
                         <?php if (podeEditarEfetivo() && !$inativa): ?>
-                            <a href="turma_cadastrar_alunos.php?turma_id=<?= $t['id'] ?>" class="link-btn" style="font-size:12px; color:var(--accent); margin-right:8px;">Cadastrar alunos</a>
+                            <a href="turma_cadastrar_alunos.php?turma_id=<?= $t['id'] ?>" class="link-btn" style="font-size:12px; color:var(--accent); margin-right:8px;"><span class="i" style="--icon-url:url('../images/icons/user-plus.svg')"></span>Cadastrar alunos</a>
                         <?php endif; ?>
-                        <button type="button" onclick="alternarEdicaoTurma('<?= $formId ?>')">Editar</button>
+                        <button type="button" onclick="alternarEdicaoTurma('<?= $formId ?>')"><span class="i" style="--icon-url:url('../images/icons/pencil.svg')"></span>Editar</button>
                         <button type="button" class="danger" <?= $inativa ? 'disabled' : '' ?>
                             onclick="if(confirm(<?= htmlspecialchars(json_encode($confirmacao), ENT_QUOTES) ?>)) document.getElementById('form_formar_<?= $t['id'] ?>').submit();">
                             <span class="i" style="--icon-url:url('../images/icons/3sgt.svg')"></span>Formar turma
@@ -210,7 +210,7 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
                                 <option value="2" <?= (int) ($t['semestre_formatura_previsto'] ?? 0) === 2 ? 'selected' : '' ?>>2º sem.</option>
                             </select>
                             <input type="text" name="esquadrao_atual" value="<?= htmlspecialchars($t['esquadrao_atual'] ?? '') ?>" placeholder="Esquadrão atual" style="min-width:140px;">
-                            <button type="submit">Salvar</button>
+                            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
                         </form>
                     </td>
                 </tr>
