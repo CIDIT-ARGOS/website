@@ -1,0 +1,44 @@
+name: Smoke test produção
+
+# Confere, todo dia e sob demanda, se produção está de pé e respondendo
+# certo. Somente leitura — não cria nem altera nada (tests/smoke_producao.php).
+# O deploy (release.yml) já roda o mesmo teste no fim de cada publicação.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 12 * * *' # 09:00 em Brasília
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        env:
+          TOKEN: ${{ github.token }}
+          SERVIDOR: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git ca-certificates >/dev/null; }
+          git init -q .
+          git remote add origin "${SERVIDOR/:\/\//://ci:$TOKEN@}/$REPO.git"
+          git fetch -q --depth=1 origin "$SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Dependências
+        run: bash scripts/ci/instalar-dependencias.sh
+
+      - name: Smoke test
+        env:
+          PROD_URL: ${{ secrets.PROD_URL }}
+        run: |
+          if [ -z "$PROD_URL" ]; then
+            echo "::error::Secret PROD_URL não configurado."
+            exit 1
+          fi
+          php tests/smoke_producao.php "$PROD_URL"

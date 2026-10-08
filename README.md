@@ -31,6 +31,14 @@ O nome vem da vigia constante do efetivo, como o gigante da mitologia grega que 
 
 PHP + MySQL, hospedado na Hostinger. Sem frameworks — simples de manter e de dar continuidade.
 
+## Desenvolvimento e publicação
+
+O repositório principal fica no [Forgejo](https://cosmos.simioni.dev.br/cidit/projeto-argos); o GitHub é espelho.
+Toda mudança passa por `feat/<nome>` → `develop` → `release` → `main`, com lint e testes automáticos em cada push.
+Uma tag `vX.Y.Z` na `main` publica a versão em produção (backup do banco, migrations e smoke test incluídos).
+
+Detalhes — branches, testes, como lançar, rollback e migrations — em [docs/CI-CD.md](docs/CI-CD.md).
+
 ## Equipe do projeto
 
 | | Nome | Função |
