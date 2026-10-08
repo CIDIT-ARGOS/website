@@ -1,7 +1,10 @@
 // Área Funcional — lógica do app. Sem framework/build, igual ao resto do
 // projeto: um arquivo, funções diretas, localStorage pra sessão do aluno.
 
-const ARGOS_API_BASE = '/api/';
+// Vem do env.php, calculado a partir de onde o app está publicado — em
+// produção o site vive num subdiretório (ex: /cidit/projetos/11/), então
+// um '/api/' fixo apontaria pra raiz do domínio e quebraria o login.
+const ARGOS_API_BASE = window.ARGOS_API_BASE || '../../api/';
 const CHAVE_SESSAO = 'argos_sessao';
 
 const TIPOS_RETIRADA = {
@@ -288,7 +291,7 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
         el.dataset.alunoId = item.aluno_id;
 
         const opcoesMotivo = motivos.map((m) =>
-            `<option value="${m.id}" ${Number(item.motivo_falta_id) === m.id ? 'selected' : ''}>${escapeHtml(m.nome)}</option>`
+            `<option value="${m.id}" ${Number(item.motivo_falta_id) === Number(m.id) ? 'selected' : ''}>${escapeHtml(m.nome)}</option>`
         ).join('');
 
         el.innerHTML = `

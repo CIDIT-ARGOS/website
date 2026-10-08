@@ -3,7 +3,7 @@
 // /api/ NUNCA passam pelo cache: retirada de falta é dado vivo, servir uma
 // versão velha seria pior que não ter cache nenhum.
 
-const CACHE_NOME = 'argos-app-shell-v1';
+const CACHE_NOME = 'argos-app-shell-v2';
 
 const ARQUIVOS_SHELL = [
     'index.html',
@@ -36,7 +36,7 @@ self.addEventListener('fetch', (evento) => {
     const url = new URL(evento.request.url);
 
     // Nunca intercepta a API — nem pra ler do cache, nem pra gravar nele.
-    if (url.pathname.startsWith('/api/') || url.pathname.includes('/app/env.php')) {
+    if (url.pathname.includes('/api/') || url.pathname.endsWith('/env.php')) {
         return;
     }
 

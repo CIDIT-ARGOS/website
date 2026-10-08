@@ -11,3 +11,9 @@ header('Content-Type: application/javascript; charset=utf-8');
 header('Cache-Control: no-store');
 
 echo 'window.ARGOS_API_KEY = ' . json_encode($APP_PWA_API_KEY ?? '', JSON_UNESCAPED_UNICODE) . ';';
+
+// Base da API relativa à raiz do projeto (3 níveis acima de web/app/env.php),
+// pra funcionar tanto no Docker local (/api/) quanto em produção, onde o site
+// fica num subdiretório (ex: /cidit/projetos/11/api/).
+$raizProjeto = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'], 3)), '/');
+echo "\n" . 'window.ARGOS_API_BASE = ' . json_encode($raizProjeto . '/api/', JSON_UNESCAPED_SLASHES) . ';';
