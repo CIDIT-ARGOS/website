@@ -1,0 +1,197 @@
+name: Release
+
+# Publica uma versão em produção.
+#
+# Como lançar:   git tag -a v1.2.0 -m "v1.2.0" && git push cosmos v1.2.0
+#                (a tag precisa apontar pra um commit que já está na main)
+# Rollback:      Actions → Release → Run workflow → informe a tag anterior.
+#
+# Etapas: valida a tag → lint + testes nos dois runners → monta o pacote →
+# deploy por FTP (manutenção, backup do banco, troca dos arquivos,
+# migrations, smoke test) → cria/atualiza a Release no Forgejo com as notas.
+# Detalhes em docs/CI-CD.md.
+#
+# Secrets (Configurações do repositório → Actions → Secrets):
+#   FTP_HOST, FTP_USER, FTP_PASSWORD, FTP_REMOTE_DIR, PROD_URL
+# Variáveis opcionais (→ Variables):
+#   FTP_PORT, FTP_TLS (sim/nao), DB_BASELINE, DEPLOY_PRESERVAR
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag já existente para (re)publicar em produção, ex: v1.2.0'
+        required: true
+
+# Nunca dois deploys ao mesmo tempo no mesmo servidor.
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  preparar:
+    name: Validar versão
+    runs-on: ubuntu-latest
+    outputs:
+      versao: ${{ steps.versao.outputs.versao }}
+      sha: ${{ steps.versao.outputs.sha }}
+    steps:
+      - name: Checkout (main + tags, pra validar a tag)
+        env:
+          TOKEN: ${{ github.token }}
+          SERVIDOR: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+        run: |
+          command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git ca-certificates >/dev/null; }
+          git init -q .
+          git remote add origin "${SERVIDOR/:\/\//://ci:$TOKEN@}/$REPO.git"
+          git fetch -q --tags origin main:refs/remotes/origin/main
+
+      - name: Validar tag
+        id: versao
+        env:
+          EVENTO: ${{ github.event_name }}
+          TAG_INFORMADA: ${{ inputs.tag }}
+          TAG_PUSH: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENTO" = "workflow_dispatch" ]; then
+            VERSAO="$TAG_INFORMADA"
+          else
+            VERSAO="$TAG_PUSH"
+          fi
+
+          if ! [[ "$VERSAO" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '$VERSAO' fora do padrão vMAJOR.MINOR.PATCH (ex: v1.2.0)."
+            exit 1
+          fi
+          SHA=$(git rev-parse --verify -q "refs/tags/$VERSAO^{commit}") || {
+            echo "::error::Tag $VERSAO não existe no repositório."; exit 1; }
+          if ! git merge-base --is-ancestor "$SHA" origin/main; then
+            echo "::error::A tag $VERSAO aponta pra $SHA, que não está na main. Só vai pra produção o que já foi mergeado na main."
+            exit 1
+          fi
+
+          echo "Versão $VERSAO → commit $SHA"
+          echo "versao=$VERSAO" >> "$GITHUB_OUTPUT"
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+
+  testes:
+    name: Testes (${{ matrix.runner }})
+    needs: preparar
+    strategy:
+      fail-fast: true
+      matrix:
+        runner: [ubuntu-latest, debian]
+    runs-on: ${{ matrix.runner }}
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: argos_root
+    env:
+      DB_HOST: mysql
+      DB_ROOT_SENHA: argos_root
+    steps:
+      - name: Checkout
+        env:
+          TOKEN: ${{ github.token }}
+          SERVIDOR: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ needs.preparar.outputs.sha }}
+        run: |
+          command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git ca-certificates >/dev/null; }
+          git init -q .
+          git remote add origin "${SERVIDOR/:\/\//://ci:$TOKEN@}/$REPO.git"
+          git fetch -q --depth=1 origin "$SHA"
+          git checkout -q FETCH_HEAD
+
+      - name: Dependências
+        run: bash scripts/ci/instalar-dependencias.sh
+
+      - name: Lint
+        run: bash scripts/ci/lint.sh
+
+      - name: Migrations + testes de integração
+        run: bash scripts/ci/testes-integracao.sh
+
+  deploy:
+    name: Deploy em produção
+    needs: [preparar, testes]
+    runs-on: ubuntu-latest
+    env:
+      VERSAO: ${{ needs.preparar.outputs.versao }}
+    steps:
+      - name: Checkout
+        env:
+          TOKEN: ${{ github.token }}
+          SERVIDOR: ${{ github.server_url }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ needs.preparar.outputs.sha }}
+        run: |
+          command -v git >/dev/null || { apt-get update -qq && apt-get install -y -qq git ca-certificates >/dev/null; }
+          git init -q .
+          git remote add origin "${SERVIDOR/:\/\//://ci:$TOKEN@}/$REPO.git"
+          git fetch -q --tags origin
+          git checkout -q "$SHA"
+
+      - name: Dependências
+        run: bash scripts/ci/instalar-dependencias.sh lftp jq zip
+
+      - name: Montar pacote
+        run: |
+          bash scripts/release/gerar-pacote.sh "$VERSAO" build/pacote
+          (cd build/pacote && zip -qr "../argos-$VERSAO.zip" .)
+
+      - name: Deploy por FTP
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_REMOTE_DIR: ${{ secrets.FTP_REMOTE_DIR }}
+          PROD_URL: ${{ secrets.PROD_URL }}
+          FTP_PORT: ${{ vars.FTP_PORT }}
+          FTP_TLS: ${{ vars.FTP_TLS }}
+          DB_BASELINE: ${{ vars.DB_BASELINE }}
+          DEPLOY_PRESERVAR: ${{ vars.DEPLOY_PRESERVAR }}
+          PACOTE_DIR: build/pacote
+        run: bash scripts/deploy/deploy-producao.sh
+
+      - name: Publicar Release no Forgejo
+        env:
+          TOKEN: ${{ github.token }}
+          API: ${{ github.server_url }}/api/v1/repos/${{ github.repository }}
+          URL_RELEASE: ${{ github.server_url }}/${{ github.repository }}/releases/tag
+        run: |
+          ANTERIOR=$(git describe --tags --abbrev=0 --match 'v*' "$VERSAO^" 2>/dev/null || true)
+          {
+            echo "Publicada em produção em $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (horário de Brasília)."
+            echo
+            if [ -n "$ANTERIOR" ]; then
+              echo "## Mudanças desde $ANTERIOR"
+              git log --no-merges --format='- %s (%h)' "$ANTERIOR..$VERSAO"
+            else
+              echo "## Mudanças"
+              git log --no-merges --format='- %s (%h)' -n 50 "$VERSAO"
+            fi
+          } > notas.md
+          cat notas.md
+
+          AUTH="Authorization: token $TOKEN"
+          ID=$(curl -sS -H "$AUTH" "$API/releases/tags/$VERSAO" | jq -r '.id // empty')
+          CORPO=$(jq -n --arg tag "$VERSAO" --rawfile body notas.md '{tag_name: $tag, name: $tag, body: $body}')
+          if [ -n "$ID" ]; then
+            echo "Release $VERSAO já existe (re-deploy) — atualizando as notas."
+            curl -fsS -X PATCH -H "$AUTH" -H 'Content-Type: application/json' -d "$CORPO" "$API/releases/$ID" >/dev/null
+          else
+            ID=$(curl -fsS -X POST -H "$AUTH" -H 'Content-Type: application/json' -d "$CORPO" "$API/releases" | jq -r '.id')
+          fi
+          curl -fsS -X POST -H "$AUTH" -F "attachment=@build/argos-$VERSAO.zip" \
+            "$API/releases/$ID/assets?name=argos-$VERSAO.zip" >/dev/null \
+            || echo "::warning::Não consegui anexar o zip (talvez já exista nesta release)."
+          echo "Release: $URL_RELEASE/$VERSAO"

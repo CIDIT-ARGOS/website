@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta http-equiv="refresh" content="30">
+<title>Argos — Em manutenção</title>
+<style>
+    :root { --azul: #0a2e5c; --texto: #1d2939; --suave: #667085; --fundo: #f4f6fa; }
+    * { box-sizing: border-box; }
+    body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: var(--fundo);
+        color: var(--texto);
+    }
+    .cartao {
+        max-width: 440px;
+        width: 100%;
+        background: #fff;
+        border-radius: 14px;
+        padding: 36px 28px;
+        text-align: center;
+        box-shadow: 0 4px 24px rgba(16, 24, 40, .08);
+        border-top: 5px solid var(--azul);
+    }
+    h1 { margin: 0 0 8px; font-size: 22px; color: var(--azul); }
+    p { margin: 0 0 12px; line-height: 1.5; color: var(--suave); }
+    .engrenagem {
+        width: 56px; height: 56px; margin: 0 auto 18px;
+        animation: girar 4s linear infinite;
+        color: var(--azul);
+    }
+    @keyframes girar { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .engrenagem { animation: none; } }
+    small { color: var(--suave); }
+</style>
+</head>
+<body>
+<main class="cartao">
+    <svg class="engrenagem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z"/>
+        <path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/>
+    </svg>
+    <h1>Argos em manutenção</h1>
+    <p>Estamos publicando uma nova versão do sistema. Isso leva só alguns minutos.</p>
+    <p>Esta página atualiza sozinha — não é preciso fazer nada.</p>
+    <small>Corpo de Alunos · EEAR</small>
+</main>
+</body>
+</html>
