@@ -432,11 +432,6 @@ a {
   grid-template-columns: repeat(3, 1fr);
 }
 
-.cards-4 {
-  grid-template-columns: repeat(4, 1fr);
-  margin-top: 48px;
-}
-
 .card {
   background: var(--branco);
   border: 1px solid var(--borda);
@@ -468,178 +463,24 @@ a {
   margin-bottom: 14px;
 }
 
-.card-outline {
-  background: transparent;
-  box-shadow: none;
-  border: 1px solid var(--borda);
-}
-
-/* ==================== STEPS (Funcionamento) ==================== */
-
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 56px;
-}
-
-.step {
-  background: var(--branco);
-  border: 1px solid var(--borda);
-  border-radius: 14px;
-  padding: 24px;
-}
-
-.step-number {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--azul-eear);
-  color: var(--branco);
-  font-family: var(--fonte-display);
-  font-weight: 700;
-  font-size: 15px;
+.card-link {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 14px;
+  flex-direction: column;
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.step h3 {
-  font-size: 16px;
-  margin-bottom: 6px;
+.card-link:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 32px rgba(10, 46, 92, 0.14);
 }
 
-.step p {
-  font-size: 14px;
-  color: var(--texto-muted);
-  margin-bottom: 0;
-}
-
-/* ==================== CALLOUTS ==================== */
-
-.callout-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 24px;
-}
-
-.callout {
-  background: var(--branco);
-  border: 1px solid var(--borda);
-  border-radius: 14px;
-  padding: 26px;
-}
-
-.callout-dark {
-  background: var(--azul-eear);
-  border-color: var(--azul-eear);
-  color: var(--branco);
-}
-
-.callout-dark h4 {
-  color: var(--branco);
-}
-
-.callout h4 {
-  font-size: 15px;
-  margin-bottom: 12px;
-}
-
-.callout p {
-  font-size: 14px;
-  margin-bottom: 0;
-  color: var(--texto-muted);
-}
-
-.callout-dark p {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.plain-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  font-size: 14px;
-}
-
-.plain-list li {
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.plain-list li:last-child {
-  border-bottom: none;
-}
-
-.plain-list strong {
-  color: var(--branco);
-}
-
-/* ==================== STAT CARD (Propósito) ==================== */
-
-.stat-card {
-  background: var(--azul-eear);
-  color: var(--branco);
-  border-radius: 20px;
-  padding: 48px 32px;
-  text-align: center;
-  box-shadow: var(--sombra);
-}
-
-.stat-number {
-  display: block;
-  font-family: var(--fonte-display);
-  font-size: 96px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.stat-label {
-  display: block;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.75);
-  margin-top: 12px;
-}
-
-/* ==================== ROADMAP ==================== */
-
-.roadmap {
-  margin-top: 56px;
-  border-top: 1px solid var(--borda);
-  padding-top: 32px;
-}
-
-.roadmap h4 {
-  font-size: 15px;
-  color: var(--texto-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 20px;
-}
-
-.roadmap-items {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.roadmap-item {
-  font-size: 14px;
-  color: var(--texto);
-  padding: 16px;
-  border: 1px dashed var(--borda);
-  border-radius: 10px;
-}
-
-.roadmap-item span {
-  display: block;
-  font-family: var(--fonte-display);
-  font-weight: 700;
-  color: var(--accent);
+.card-link-cta {
+  margin-top: auto;
+  padding-top: 14px;
   font-size: 13px;
-  margin-bottom: 6px;
+  font-weight: 600;
+  color: var(--accent);
 }
 
 /* ==================== FOOTER ==================== */
@@ -830,20 +671,7 @@ a {
     margin-top: 32px;
   }
 
-  .cards-3,
-  .cards-4 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .steps {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .callout-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .roadmap-items {
+  .cards-3 {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -888,25 +716,12 @@ a {
     padding: 64px 0;
   }
 
-  .cards-3,
-  .cards-4 {
-    grid-template-columns: 1fr;
-  }
-
-  .steps {
-    grid-template-columns: 1fr;
-  }
-
-  .roadmap-items {
+  .cards-3 {
     grid-template-columns: 1fr;
   }
 
   .footer-grid {
     grid-template-columns: 1fr;
     gap: 32px;
-  }
-
-  .stat-number {
-    font-size: 72px;
   }
 }

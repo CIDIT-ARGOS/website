@@ -8,7 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -25,9 +25,8 @@
 
     <nav class="nav-links" id="navLinks">
       <a href="#introducao" class="nav-link active">Introdução</a>
-      <a href="#apresentacao" class="nav-link">Apresentação</a>
-      <a href="#funcionamento" class="nav-link">Funcionamento</a>
-      <a href="#proposito" class="nav-link">Propósito</a>
+      <a href="#sobre" class="nav-link">Sobre</a>
+      <a href="#acessar" class="nav-link">Acessar</a>
     </nav>
 
     <div class="navbar-actions">
@@ -62,12 +61,12 @@
         <p class="hero-subtitle">Sistema de Retirada de Faltas · Corpo de Alunos</p>
         <p class="hero-text">
           Vigilância contínua do efetivo: retirada de faltas <strong>digital</strong>,
-          justificativa de faltas em campo e histórico auditável de cada retirada —
-          substituindo o controle manual por papeletas e o Livro do Aluno de Dia.
+          login por QR Code e histórico auditável de cada retirada — substituindo
+          o controle manual por papeletas e o Livro do Aluno de Dia.
         </p>
         <div class="hero-actions">
-          <a href="#apresentacao" class="btn btn-primary">Conhecer o projeto</a>
-          <a href="#funcionamento" class="btn btn-outline">Ver como funciona</a>
+          <a href="#sobre" class="btn btn-primary">Conhecer o projeto</a>
+          <a href="#acessar" class="btn btn-outline">Acessar o sistema</a>
         </div>
       </div>
 
@@ -80,12 +79,12 @@
     </div>
   </section>
 
-  <!-- ================= APRESENTAÇÃO ================= -->
-  <section id="apresentacao" class="section">
+  <!-- ================= SOBRE ================= -->
+  <section id="sobre" class="section">
     <div class="section-inner">
       <header class="section-head">
-        <span class="tag">01 · Conceito</span>
-        <h2>A origem do nome</h2>
+        <span class="tag">01 · Sobre o projeto</span>
+        <h2>A origem do nome e o problema que resolve</h2>
       </header>
 
       <div class="split">
@@ -93,11 +92,16 @@
           <p>
             Na mitologia grega, <strong>Argos Panoptes</strong> era o gigante coberto por
             centenas de olhos. Por nunca fechar todos ao mesmo tempo, exercia uma vigilância
-            contínua, atenta e infalível.
+            contínua, atenta e infalível — o projeto adota o nome como símbolo dessa
+            <strong>vigia constante</strong> do efetivo.
           </p>
           <p>
-            O projeto adota o nome como símbolo da <strong>vigia constante</strong> do efetivo:
-            nenhuma alteração ou falta passa sem o devido registro e controle.
+            Mesmo sendo reconhecida como o maior centro de formação técnica da América Latina,
+            a EEAR ainda controla o efetivo de alunos de forma manual, por meio de
+            <strong>Papeletas de Retirada de Faltas</strong> e do <strong>Livro do Aluno de Dia</strong>
+            mantido em cada esquadrão. O Argos digitaliza esse controle: retirada de faltas pelo
+            celular do próprio aluno de serviço, com histórico auditável e responsável
+            identificado em cada retirada.
           </p>
 
           <div class="cards cards-3">
@@ -124,131 +128,46 @@
             <img src="images/tela-login.png" alt="Tela de acesso do aplicativo Argos"
                  onerror="this.closest('.img-slot').classList.add('img-missing')">
           </div>
-          <p class="media-caption">Acesso por identidade militar / SARAM. Tema claro, alto contraste, uso ao ar livre.</p>
+          <p class="media-caption">Tela de acesso do app. Tema claro, alto contraste, uso ao ar livre.</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ================= FUNCIONAMENTO ================= -->
-  <section id="funcionamento" class="section section-alt">
+  <!-- ================= ACESSAR ================= -->
+  <section id="acessar" class="section section-alt">
     <div class="section-inner">
       <header class="section-head">
-        <span class="tag">02 · Operação</span>
-        <h2>Como o Argos funciona</h2>
+        <span class="tag">02 · Acessar o sistema</span>
+        <h2>Três portas de entrada</h2>
         <p class="section-lead">
-          Um fluxo simples, pensado para o pátio: identificar quem está fazendo a chamada,
-          registrar o efetivo e justificar quem faltou — tudo em poucos minutos.
+          Cada perfil entra pelo sistema certo pra sua função — do aluno de serviço no
+          pátio ao comando do CA.
         </p>
       </header>
 
-      <div class="steps">
-        <div class="step">
-          <div class="step-number">1</div>
-          <h3>Escolher a retirada</h3>
-          <p>Formatura, 1ª ou 2ª Jornada, Educação Física ou Pernoite — com status pendente ou enviada.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">2</div>
-          <h3>Identificar o aluno de serviço</h3>
-          <p>Login individual do responsável pela chamada. Sem essa identificação, a retirada não abre.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">3</div>
-          <h3>Registrar o efetivo</h3>
-          <p>Lista do esquadrão em tela, com marcação rápida por aluno e retorno imediato de duplicidade.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">4</div>
-          <h3>Registrar o motivo da falta</h3>
-          <p>Alunos de Serviço, Posto Médico, Dispensados, Punição (LNC, Detenção, Prisão) ou Justificativa para apuração dos fatos.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">5</div>
-          <h3>Revisão e envio</h3>
-          <p>Conferência de presentes, faltas e observações antes de assinar a chamada.</p>
-        </div>
-        <div class="step">
-          <div class="step-number">6</div>
-          <h3>Histórico e protocolo</h3>
-          <p>Cada retirada gera protocolo único, responsável identificado e histórico consultável.</p>
-        </div>
-      </div>
-
-      <div class="callout-grid">
-        <div class="callout callout-dark">
-          <h4>Controles do registro</h4>
-          <ul class="plain-list">
-            <li><strong>Anti dupla-contagem</strong> — aluno já registrado volta como “já lançado”.</li>
-            <li><strong>Fora do efetivo</strong> — aluno de outro esquadrão é recusado.</li>
-            <li><strong>Busca por número ou nome</strong> — localização rápida na lista, mesmo em campo.</li>
-          </ul>
-        </div>
-        <div class="callout">
-          <h4>Simples de operar em qualquer condição</h4>
-          <p>A marcação acontece direto na tela, sem depender de hardware extra. O toque abre direto o motivo da falta, com registro claro de exceções.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ================= PROPÓSITO ================= -->
-  <section id="proposito" class="section">
-    <div class="section-inner">
-      <header class="section-head">
-        <span class="tag">03 · Propósito</span>
-        <h2>Por que o Argos existe</h2>
-      </header>
-
-      <div class="split split-reverse">
-        <div class="split-media">
-          <div class="stat-card">
-            <span class="stat-number">2</span>
-            <span class="stat-label">registros hoje em uso:<br>Papeletas de Retirada de Faltas e Livro do Aluno de Dia</span>
-          </div>
-        </div>
-        <div class="split-text">
-          <p>
-            Mesmo sendo reconhecida como o maior centro de formação técnica da América Latina,
-            a EEAR ainda controla o efetivo de alunos de forma manual, por meio de
-            <strong>Papeletas de Retirada de Faltas</strong> preenchidas nas entradas em forma
-            e do <strong>Livro do Aluno de Dia</strong> mantido em cada esquadrão.
-          </p>
-          <p>
-            O Argos nasce para digitalizar esse controle: um sistema eletrônico que substitui
-            a chamada em papel por um registro estruturado, com histórico auditável e
-            responsável identificado em cada retirada.
-          </p>
-        </div>
-      </div>
-
-      <div class="cards cards-4">
-        <div class="card card-outline">
-          <h3>Entradas em forma</h3>
-          <p>1ª Jornada, 2ª Jornada, Educação Física e Pernoite.</p>
-        </div>
-        <div class="card card-outline">
-          <h3>Categorias controladas</h3>
-          <p>Alunos de Serviço, Posto Médico, Dispensados e Punição (LNC, Detenção ou Prisão).</p>
-        </div>
-        <div class="card card-outline">
-          <h3>Justificativa</h3>
-          <p>Toda falta fora dessas categorias recebe motivo específico, pronto para apuração dos fatos.</p>
-        </div>
-        <div class="card card-outline">
-          <h3>Próximo passo: DEF</h3>
-          <p>Após consolidado nas entradas em forma, o sistema será estendido à Divisão de Ensino e Formação.</p>
-        </div>
-      </div>
-
-      <div class="roadmap">
-        <h4>Roteiro futuro</h4>
-        <div class="roadmap-items">
-          <div class="roadmap-item"><span>01</span>Modo offline com sincronização</div>
-          <div class="roadmap-item"><span>02</span>Painel do esquadrão e relatórios</div>
-          <div class="roadmap-item"><span>03</span>Integração com escalas de serviço</div>
-          <div class="roadmap-item"><span>04</span>Identificação por QR Code individual (bônus)</div>
-        </div>
+      <div class="cards cards-3">
+        <a href="app/index.html" class="card card-link">
+          <div class="card-icon" aria-hidden="true">▦</div>
+          <h3>Área Funcional</h3>
+          <p>App do aluno de serviço: login por QR Code, retirada de faltas e efetivo do
+          esquadrão, direto do celular. Instale como aplicativo.</p>
+          <span class="card-link-cta">Acessar →</span>
+        </a>
+        <a href="painel/index.php" class="card card-link">
+          <div class="card-icon" aria-hidden="true">▤</div>
+          <h3>Painel</h3>
+          <p>Comando e encarregados do CA e dos esquadrões acompanham o efetivo, geram
+          relatórios e o Livro do Dia.</p>
+          <span class="card-link-cta">Acessar →</span>
+        </a>
+        <a href="ikarus37/index.php" class="card card-link">
+          <div class="card-icon" aria-hidden="true">⚙</div>
+          <h3>Ikarus37</h3>
+          <p>Administração técnica: contas, chaves de API e o domínio de negócio
+          (unidades, motivos, grupos de acesso).</p>
+          <span class="card-link-cta">Acessar →</span>
+        </a>
       </div>
     </div>
   </section>

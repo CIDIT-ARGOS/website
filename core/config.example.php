@@ -7,6 +7,12 @@ $DB_NOME = "";
 $DB_USUARIO = "";
 $DB_SENHA = "";
 
+// Chave de API usada pela PWA "Área Funcional" (web/app) pra se identificar
+// como app confiável (header X-API-Key) — não é segredo por aluno, quem
+// identifica o aluno é a sessão dele (X-Session-Token, via /api/sessao.php).
+// Gere uma chave nova em Ikarus37 → API (ex: nome "App PWA") e cole aqui.
+$APP_PWA_API_KEY = "";
+
 function conectarBanco() {
     global $DB_HOST, $DB_NOME, $DB_USUARIO, $DB_SENHA;
 
