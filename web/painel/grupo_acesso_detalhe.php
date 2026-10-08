@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/grupos_acesso_core.php';
 require_once __DIR__ . '/../../core/unidades_core.php';
@@ -9,7 +10,7 @@ $usuarioId = idUsuarioPainel();
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'gerenciar_grupos_acesso', $usuarioId)) {
-    die("Seu cargo não tem a permissão 'gerenciar_grupos_acesso'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_grupos_acesso'.");
 }
 
 $grupoId = (int) ($_GET['id'] ?? 0);
@@ -82,6 +83,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
     .container { padding: 24px; max-width: 900px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     button.danger { background: var(--danger); }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
@@ -91,7 +93,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
     .ok { color: var(--ok); font-size: 13px; }
     .form-linha { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .scroll-x { overflow-x: auto; min-width: 0; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -124,7 +126,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
                     <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['tipo']) ?>)</option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit">Adicionar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/user-plus.svg')"></span>Adicionar</button>
         </form>
 
         <div class="scroll-x">
@@ -168,7 +170,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT id, nome, usua
                     <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['nome']) ?> (<?= htmlspecialchars($u['tipo']) ?>)</option>
                 <?php endforeach; ?>
             </select>
-            <button type="submit">Conceder</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/shield-check.svg')"></span>Conceder</button>
         </form>
 
         <div class="scroll-x">

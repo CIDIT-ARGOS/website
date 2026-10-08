@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100%" height="100%">
+  <g fill="none" stroke="white" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Linha Superior - Posição Y ajustada para 35 -->
+    <path d="M 15 35 L 42 35 L 50 50 L 58 35 L 85 35" />
+    
+    <!-- Linha do Meio - Posição Y ajustada para 50 -->
+    <path d="M 15 50 L 42 50 L 50 65 L 58 50 L 85 50" />
+    
+    <!-- Linha Inferior - Posição Y ajustada para 65 -->
+    <path d="M 15 65 L 42 65 L 50 80 L 58 65 L 85 65" />
+  </g>
+</svg>

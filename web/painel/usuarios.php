@@ -1,11 +1,12 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/painel_usuarios_core.php';
 
 if (!podeGerenciarUsuarios()) {
-    die("Seu cargo não tem permissão para gerenciar usuários do painel.");
+    exibirAcessoNegado("Seu cargo não tem permissão para gerenciar usuários do painel.");
 }
 
 $conexao = conectarBanco();
@@ -83,6 +84,7 @@ $usuarios = listarUsuariosPainel($conexao);
     .container { padding: 24px; max-width: 1100px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     button.danger { background: var(--danger); }
     button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
@@ -98,7 +100,7 @@ $usuarios = listarUsuariosPainel($conexao);
     .badge.inativo { background: #fbe0e0; color: var(--danger); }
     .scroll-x { overflow-x: auto; min-width: 0; }
     details summary { cursor: pointer; color: var(--accent); font-size: 12px; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
     .campo-senha { position: relative; display: inline-block; }
     .campo-senha input { padding-right: 34px !important; }
     .campo-senha .toggle-senha { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 0; width: 18px; }
@@ -176,7 +178,7 @@ $usuarios = listarUsuariosPainel($conexao);
                 <?php endforeach; ?>
             </select>
             <input type="text" name="esquadrao" placeholder="Esquadrão (ex: PRATA)">
-            <button type="submit">Criar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Criar</button>
         </form>
     </div>
 
@@ -215,8 +217,8 @@ $usuarios = listarUsuariosPainel($conexao);
                     </td>
                     <td><?= htmlspecialchars($u['ultimo_login'] ?? '—') ?></td>
                     <td class="acoes">
-                        <button form="<?= $formId ?>" type="submit">Salvar</button>
-                        <button type="button" class="ghost" onclick="redefinirSenha(<?= $u['id'] ?>)">redefinir senha</button>
+                        <button form="<?= $formId ?>" type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
+                        <button type="button" class="ghost" onclick="redefinirSenha(<?= $u['id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/key.svg')"></span>redefinir senha</button>
                         <?php if ($u['id'] != $meuId): ?>
                         <button type="button" class="danger" onclick="excluirUsuario(<?= $u['id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir</button>
                         <?php endif; ?>

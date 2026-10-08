@@ -11,6 +11,12 @@ $DB_SENHA = "argos";
 function conectarBanco() {
     global $DB_HOST, $DB_NOME, $DB_USUARIO, $DB_SENHA;
 
+    // Desliga o modo de exceção do mysqli (padrão desde PHP 8.1): sem isso, um
+    // erro de banco (ex: chave duplicada) lança mysqli_sql_exception não tratada
+    // e derruba a página com um erro cru, em vez de deixar o código verificar
+    // o retorno e mostrar uma mensagem amigável.
+    mysqli_report(MYSQLI_REPORT_OFF);
+
     $conexao = mysqli_connect($DB_HOST, $DB_USUARIO, $DB_SENHA, $DB_NOME);
 
     if (!$conexao) {

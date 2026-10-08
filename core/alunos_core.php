@@ -118,6 +118,11 @@ function listarAlunos($conexao, $filtros = []) {
         $params[] = $filtros['curso'];
         $tipos .= "s";
     }
+    if (!empty($filtros['turma_id'])) {
+        $condicoes[] = "a.turma_id = ?";
+        $params[] = (int) $filtros['turma_id'];
+        $tipos .= "i";
+    }
     if (!empty($filtros['qrcode_hash'])) {
         $condicoes[] = "a.qrcode_hash = ?";
         $params[] = $filtros['qrcode_hash'];
@@ -138,13 +143,13 @@ function listarAlunos($conexao, $filtros = []) {
     $orderBy = $filtros['order_by'] ?? "a.nome_guerra ASC";
 
     $selectPosto = !empty($filtros['com_posto_exibicao'])
-        ? "a.*, COALESCE(p.exibicao, a.posto_graduacao) as posto_exibicao"
-        : "a.*";
+        ? "a.*, COALESCE(p.exibicao, a.posto_graduacao) as posto_exibicao, t.nome AS turma_nome"
+        : "a.*, t.nome AS turma_nome";
     $joinPosto = !empty($filtros['com_posto_exibicao'])
         ? "LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao"
         : "";
 
-    $sql = "SELECT $selectPosto FROM alunos a $joinPosto $where ORDER BY $orderBy";
+    $sql = "SELECT $selectPosto FROM alunos a $joinPosto LEFT JOIN turmas t ON t.id = a.turma_id $where ORDER BY $orderBy";
 
     $stmt = mysqli_prepare($conexao, $sql);
     if ($params) {
@@ -300,17 +305,18 @@ function criarAluno($conexao, $dados) {
         INSERT INTO alunos (
             posto_graduacao, quadro, especialidade, sub_especialidade, nome_guerra, sexo,
             identidade_militar, organizacao_militar, setor, secao, ramal, qrcode_hash,
-            milhao, esquadrao, esquadrilha, curso, serie
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            milhao, esquadrao, esquadrilha, curso, serie, turma_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
 
     $qrcodeHash = $dados['qrcode_hash'] ?? null;
+    $turmaId = !empty($dados['turma_id']) ? (int) $dados['turma_id'] : null;
 
     mysqli_stmt_bind_param(
-        $stmt, "sssssssssssssssss",
+        $stmt, "sssssssssssssssssi",
         $dados['posto_graduacao'], $dados['quadro'], $dados['especialidade'], $dados['sub_especialidade'], $dados['nome_guerra'], $dados['sexo'],
         $dados['identidade_militar'], $dados['organizacao_militar'], $dados['setor'], $dados['secao'], $dados['ramal'], $qrcodeHash,
-        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie']
+        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $turmaId
     );
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -336,17 +342,18 @@ function atualizarAluno($conexao, $id, $dados) {
         UPDATE alunos SET
             posto_graduacao = ?, quadro = ?, especialidade = ?, sub_especialidade = ?, nome_guerra = ?, sexo = ?,
             identidade_militar = ?, organizacao_militar = ?, setor = ?, secao = ?, ramal = ?, qrcode_hash = ?,
-            milhao = ?, esquadrao = ?, esquadrilha = ?, curso = ?, serie = ?
+            milhao = ?, esquadrao = ?, esquadrilha = ?, curso = ?, serie = ?, turma_id = ?
         WHERE id = ?
     ");
 
     $qrcodeHash = $dados['qrcode_hash'] ?? null;
+    $turmaId = !empty($dados['turma_id']) ? (int) $dados['turma_id'] : null;
 
     mysqli_stmt_bind_param(
-        $stmt, "sssssssssssssssssi",
+        $stmt, "sssssssssssssssssii",
         $dados['posto_graduacao'], $dados['quadro'], $dados['especialidade'], $dados['sub_especialidade'], $dados['nome_guerra'], $dados['sexo'],
         $dados['identidade_militar'], $dados['organizacao_militar'], $dados['setor'], $dados['secao'], $dados['ramal'], $qrcodeHash,
-        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $id
+        $dados['milhao'], $dados['esquadrao'], $dados['esquadrilha'], $dados['curso'], $dados['serie'], $turmaId, $id
     );
 
     if (!mysqli_stmt_execute($stmt)) {
@@ -358,8 +365,8 @@ function atualizarAluno($conexao, $id, $dados) {
 
 /**
  * Atualização parcial (sexo, curso, série, esquadrilha, especialidade,
- * sub_especialidade, ativo) — o subconjunto de campos editável pelo painel,
- * que não mexe nos dados de identificação vindos da planilha oficial.
+ * sub_especialidade, turma, ativo) — o subconjunto de campos editável pelo
+ * painel, que não mexe nos dados de identificação vindos da planilha oficial.
  */
 function atualizarAlunoParcial($conexao, $id, $dados) {
     $sexo = $dados['sexo'] ?? '';
@@ -368,6 +375,7 @@ function atualizarAlunoParcial($conexao, $id, $dados) {
     $esquadrilha = trim($dados['esquadrilha'] ?? '');
     $especialidade = trim($dados['especialidade'] ?? '');
     $subEspecialidade = trim($dados['sub_especialidade'] ?? '');
+    $turmaId = !empty($dados['turma_id']) ? (int) $dados['turma_id'] : null;
     $ativo = !empty($dados['ativo']) ? 1 : 0;
 
     $mensagemErro = validarAluno(['sexo' => $sexo, 'curso' => $curso, 'serie' => $serie], true);
@@ -376,10 +384,10 @@ function atualizarAlunoParcial($conexao, $id, $dados) {
     }
 
     $stmt = mysqli_prepare($conexao, "
-        UPDATE alunos SET sexo = ?, curso = ?, serie = ?, esquadrilha = ?, especialidade = ?, sub_especialidade = ?, ativo = ?
+        UPDATE alunos SET sexo = ?, curso = ?, serie = ?, esquadrilha = ?, especialidade = ?, sub_especialidade = ?, turma_id = ?, ativo = ?
         WHERE id = ?
     ");
-    mysqli_stmt_bind_param($stmt, "ssssssii", $sexo, $curso, $serie, $esquadrilha, $especialidade, $subEspecialidade, $ativo, $id);
+    mysqli_stmt_bind_param($stmt, "ssssssiii", $sexo, $curso, $serie, $esquadrilha, $especialidade, $subEspecialidade, $turmaId, $ativo, $id);
 
     if (!mysqli_stmt_execute($stmt)) {
         return ['ok' => false, 'erro' => 'Erro ao atualizar: ' . mysqli_stmt_error($stmt), 'codigo' => 500];
@@ -392,4 +400,110 @@ function inativarAluno($conexao, $id) {
     $stmt = mysqli_prepare($conexao, "UPDATE alunos SET ativo = 0 WHERE id = ?");
     mysqli_stmt_bind_param($stmt, "i", $id);
     return mysqli_stmt_execute($stmt);
+}
+
+/**
+ * Atribui (ou remove, se $turmaId for null) uma turma a vários alunos de uma
+ * vez — usada pela ação em lote da tela de Efetivo, pra não depender de
+ * editar aluno por aluno quando uma turma inteira precisa ser vinculada.
+ * $escopo (esquadrão), quando informado, é reforçado na query — mesmo que o
+ * POST venha manipulado, só afeta alunos dentro do esquadrão de quem está
+ * autenticado.
+ *
+ * @return array{ok: bool, erro?: string, atualizados?: int}
+ */
+function atribuirTurmaEmLote($conexao, array $alunoIds, $turmaId, $escopo = null) {
+    $alunoIds = array_values(array_unique(array_filter(array_map('intval', $alunoIds))));
+    if (empty($alunoIds)) {
+        return ['ok' => false, 'erro' => 'Selecione ao menos um aluno.'];
+    }
+
+    $marcadores = implode(',', array_fill(0, count($alunoIds), '?'));
+    $tipos = str_repeat('i', count($alunoIds));
+    $valores = $alunoIds;
+
+    $sql = "UPDATE alunos SET turma_id = ? WHERE ativo = 1 AND id IN ($marcadores)";
+    array_unshift($valores, $turmaId);
+    $tipos = 'i' . $tipos;
+
+    if ($escopo !== null) {
+        $sql .= " AND esquadrao = ?";
+        $valores[] = $escopo;
+        $tipos .= 's';
+    }
+
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$valores);
+    if (!mysqli_stmt_execute($stmt)) {
+        return ['ok' => false, 'erro' => 'Erro ao atribuir turma: ' . mysqli_error($conexao)];
+    }
+
+    return ['ok' => true, 'atualizados' => mysqli_stmt_affected_rows($stmt)];
+}
+
+function listarPostosGraduacao($conexao) {
+    $r = mysqli_query($conexao, "SELECT codigo, exibicao FROM postos_graduacao ORDER BY exibicao");
+    return mysqli_fetch_all($r, MYSQLI_ASSOC);
+}
+
+/**
+ * Cadastra uma leva inteira de alunos novos de uma vez, um por linha de
+ * texto colada (formato planilha: campos separados por TAB ou ";"), todos
+ * com curso/série/turma_id em comum — usado pela tela de "cadastrar alunos
+ * da turma" (issue #32), pra não depender de cadastrar um por um.
+ *
+ * Formato de cada linha: Posto;Nome de Guerra;Sexo;Identidade Militar;
+ * Milhão;Esquadrilha;Especialidade (opcional);Sub-especialidade (opcional)
+ *
+ * @return array{sucesso: int, erros: array<array{linha:int, texto:string, erro:string}>}
+ */
+function cadastrarAlunosEmLote($conexao, $textoLinhas, $camposComuns) {
+    $sucesso = 0;
+    $erros = [];
+    $numeroLinha = 0;
+
+    foreach (preg_split('/\r\n|\r|\n/', (string) $textoLinhas) as $linha) {
+        $numeroLinha++;
+        $linha = trim($linha);
+        if ($linha === '') {
+            continue;
+        }
+
+        $campos = preg_split('/\t|;/', $linha);
+        $campos = array_map('trim', $campos);
+
+        if (count($campos) < 5) {
+            $erros[] = ['linha' => $numeroLinha, 'texto' => $linha, 'erro' => 'Linha incompleta — informe ao menos Posto, Nome de Guerra, Sexo, Identidade Militar e Milhão.'];
+            continue;
+        }
+
+        [$posto, $nomeGuerra, $sexo, $identidadeMilitar, $milhao] = array_slice($campos, 0, 5);
+        $esquadrilha = $campos[5] ?? '';
+        $especialidade = $campos[6] ?? '';
+        $subEspecialidade = $campos[7] ?? '';
+
+        $dados = array_merge(
+            ['quadro' => null, 'organizacao_militar' => null, 'setor' => null, 'secao' => null, 'ramal' => null, 'qrcode_hash' => null],
+            $camposComuns,
+            [
+                'posto_graduacao' => $posto !== '' ? $posto : 'GS',
+                'nome_guerra' => $nomeGuerra,
+                'sexo' => strtoupper($sexo),
+                'identidade_militar' => $identidadeMilitar,
+                'milhao' => $milhao,
+                'esquadrilha' => $esquadrilha,
+                'especialidade' => $especialidade ?: null,
+                'sub_especialidade' => $subEspecialidade ?: null,
+            ]
+        );
+
+        $resultado = criarAluno($conexao, $dados);
+        if ($resultado['ok']) {
+            $sucesso++;
+        } else {
+            $erros[] = ['linha' => $numeroLinha, 'texto' => $linha, 'erro' => $resultado['erro']];
+        }
+    }
+
+    return ['sucesso' => $sucesso, 'erros' => $erros];
 }
