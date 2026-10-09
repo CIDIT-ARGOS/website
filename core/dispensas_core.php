@@ -10,6 +10,39 @@ require_once __DIR__ . '/validacao_core.php';
 // Limites batendo com o VARCHAR de dispensas (database/init_db.sql).
 const DISPENSA_LIMITES_CAMPOS = ['numero' => 20, 'motivo' => 255, 'dispensado_de' => 255];
 
+// Janela de tolerância pro início da dispensa em torno de hoje (issue #30) —
+// evita tanto lançar uma dispensa já totalmente expirada há meses (ex: um
+// período de janeiro lançado em setembro, por erro de digitação do ano) quanto
+// uma dispensa marcada pra um futuro distante sem nenhum vínculo com uma
+// consulta/procedimento já agendado. Ainda dá margem pra lançar com atraso de
+// alguns dias (esqueceu de registrar no dia) e pra procedimentos agendados
+// com antecedência de até um mês.
+const DISPENSA_TOLERANCIA_DIAS_PASSADO = 7;
+const DISPENSA_TOLERANCIA_DIAS_FUTURO = 30;
+
+/**
+ * Valida se a data de início da dispensa está dentro da janela aceitável em
+ * torno de hoje. Retorna mensagem de erro ou null se estiver ok.
+ */
+function _dispensaValidarJanelaData($dataInicio) {
+    $hoje = new DateTimeImmutable('today');
+    $inicio = DateTimeImmutable::createFromFormat('!Y-m-d', $dataInicio);
+    if (!$inicio) {
+        return 'Data de início inválida.';
+    }
+
+    $limitePassado = $hoje->modify('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days');
+    $limiteFuturo = $hoje->modify('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days');
+
+    if ($inicio < $limitePassado) {
+        return 'Data de início muito distante no passado (mais de ' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' dias atrás). Confira o ano/mês digitado.';
+    }
+    if ($inicio > $limiteFuturo) {
+        return 'Data de início muito distante no futuro (mais de ' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' dias à frente). Confira o ano/mês digitado.';
+    }
+    return null;
+}
+
 function listarDispensaTipos($conexao) {
     $resultado = mysqli_query($conexao, "SELECT * FROM dispensa_tipos WHERE ativo = 1 ORDER BY ordem");
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
@@ -128,6 +161,28 @@ function dispensaAtivaParaAluno($conexao, $alunoId, $data) {
 }
 
 /**
+ * Já existe uma dispensa idêntica (mesmo aluno, período e motivo) pra esse
+ * aluno? Usado pra impedir duplicidade que o usuário não consegue distinguir
+ * na listagem (issue #30). $idAtual: ignora o próprio registro numa edição.
+ */
+function _dispensaExisteIdentica($conexao, $alunoId, $dataInicio, $dataTermino, $motivo, $idAtual = null) {
+    $sql = "SELECT id FROM dispensas WHERE aluno_id = ? AND data_inicio = ? AND data_termino = ? AND motivo = ?";
+    $tipos = "isss";
+    $params = [$alunoId, $dataInicio, $dataTermino, $motivo];
+    if ($idAtual !== null) {
+        $sql .= " AND id != ?";
+        $tipos .= "i";
+        $params[] = $idAtual;
+    }
+    $sql .= " LIMIT 1";
+
+    $stmt = mysqli_prepare($conexao, $sql);
+    mysqli_stmt_bind_param($stmt, $tipos, ...$params);
+    mysqli_stmt_execute($stmt);
+    return (bool) mysqli_stmt_get_result($stmt)->fetch_row();
+}
+
+/**
  * @return array{ok: bool, erro?: string, id?: int}
  */
 function criarDispensa($conexao, $dados) {
@@ -148,12 +203,19 @@ function criarDispensa($conexao, $dados) {
     if ($dataTermino < $dataInicio) {
         return ['ok' => false, 'erro' => 'O término não pode ser antes do início.'];
     }
+    $erroJanela = _dispensaValidarJanelaData($dataInicio);
+    if ($erroJanela) {
+        return ['ok' => false, 'erro' => $erroJanela];
+    }
     if ($motivo === '') {
         return ['ok' => false, 'erro' => 'Informe o motivo da dispensa.'];
     }
     $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
     if ($erroComprimento) {
         return ['ok' => false, 'erro' => $erroComprimento];
+    }
+    if (_dispensaExisteIdentica($conexao, $alunoId, $dataInicio, $dataTermino, $motivo)) {
+        return ['ok' => false, 'erro' => 'Já existe uma dispensa idêntica (mesmo aluno, período e motivo) cadastrada.'];
     }
 
     $stmt = mysqli_prepare($conexao, "
@@ -182,12 +244,24 @@ function atualizarDispensa($conexao, $id, $dados) {
     if ($dataTermino < $dataInicio) {
         return ['ok' => false, 'erro' => 'O término não pode ser antes do início.'];
     }
+    $erroJanela = _dispensaValidarJanelaData($dataInicio);
+    if ($erroJanela) {
+        return ['ok' => false, 'erro' => $erroJanela];
+    }
     if ($motivo === '') {
         return ['ok' => false, 'erro' => 'Informe o motivo da dispensa.'];
     }
     $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
     if ($erroComprimento) {
         return ['ok' => false, 'erro' => $erroComprimento];
+    }
+
+    $existente = buscarDispensaPorId($conexao, $id);
+    if (!$existente) {
+        return ['ok' => false, 'erro' => 'Dispensa não encontrada.'];
+    }
+    if (_dispensaExisteIdentica($conexao, $existente['aluno_id'], $dataInicio, $dataTermino, $motivo, $id)) {
+        return ['ok' => false, 'erro' => 'Já existe uma dispensa idêntica (mesmo aluno, período e motivo) cadastrada.'];
     }
 
     $stmt = mysqli_prepare($conexao, "

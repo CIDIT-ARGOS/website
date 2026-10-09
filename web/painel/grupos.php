@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/grupos_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
@@ -8,7 +9,7 @@ require_once __DIR__ . '/../../core/alunos_core.php';
 $conexao = conectarBanco();
 
 if (escopoEsquadrao() !== null) {
-    die("Grupos são geridos por cargos com visão de todo o CA.");
+    exibirAcessoNegado("Grupos são geridos por cargos com visão de todo o CA.");
 }
 
 $mensagem = null;
@@ -102,11 +103,13 @@ if ($grupoAtual && $buscaNome !== '') {
     .container { padding: 24px; max-width: 900px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 7px 12px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 12px; cursor: pointer; }
     button.danger { background: var(--danger); }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
     th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
     th { background: var(--azul-eear); color: #ffffff; }
+    .scroll-x { overflow-x: auto; min-width: 0; }
     .erro { color: var(--danger); font-size: 13px; }
     .ok { color: var(--ok); font-size: 13px; }
     .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 20px; align-items: start; }
@@ -123,7 +126,7 @@ if ($grupoAtual && $buscaNome !== '') {
         .layout { grid-template-columns: 1fr; }
         .lista-grupos { max-height: 300px; }
     }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -167,7 +170,7 @@ if ($grupoAtual && $buscaNome !== '') {
                 <option value="servico">Serviço</option>
                 <option value="comissao">Comissão</option>
             </select>
-            <button type="submit">Criar grupo</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Criar grupo</button>
         </form>
         <p style="color: var(--text-muted); font-size: 12px; margin-top: 8px; margin-bottom: 0;">
             O grupo passa a existir como agrupamento próprio (retirada de falta separada) e também
@@ -182,7 +185,7 @@ if ($grupoAtual && $buscaNome !== '') {
                 <form method="post" onsubmit="return confirm('Excluir o grupo \'<?= htmlspecialchars($grupoAtual['nome'], ENT_QUOTES) ?>\'? Os membros são desvinculados, mas o histórico de retiradas já feitas continua.');">
                     <input type="hidden" name="acao" value="excluir_grupo">
                     <input type="hidden" name="grupo_id" value="<?= $grupoAtual['id'] ?>">
-                    <button type="submit" class="danger">Excluir grupo</button>
+                    <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Excluir grupo</button>
                 </form>
             </div>
             <form method="get">
@@ -192,6 +195,7 @@ if ($grupoAtual && $buscaNome !== '') {
             </form>
 
             <?php if (!empty($candidatos)): ?>
+                <div class="scroll-x">
                 <table>
                     <tr><th>Identificação</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
                     <?php foreach ($candidatos as $c): ?>
@@ -203,12 +207,13 @@ if ($grupoAtual && $buscaNome !== '') {
                                     <input type="hidden" name="acao" value="adicionar">
                                     <input type="hidden" name="grupo" value="<?= htmlspecialchars($grupoAtual['nome']) ?>">
                                     <input type="hidden" name="aluno_id" value="<?= $c['id'] ?>">
-                                    <button type="submit">Adicionar</button>
+                                    <button type="submit"><span class="i" style="--icon-url:url('../images/icons/user-plus.svg')"></span>Adicionar</button>
                                 </form>
                             </td>
                         </tr>
                     <?php endforeach; ?>
                 </table>
+                </div>
             <?php elseif ($buscaNome !== ''): ?>
                 <p style="color: var(--text-muted); font-size: 13px;">Nenhum aluno encontrado.</p>
             <?php endif; ?>
@@ -216,6 +221,7 @@ if ($grupoAtual && $buscaNome !== '') {
 
         <div class="card">
             <h4>Membros atuais (<?= count($membros) ?>)</h4>
+            <div class="scroll-x">
             <table>
                 <tr><th>Identificação</th><th>Esquadrão/Esquadrilha</th><th></th></tr>
                 <?php foreach ($membros as $m): ?>
@@ -227,12 +233,13 @@ if ($grupoAtual && $buscaNome !== '') {
                                 <input type="hidden" name="acao" value="remover">
                                 <input type="hidden" name="grupo_id" value="<?= $grupoAtual['id'] ?>">
                                 <input type="hidden" name="aluno_id" value="<?= $m['id'] ?>">
-                                <button type="submit" class="danger">Remover</button>
+                                <button type="submit" class="danger"><span class="i" style="--icon-url:url('../images/icons/trash.svg')"></span>Remover</button>
                             </form>
                         </td>
                     </tr>
                 <?php endforeach; ?>
             </table>
+            </div>
         </div>
     <?php else: ?>
         <div class="card">

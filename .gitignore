@@ -28,3 +28,6 @@ desktop.ini
 # ===== Pacote completo de ícones (Tabler) — fonte local, não vai pro repo/servidor =====
 # Só os ícones realmente usados (images/icons/*.svg) são versionados e enviados por FTP.
 icons-source/
+
+# ===== Saída do build da release (scripts/release/gerar-pacote.sh) =====
+build/

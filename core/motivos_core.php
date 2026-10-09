@@ -3,11 +3,17 @@
 // Lógica de negócio dos motivos de falta. Usada tanto pela API (/api/motivos.php)
 // quanto pelas telas do painel.
 
+/**
+ * Lista os motivos disponíveis pra justificar uma falta (chamada do painel e
+ * seleção do aluno no app). Motivos classificados como 'presente' ficam de
+ * fora — não faz sentido justificar uma falta com um motivo que significa
+ * "estava presente" (issue #29).
+ */
 function listarMotivos($conexao) {
     $resultado = mysqli_query($conexao, "
         SELECT id, nome, codigo, classificacao, requer_observacao, ordem
         FROM motivos_falta
-        WHERE ativo = 1
+        WHERE ativo = 1 AND classificacao != 'presente'
         ORDER BY ordem ASC
     ");
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);

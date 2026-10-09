@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
@@ -9,7 +10,7 @@ require_once __DIR__ . '/../../core/grupos_core.php';
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())) {
-    die("Seu cargo não tem a permissão 'registrar_retirada'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'registrar_retirada'.");
 }
 
 $escopo = escopoEsquadrao(); // null = pode escolher esquadrão/grupo livremente
@@ -67,13 +68,14 @@ $grupos = listarGrupos($conexao);
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
     label { display: block; font-size: 12px; color: var(--text-muted); margin-top: 12px; margin-bottom: 4px; }
     input, select { width: 100%; padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 9px 18px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; margin-top: 18px; }
     .erro { color: var(--danger); font-size: 13px; }
     fieldset { border: 1px solid var(--border); border-radius: 8px; margin-top: 14px; padding: 10px; }
     legend { font-size: 12px; color: var(--text-muted); padding: 0 6px; }
     .responsavel { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-top: 12px; }
     .responsavel .rotulo { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <script>
     function alternarTipo() {
@@ -178,7 +180,7 @@ $grupos = listarGrupos($conexao);
                 <?= htmlspecialchars($responsavelNome) ?> · <?= htmlspecialchars(nomeCargo($_SESSION['painel_cargo'])) ?>
             </div>
 
-            <button type="submit">Abrir retirada</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Abrir retirada</button>
         </form>
     </div>
 </div>

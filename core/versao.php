@@ -1,11 +1,12 @@
 <?php
 // Versão exibida no rodapé do Painel e do Ikarus37.
-// O deploy é manual via FTP (sem .git no servidor — ver .github/workflows/api-smoke-test.yml),
-// então não dá pra ler o commit direto do git em produção. Este arquivo é atualizado
-// à mão a cada commit relevante enviado pra main, junto com o resto do código.
+//
+// Em produção este arquivo é GERADO no deploy (scripts/release/gerar-pacote.sh)
+// com a tag da release, o commit e a data — não precisa mais editar à mão.
+// Aqui no repositório ele fica como "dev", que é o que aparece no Docker local.
 
 return [
-    'versao' => 'v1',
-    'commit' => 'a4efdf5',
-    'data' => '2026-09-17',
+    'versao' => 'dev',
+    'commit' => 'local',
+    'data' => '-',
 ];
