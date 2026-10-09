@@ -76,7 +76,11 @@ function pegar($metodo, $caminho, $headers = [], $corpo = null) {
         // Nunca resposta de cache logo depois de trocar os arquivos.
         'header' => implode("\r\n", array_merge($linhas, ['Cache-Control: no-cache', 'Pragma: no-cache'])),
     ]]);
-    $resposta = @file_get_contents($baseUrl . $caminho, false, $contexto);
+    // Parâmetro aleatório em toda URL: a Hostinger tem uma CDN (hcdn) na
+    // frente do site, e logo depois do deploy alguns edges ainda serviam 404
+    // em cache de quando os arquivos estavam sendo trocados.
+    $url = $baseUrl . $caminho . (strpos($caminho, '?') === false ? '?' : '&') . '_smoke=' . bin2hex(random_bytes(4));
+    $resposta = @file_get_contents($url, false, $contexto);
     if ($resposta === false) {
         throw new RuntimeException("sem resposta de $baseUrl$caminho");
     }
