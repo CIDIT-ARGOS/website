@@ -256,7 +256,43 @@ EXCLUIR="-x '^.htaccess\$'"
 for arquivo in "${PONTOS_ENTRADA[@]}"; do
     EXCLUIR+=" -x '^$arquivo\$'"
 done
-ftp "mirror -R --no-perms --overwrite --parallel=4 $EXCLUIR \"$PACOTE_DIR\" ."
+ftp "mirror -R --no-perms --overwrite --parallel=2 $EXCLUIR \"$PACOTE_DIR\" ."
+
+# Confere arquivo por arquivo pelo FTP — sem isso, um upload incompleto só
+# aparecia no smoke test, com o site já aberto (404 em parte das páginas).
+arquivos_faltando() {
+    # Pastas sem permissão de leitura (ex: _backups/) geram "550" no find —
+    # ignorado, mas a listagem tem que ter vindo (senão tudo pareceria ok).
+    { ftp "find ." 2>/dev/null || true; } | sed 's|^\./||' | grep -v '/$' | sort > "$TRABALHO/remoto.txt" || true
+    if ! grep -qx 'core/config.php' "$TRABALHO/remoto.txt"; then
+        echo "::error::Não consegui listar os arquivos do servidor pelo FTP." >&2
+        echo "__LISTAGEM_FALHOU__"
+        return
+    fi
+    (cd "$PACOTE_DIR" && find . -type f | sed 's|^\./||' | sort) \
+        | grep -vxF -e .htaccess $(printf -- '-e %s ' "${PONTOS_ENTRADA[@]}") \
+        | comm -23 - "$TRABALHO/remoto.txt" || true
+}
+etapa "Conferindo se todos os arquivos chegaram no servidor"
+faltando="$(arquivos_faltando)"
+[ "$faltando" != "__LISTAGEM_FALHOU__" ] || exit 1
+if [ -n "$faltando" ]; then
+    echo "::warning::$(echo "$faltando" | wc -l) arquivo(s) não chegaram — reenviando um a um:"
+    echo "$faltando" | sed 's/^/   /'
+    comandos=""
+    while IFS= read -r arquivo; do
+        comandos+=" mkdir -pf \"$(dirname "$arquivo")\"; put -O \"$(dirname "$arquivo")\" \"$PACOTE_DIR/$arquivo\";"
+    done <<< "$faltando"
+    ftp "$comandos"
+    faltando="$(arquivos_faltando)"
+    if [ -n "$faltando" ]; then
+        [ "$faltando" != "__LISTAGEM_FALHOU__" ] || exit 1
+        echo "::error::Continuam faltando no servidor:"
+        echo "$faltando" | sed 's/^/   /'
+        exit 1
+    fi
+fi
+echo "$(wc -l < "$TRABALHO/remoto.txt") arquivos no servidor, nenhum faltando."
 
 # ---------------------------------------------------------------------
 FASE=migracoes
@@ -289,6 +325,17 @@ FASE=smoke
 etapa "Smoke test em produção"
 codigo_smoke=0
 php "$RAIZ_REPO/tests/smoke_producao.php" "$PROD_URL" "$VERSAO" || codigo_smoke=$?
+if [ $codigo_smoke -eq 1 ]; then
+    # Pode ser transitório (cache/firewall da hospedagem logo após a troca
+    # dos arquivos) — confere o que existe no FTP e tenta de novo uma vez.
+    echo
+    echo "Smoke test falhou. Arquivos no servidor das páginas testadas:"
+    ftp "cls -1 api web web/app web/painel web/ikarus37" 2>&1 | sed 's/^/   /' || true
+    echo "Aguardando 30s e repetindo o smoke test..."
+    sleep 30
+    codigo_smoke=0
+    php "$RAIZ_REPO/tests/smoke_producao.php" "$PROD_URL" "$VERSAO" || codigo_smoke=$?
+fi
 if [ $codigo_smoke -eq 3 ]; then
     # Só configuração do servidor (ex: APP_PWA_API_KEY vazio): o site
     # funciona, então não religa a manutenção — só falha o job e avisa.

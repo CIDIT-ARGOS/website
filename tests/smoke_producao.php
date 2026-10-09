@@ -67,10 +67,14 @@ function pegar($metodo, $caminho, $headers = [], $corpo = null) {
     }
     $contexto = stream_context_create(['http' => [
         'method' => $metodo,
-        'header' => implode("\r\n", $linhas),
         'content' => $corpo !== null ? json_encode($corpo) : '',
         'ignore_errors' => true,
         'timeout' => 30,
+        // Sem User-Agent, firewalls de hospedagem costumam tratar a
+        // requisição como robô e responder 403/404.
+        'user_agent' => 'Mozilla/5.0 (compatible; Argos-Smoke/1.0)',
+        // Nunca resposta de cache logo depois de trocar os arquivos.
+        'header' => implode("\r\n", array_merge($linhas, ['Cache-Control: no-cache', 'Pragma: no-cache'])),
     ]]);
     $resposta = @file_get_contents($baseUrl . $caminho, false, $contexto);
     if ($resposta === false) {
