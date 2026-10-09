@@ -1,3 +1,23 @@
 # Scripts que rodam dentro de containers Linux (Docker) precisam de LF —
 # CRLF quebra o bash com "$'\r': command not found".
 *.sh text eol=lf
+deploy/htaccess-manutencao text eol=lf
+
+# Fora do pacote de produção (git archive — scripts/release/gerar-pacote.sh):
+# só serve pra desenvolvimento, CI e deploy.
+/.forgejo export-ignore
+/.github export-ignore
+/.claude export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/docker export-ignore
+/docker-compose.yml export-ignore
+/deploy export-ignore
+# SQL não vai pro servidor (seria baixável se o .htaccess for ignorado) — as
+# migrations sobem só durante o deploy, dentro de _deploy/, e são apagadas no fim.
+/database export-ignore
+/scripts export-ignore
+/tests export-ignore
+/docs export-ignore
+/README.md export-ignore
+/CONTRIBUTING.md export-ignore

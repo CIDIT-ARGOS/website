@@ -1,12 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/dispensas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
 if (!podeGerenciarDispensas()) {
-    die("Seu cargo não tem a permissão 'gerenciar_dispensas'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_dispensas'.");
 }
 
 $conexao = conectarBanco();
@@ -68,6 +69,8 @@ if ($escopo !== null) {
 }
 $alunos = listarAlunos($conexao, $filtrosAlunos);
 $tiposDispensa = listarDispensaTipos($conexao);
+$dataInicioMin = date('Y-m-d', strtotime('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days'));
+$dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days'));
 
 ?>
 <!DOCTYPE html>
@@ -90,6 +93,7 @@ $tiposDispensa = listarDispensaTipos($conexao);
     .container { padding: 24px; max-width: 1100px; margin: 0 auto; }
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
     input, select { padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     button { padding: 8px 14px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
     button.danger { background: var(--danger); }
     table { border-collapse: collapse; width: 100%; margin-top: 10px; font-size: 13px; }
@@ -104,7 +108,7 @@ $tiposDispensa = listarDispensaTipos($conexao);
     .badge.encerrada { background: #eef1f6; color: var(--text-muted); }
     .tag-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #eef1f6; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
     .tag-check input { margin: 0; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -133,11 +137,11 @@ $tiposDispensa = listarDispensaTipos($conexao);
                     <option value="<?= htmlspecialchars($a['milhao']) ?>"><?= htmlspecialchars(identificacaoAluno($a)) ?> — <?= htmlspecialchars($a['esquadrao']) ?>/<?= htmlspecialchars($a['esquadrilha']) ?></option>
                 <?php endforeach; ?>
             </datalist>
-            <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" name="data_inicio" required></label>
+            <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" name="data_inicio" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>" required></label>
             <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" name="data_termino" required></label>
             <input type="text" name="numero" placeholder="Nº da dispensa">
             <input type="text" name="motivo" placeholder="Motivo" required style="min-width:180px;">
-            <button type="submit">Cadastrar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Cadastrar</button>
             <div style="width:100%; display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:4px;">
                 <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
                 <?php foreach ($tiposDispensa as $t): ?>
@@ -172,7 +176,7 @@ $tiposDispensa = listarDispensaTipos($conexao);
                 <tr id="<?= $detalheId ?>" hidden>
                     <td colspan="3">
                         <div class="form-linha" style="padding:10px 0;">
-                            <label style="font-size:12px; color:var(--text-muted);">Início <input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Início <input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Término <input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Nº <input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Motivo <input form="<?= $formId ?>" type="text" name="motivo" value="<?= htmlspecialchars($d['motivo']) ?>" style="min-width:180px;"></label>
@@ -183,7 +187,7 @@ $tiposDispensa = listarDispensaTipos($conexao);
                                 <label class="tag-check"><input form="<?= $formId ?>" type="checkbox" name="dispensa_tipo_ids[]" value="<?= $t['id'] ?>" <?= in_array($t['id'], $tagsIdsAtuais) ? 'checked' : '' ?>> <?= htmlspecialchars($t['nome']) ?></label>
                             <?php endforeach; ?>
                             <input form="<?= $formId ?>" type="text" name="dispensado_de" value="<?= htmlspecialchars($d['dispensado_de'] ?? '') ?>" placeholder="Específico (opcional)" style="min-width:180px;">
-                            <button type="submit" form="<?= $formId ?>">Salvar</button>
+                            <button type="submit" form="<?= $formId ?>"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
                         </div>
                     </td>
                 </tr>

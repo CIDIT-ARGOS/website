@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/motivos_core.php';
@@ -12,7 +13,7 @@ require_once __DIR__ . '/../../core/servicos_core.php';
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())) {
-    die("Seu cargo não tem a permissão 'registrar_retirada'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'registrar_retirada'.");
 }
 
 $escopo = escopoEsquadrao();
@@ -23,7 +24,7 @@ if (!$retirada) {
     die("Retirada não encontrada.");
 }
 if ($escopo !== null && $retirada['esquadrao'] !== $escopo) {
-    die("Você não tem permissão para ver retiradas fora do Esquadrão $escopo.");
+    exibirAcessoNegado("Você não tem permissão para ver retiradas fora do Esquadrão $escopo.");
 }
 
 $mensagem = null;
@@ -74,6 +75,8 @@ $itens = listarItensRetirada($conexao, $id);
 
 $motivos = listarMotivos($conexao);
 $tiposDispensa = $podeLancarDispensa ? listarDispensaTipos($conexao) : [];
+$dataInicioMin = date('Y-m-d', strtotime('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days'));
+$dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days'));
 
 $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
 $somenteLeitura = $retirada['status'] === 'enviada';
@@ -105,6 +108,7 @@ $servicos = listarServicos($conexao);
     th { background: var(--azul-eear); color: #ffffff; }
     .scroll-x { overflow-x: auto; min-width: 0; }
     select, input[type=text] { padding: 6px 8px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; }
+    select { max-width: 220px; }
     button { padding: 9px 18px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; margin-top: 14px; margin-right: 8px; }
     button.enviar { background: var(--ok); }
     .erro { color: var(--danger); font-size: 13px; }
@@ -115,7 +119,7 @@ $servicos = listarServicos($conexao);
     .badge.enviada { background: #d9f2e3; color: var(--ok); }
     .tag-check { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; background: #eef1f6; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
     .tag-check input { margin: 0; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <script>
     function alternarMotivo(alunoId, presenteCheckbox) {
@@ -256,7 +260,7 @@ $servicos = listarServicos($conexao);
                         </td>
                         <?php if (!$somenteLeitura && $podeLancarDispensa): ?>
                         <td>
-                            <button type="button" onclick="alternarDispensa(<?= $item['aluno_id'] ?>)">Lançar</button>
+                            <button type="button" onclick="alternarDispensa(<?= $item['aluno_id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/medical-cross.svg')"></span>Lançar</button>
                         </td>
                         <?php endif; ?>
                     </tr>
@@ -264,7 +268,7 @@ $servicos = listarServicos($conexao);
                     <tr id="dispensa_<?= $item['aluno_id'] ?>" hidden>
                         <td colspan="5">
                             <div class="form-linha" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:8px 0;">
-                                <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" id="disp_inicio_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Início <input type="date" id="disp_inicio_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" id="disp_termino_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Nº <input type="text" id="disp_numero_<?= $item['aluno_id'] ?>" style="width:70px;"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Motivo <input type="text" id="disp_motivo_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
@@ -275,7 +279,7 @@ $servicos = listarServicos($conexao);
                                     <label class="tag-check"><input type="checkbox" class="disp_tipo_<?= $item['aluno_id'] ?>" value="<?= $t['id'] ?>"> <?= htmlspecialchars($t['nome']) ?></label>
                                 <?php endforeach; ?>
                                 <input type="text" id="disp_dispensado_de_<?= $item['aluno_id'] ?>" placeholder="Específico (opcional)" style="min-width:160px;">
-                                <button type="button" onclick="lancarDispensa(<?= $item['aluno_id'] ?>)">Salvar dispensa</button>
+                                <button type="button" onclick="lancarDispensa(<?= $item['aluno_id'] ?>)"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar dispensa</button>
                             </div>
                         </td>
                     </tr>
@@ -285,8 +289,8 @@ $servicos = listarServicos($conexao);
             </div>
 
             <?php if (!$somenteLeitura): ?>
-                <button type="submit">Salvar</button>
-                <button type="submit" name="enviar" value="1" class="enviar" onclick="return confirm('Enviar a chamada? Depois de enviada não dá mais pra editar.');">Salvar e enviar chamada</button>
+                <button type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
+                <button type="submit" name="enviar" value="1" class="enviar" onclick="return confirm('Enviar a chamada? Depois de enviada não dá mais pra editar.');"><span class="i" style="--icon-url:url('../images/icons/send.svg')"></span>Salvar e enviar chamada</button>
             <?php endif; ?>
         </form>
     </div>

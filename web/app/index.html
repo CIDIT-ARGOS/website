@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0a2e5c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Argos — Área Funcional</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<header class="topbar" id="topbar">
+  <div class="marca">
+    <strong>ARGOS</strong>
+    <small>Área Funcional</small>
+  </div>
+  <div class="sessao-info" id="sessaoInfo" style="display:none;"></div>
+</header>
+
+<!-- ================= LOGIN ================= -->
+<section class="view ativa" id="view-login">
+  <div class="login-box">
+    <span class="i" style="--icon-url:url('../../images/icons/qrcode.svg'); width:40px; height:40px; margin:0 0 8px;"></span>
+    <h1>Acesso do Aluno de Serviço</h1>
+    <p class="sub">Aponte a câmera para o QR Code da sua identidade militar para entrar.</p>
+
+    <div class="camera-frame" id="cameraFrame">
+      <video id="videoQr" autoplay playsinline muted></video>
+      <div class="mira"></div>
+    </div>
+    <canvas id="canvasQr" style="display:none;"></canvas>
+
+    <div id="loginErro"></div>
+
+    <button type="button" class="primario" id="btnEscanear">
+      <span class="i" style="--icon-url:url('../../images/icons/camera.svg')"></span>
+      Escanear QR Code
+    </button>
+
+    <div class="divisor">ou</div>
+
+    <form class="campo-colar" id="formColar">
+      <label for="qrColado">Colar código do QR (se a câmera não funcionar)</label>
+      <input type="text" id="qrColado" placeholder="hash de 64 caracteres" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button type="submit" class="secundario">Entrar com o código</button>
+    </form>
+  </div>
+</section>
+
+<!-- ================= RETIRADAS ================= -->
+<section class="view" id="view-retiradas">
+  <div class="view-header"><h1>Retiradas</h1></div>
+  <div id="retiradasErro"></div>
+  <div class="card">
+    <button type="button" class="primario" id="btnNovaRetirada">
+      <span class="i" style="--icon-url:url('../../images/icons/plus.svg')"></span>
+      Abrir nova retirada
+    </button>
+  </div>
+  <div class="lista-retiradas" id="listaRetiradas">
+    <p class="vazio">Carregando…</p>
+  </div>
+</section>
+
+<!-- ================= NOVA RETIRADA ================= -->
+<section class="view" id="view-nova-retirada">
+  <div class="view-header">
+    <button type="button" class="btn-voltar" data-voltar="view-retiradas">
+      <span class="i" style="--icon-url:url('../../images/icons/arrow-left.svg')"></span>voltar
+    </button>
+    <h1>Nova retirada</h1>
+  </div>
+  <div id="novaRetiradaErro"></div>
+  <form class="form-grid" id="formNovaRetirada">
+    <div>
+      <label for="novaTipo">Tipo de retirada</label>
+      <select id="novaTipo" required>
+        <option value="1_jornada">1ª Jornada</option>
+        <option value="2_jornada">2ª Jornada</option>
+        <option value="educacao_fisica">Educação Física</option>
+        <option value="pernoite">Pernoite</option>
+      </select>
+    </div>
+    <div>
+      <label for="novaEsquadrilha">Esquadrilha</label>
+      <select id="novaEsquadrilha" required>
+        <option value="A">Esquadrilha A</option>
+        <option value="B">Esquadrilha B</option>
+        <option value="C">Esquadrilha C</option>
+        <option value="D">Esquadrilha D</option>
+      </select>
+    </div>
+    <button type="submit" class="primario">Abrir e começar a chamada</button>
+  </form>
+</section>
+
+<!-- ================= MARCAR ================= -->
+<section class="view" id="view-marcar">
+  <div class="view-header">
+    <button type="button" class="btn-voltar" data-voltar="view-retiradas">
+      <span class="i" style="--icon-url:url('../../images/icons/arrow-left.svg')"></span>voltar
+    </button>
+    <h1 id="marcarTitulo">Chamada</h1>
+  </div>
+  <div id="marcarMensagem"></div>
+  <div class="busca-barra">
+    <input type="search" id="marcarBusca" placeholder="Buscar por nome ou milhão…">
+  </div>
+  <div class="lista-alunos" id="listaMarcar">
+    <p class="vazio">Carregando…</p>
+  </div>
+  <div class="rodape-acao" id="rodapeEnviar" style="display:none;">
+    <button type="button" class="primario" id="btnEnviarChamada">
+      <span class="i" style="--icon-url:url('../../images/icons/circle-check.svg')"></span>
+      Enviar chamada
+    </button>
+  </div>
+</section>
+
+<!-- ================= EFETIVO ================= -->
+<section class="view" id="view-efetivo">
+  <div class="view-header"><h1>Efetivo do esquadrão</h1></div>
+  <div class="busca-barra">
+    <input type="search" id="efetivoBusca" placeholder="Buscar por nome ou milhão…">
+  </div>
+  <div class="lista-alunos" id="listaEfetivo">
+    <p class="vazio">Carregando…</p>
+  </div>
+</section>
+
+<nav class="nav-inferior oculta" id="navInferior">
+  <button type="button" class="nav-item" data-ir="view-retiradas">
+    <span class="i" style="--icon-url:url('../../images/icons/home.svg')"></span>
+    Retiradas
+  </button>
+  <button type="button" class="nav-item" data-ir="view-efetivo">
+    <span class="i" style="--icon-url:url('../../images/icons/users-group.svg')"></span>
+    Efetivo
+  </button>
+  <button type="button" class="nav-item" id="btnSair">
+    <span class="i" style="--icon-url:url('../../images/icons/logout.svg')"></span>
+    Sair
+  </button>
+</nav>
+
+<script src="env.php"></script>
+<script src="js/qr-scanner.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

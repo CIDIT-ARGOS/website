@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/cargos_core.php';
 require_once __DIR__ . '/../../core/cargo_permissoes_core.php';
@@ -8,7 +9,7 @@ require_once __DIR__ . '/../../core/cargo_permissoes_core.php';
 $conexao = conectarBanco();
 
 if (!temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'gerenciar_cargos')) {
-    die("Sua conta não tem a permissão 'gerenciar_cargos'.");
+    exibirAcessoNegado("Sua conta não tem a permissão 'gerenciar_cargos'.");
 }
 
 $mensagem = null;
@@ -59,7 +60,7 @@ foreach ($cargos as $c) {
     .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
     .tabs a { padding: 8px 14px; border-radius: 6px; color: var(--text-muted); text-decoration: none; font-size: 13px; border: 1px solid var(--border); }
     .tabs a.ativo { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -108,7 +109,7 @@ foreach ($cargos as $c) {
                 <?php endforeach; ?>
             </table>
             <div style="margin-top:14px;">
-                <button type="submit">Salvar permissões</button>
+                <button type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar permissões</button>
             </div>
         </form>
         </div>

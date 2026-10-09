@@ -1,0 +1,26 @@
+# .htaccess TEMPORÁRIO, ativo só durante o deploy (ver scripts/deploy/deploy-producao.sh).
+# Manda toda requisição pra manutencao.html, exceto as do próprio workflow
+# de deploy, que mandam o header X-Deploy-Token (token aleatório gerado pra
+# este deploy — __DEPLOY_TOKEN__ é substituído pelo script antes do upload).
+# Apache nunca serve arquivos .ht*, então o token não vaza por aqui.
+# No fim do deploy este arquivo é sobrescrito pelo .htaccess normal do projeto.
+
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set Cache-Control "no-store"
+    Header always set Retry-After "300"
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    RewriteCond %{HTTP:X-Deploy-Token} !^__DEPLOY_TOKEN__$
+    RewriteCond %{REQUEST_URI} !manutencao\.html$
+    RewriteRule ^ manutencao.html [L]
+</IfModule>
+
+# Se o servidor não tiver mod_rewrite/AllowOverride, este arquivo não faz
+# nada — por isso o deploy TAMBÉM troca as páginas de entrada (index.html,
+# painel/index.php, ikarus37/index.php, app/index.html) pela de manutenção
+# até o fim do processo.

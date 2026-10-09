@@ -1,11 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
+require_once __DIR__ . '/../../core/turmas_core.php';
 
 if (!podeEditarEfetivo()) {
-    die("Seu cargo não tem a permissão 'editar_efetivo'.");
+    exibirAcessoNegado("Seu cargo não tem a permissão 'editar_efetivo'.");
 }
 
 $conexao = conectarBanco();
@@ -22,7 +24,7 @@ if (!$aluno) {
 }
 
 if ($escopo !== null && $aluno['esquadrao'] !== $escopo) {
-    die("Você não tem permissão para editar alunos fora do Esquadrão $escopo.");
+    exibirAcessoNegado("Você não tem permissão para editar alunos fora do Esquadrão $escopo.");
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -37,6 +39,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $erro = $resultado['erro'];
     }
 }
+
+$turmasDisponiveis = listarTurmas($conexao, true);
 
 ?>
 <!DOCTYPE html>
@@ -60,11 +64,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
     label { display: block; font-size: 12px; color: var(--text-muted); margin-top: 12px; margin-bottom: 4px; }
     input, select { width: 100%; padding: 8px 10px; background: #ffffff; border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; }
+    select { max-width: 100%; }
     input[readonly] { color: var(--text-muted); }
     button { padding: 9px 18px; background: var(--accent); border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; margin-top: 18px; }
     .erro { color: var(--danger); font-size: 13px; }
     .ok { color: var(--ok); font-size: 13px; }
-    .i { display: inline-block; width: 13px; height: 13px; vertical-align: -2px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 4px; }
+    .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 </head>
 <body>
@@ -114,11 +119,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label>Sub-especialidade</label>
             <input type="text" name="sub_especialidade" value="<?= htmlspecialchars($aluno['sub_especialidade'] ?? '') ?>">
 
+            <label>Turma</label>
+            <select name="turma_id">
+                <option value="">— nenhuma —</option>
+                <?php foreach ($turmasDisponiveis as $t): ?>
+                    <option value="<?= $t['id'] ?>" <?= (int) $aluno['turma_id'] === (int) $t['id'] ? 'selected' : '' ?>>
+                        <?= htmlspecialchars($t['nome']) ?><?= empty($t['ativo']) ? ' (formada)' : '' ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
             <label style="display:flex; align-items:center; gap:6px; margin-top:16px;">
                 <input type="checkbox" name="ativo" style="width:auto;" <?= $aluno['ativo'] ? 'checked' : '' ?>> Ativo
             </label>
 
-            <button type="submit">Salvar</button>
+            <button type="submit"><span class="i" style="--icon-url:url('../images/icons/device-floppy.svg')"></span>Salvar</button>
         </form>
     </div>
 </div>
