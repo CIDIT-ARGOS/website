@@ -27,6 +27,8 @@ $SUDO a2enmod -q rewrite headers >/dev/null
 $SUDO tee /etc/apache2/conf-available/argos-ci.conf >/dev/null <<'CONF'
 ServerName localhost
 <Directory /var/www/html>
+    # Como em produção: index.html não é página padrão (a raiz dava 403).
+    DirectoryIndex index.php
     AllowOverride All
     Require all granted
 </Directory>
@@ -67,6 +69,7 @@ checar() { # checar <descrição> <caminho> <status esperado>
 etapa "Rotas do .htaccess em subdiretório"
 checar "raiz"                       "/"                        200
 checar "landing"                    "/web/index.html"          200
+checar "CSS da landing servida na raiz" "/css/style.css"         200
 checar "URL curta do Painel"        "/painel/index.php"        200
 checar "URL curta da PWA"           "/app/index.html"          200
 checar "API direta"                 "/api/index.php"           200

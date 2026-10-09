@@ -11,6 +11,13 @@
 // A chave de API usada é a que a própria PWA recebe (web/app/env.php), então
 // o teste também prova que o APP_PWA_API_KEY do config.php de produção está
 // preenchido e é uma chave ativa.
+//
+// Códigos de saída:
+//   0  tudo ok
+//   1  falha CRÍTICA — o site está quebrado (o deploy religa a manutenção)
+//   3  só falhas de CONFIGURAÇÃO — o site funciona, mas falta ajuste no
+//      servidor (ex: APP_PWA_API_KEY vazio); o deploy falha e avisa, mas
+//      não tira o site do ar
 
 $baseUrl = rtrim($argv[1] ?? getenv('PROD_URL') ?: '', '/');
 $versaoEsperada = $argv[2] ?? '';
@@ -21,19 +28,26 @@ if ($baseUrl === '') {
 }
 
 $falhas = 0;
+$falhasConfig = 0;
 
-function checar($nome, callable $corpo) {
-    global $falhas;
+function checar($nome, callable $corpo, $critico = true) {
+    global $falhas, $falhasConfig;
     try {
         $corpo();
         echo "  ok    $nome\n";
     } catch (Throwable $e) {
-        $falhas++;
-        echo "  FALHA $nome\n        " . $e->getMessage() . "\n";
+        $critico ? $falhas++ : $falhasConfig++;
+        echo '  ' . ($critico ? 'FALHA' : 'CONFIG') . " $nome\n        " . $e->getMessage() . "\n";
         if (getenv('GITHUB_ACTIONS') || getenv('FORGEJO_ACTIONS')) {
             echo "::error::$nome — " . str_replace("\n", ' ', $e->getMessage()) . "\n";
         }
     }
+}
+
+// Checagem de configuração do servidor (não de código): se falhar, o deploy
+// avisa mas não tira o site do ar.
+function checarConfig($nome, callable $corpo) {
+    checar($nome, $corpo, false);
 }
 
 function exigir($condicao, $mensagem) {
@@ -98,29 +112,40 @@ checar('API recusa chave inválida (401)', function () {
     exigirStatus(pegar('GET', '/api/motivos.php', ['X-API-Key' => 'chave-invalida-smoke-test']), 401);
 });
 
-$chaveApp = null;
-checar('PWA: env.php entrega chave e base da API corretas', function () use (&$chaveApp, $baseUrl) {
+$envPwa = '';
+checar('PWA: env.php responde com a base da API correta', function () use (&$envPwa, $baseUrl) {
     $r = pegar('GET', '/web/app/env.php');
     exigirStatus($r, 200);
     semErroPhp($r);
-    exigir(preg_match('/window\.ARGOS_API_KEY = "([^"]*)";/', $r['corpo'], $m), 'ARGOS_API_KEY ausente');
-    exigir($m[1] !== '', 'APP_PWA_API_KEY está vazio no core/config.php de produção — gere uma chave em Ikarus37 → API');
-    $chaveApp = $m[1];
+    $envPwa = $r['corpo'];
     exigir(preg_match('/window\.ARGOS_API_BASE = "([^"]*)";/', $r['corpo'], $b), 'ARGOS_API_BASE ausente');
     $caminhoEsperado = (parse_url($baseUrl, PHP_URL_PATH) ?? '') . '/api/';
     exigir($b[1] === $caminhoEsperado, "ARGOS_API_BASE = {$b[1]}, esperava $caminhoEsperado");
 });
 
-checar('PWA: a chave do app é aceita pela API', function () use (&$chaveApp) {
+$chaveApp = null;
+checarConfig('PWA: APP_PWA_API_KEY preenchido no core/config.php', function () use (&$envPwa, &$chaveApp) {
+    exigir(preg_match('/window\.ARGOS_API_KEY = "([^"]*)";/', $envPwa, $m), 'ARGOS_API_KEY ausente no env.php');
+    exigir($m[1] !== '', 'APP_PWA_API_KEY está vazio no core/config.php de produção — gere uma chave em Ikarus37 → API e cole no config.php');
+    $chaveApp = $m[1];
+});
+
+checarConfig('PWA: a chave do app é aceita pela API', function () use (&$chaveApp) {
     exigir($chaveApp, 'sem chave do app (teste anterior falhou)');
     // qrcode_hash propositalmente inválido: com chave válida a API responde
     // 400 (formato), com chave inválida 401 — e nada é gravado.
     exigirStatus(pegar('POST', '/api/sessao.php', ['X-API-Key' => $chaveApp], ['qrcode_hash' => 'smoke']), 400);
 });
 
-checar('rotas do app exigem sessão do aluno (401 só com a chave)', function () use (&$chaveApp) {
+checarConfig('rotas do app exigem sessão do aluno (401 só com a chave)', function () use (&$chaveApp) {
     exigir($chaveApp, 'sem chave do app');
     exigirStatus(pegar('GET', '/api/alunos.php', ['X-API-Key' => $chaveApp]), 401);
+});
+
+checar('raiz do site abre a landing page', function () {
+    $r = pegar('GET', '/');
+    exigirStatus($r, 200);
+    semErroPhp($r);
 });
 
 foreach ([
@@ -158,5 +183,13 @@ checar('dados sensíveis não são servidos', function () {
     }
 });
 
-echo $falhas ? "\n$falhas verificação(ões) falharam.\n" : "\nTudo ok.\n";
-exit($falhas ? 1 : 0);
+if ($falhas) {
+    echo "\n$falhas verificação(ões) CRÍTICA(s) falharam" . ($falhasConfig ? " (e $falhasConfig de configuração)" : '') . ".\n";
+    exit(1);
+}
+if ($falhasConfig) {
+    echo "\nSite ok, mas $falhasConfig verificação(ões) de CONFIGURAÇÃO falharam — ajuste no servidor.\n";
+    exit(3);
+}
+echo "\nTudo ok.\n";
+exit(0);

@@ -110,9 +110,14 @@ limpar_ao_sair() {
             manutencao|backup)
                 echo "Desfazendo a manutenção — produção continua na versão anterior."
                 restaurar_originais || echo "::error::Não consegui desfazer a manutenção! Suba de volta os arquivos de $TRABALHO/originais por FTP." ;;
+            smoke_config)
+                echo "O site está NO AR com $VERSAO e funcionando, mas falta configuração no servidor"
+                echo "(itens CONFIG do smoke test acima). Ajuste e confira em:"
+                echo "Actions → Smoke test produção → Run workflow." ;;
             abertura|smoke)
                 echo "::error::O site foi reaberto com a versão nova e não passou no smoke test — religando a manutenção."
-                ftp "mirror -R --no-perms --overwrite --exclude '^_deploy/' \"$TRABALHO/manutencao\" .; rm -rf _deploy" >/dev/null 2>&1                     || echo "::error::Não consegui religar a manutenção!"
+                ftp "mirror -R --no-perms --overwrite --exclude '^_deploy/' \"$TRABALHO/manutencao\" .; rm -rf _deploy" >/dev/null 2>&1 \
+                    || echo "::error::Não consegui religar a manutenção!"
                 echo "Banco já migrado; backup deste deploy em _backups/ no servidor."
                 echo "Opções: corrigir e lançar uma nova tag, ou re-deployar a versão anterior"
                 echo "(Actions → Release → Run workflow → tag anterior)." ;;
@@ -282,7 +287,15 @@ ftp "$comandos"
 # ---------------------------------------------------------------------
 FASE=smoke
 etapa "Smoke test em produção"
-php "$RAIZ_REPO/tests/smoke_producao.php" "$PROD_URL" "$VERSAO"
+codigo_smoke=0
+php "$RAIZ_REPO/tests/smoke_producao.php" "$PROD_URL" "$VERSAO" || codigo_smoke=$?
+if [ $codigo_smoke -eq 3 ]; then
+    # Só configuração do servidor (ex: APP_PWA_API_KEY vazio): o site
+    # funciona, então não religa a manutenção — só falha o job e avisa.
+    FASE=smoke_config
+    exit 1
+fi
+[ $codigo_smoke -eq 0 ] || exit 1
 
 echo
 echo "Deploy de $VERSAO concluído."

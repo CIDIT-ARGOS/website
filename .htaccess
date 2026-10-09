@@ -12,6 +12,11 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Raiz → landing. Não dá pra contar com DirectoryIndex: em produção a
+    # raiz respondia 403 mesmo com index.html lá. Os links relativos da
+    # landing (css/, images/, painel/...) caem na última regra e vão pra web/.
+    RewriteRule ^$ web/index.html [L]
+
     # Código e dados internos nunca são servidos.
     RewriteRule ^(core|database|_backups)(/|$) - [F,L]
 
@@ -20,7 +25,7 @@
     RewriteRule ^(api|web)(/|$) - [L]
 
     # Qualquer outro caminho que não exista vira web/ (URLs curtas: /painel/,
-    # /app/, /ikarus37/). A raiz cai no index.html, que redireciona pra web/.
+    # /app/, /ikarus37/).
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ web/$1 [L]
