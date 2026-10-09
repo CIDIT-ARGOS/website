@@ -110,6 +110,12 @@ limpar_ao_sair() {
             manutencao|backup)
                 echo "Desfazendo a manutenção — produção continua na versão anterior."
                 restaurar_originais || echo "::error::Não consegui desfazer a manutenção! Suba de volta os arquivos de $TRABALHO/originais por FTP." ;;
+            abertura|smoke)
+                echo "::error::O site foi reaberto com a versão nova e não passou no smoke test — religando a manutenção."
+                ftp "mirror -R --no-perms --overwrite --exclude '^_deploy/' \"$TRABALHO/manutencao\" .; rm -rf _deploy" >/dev/null 2>&1                     || echo "::error::Não consegui religar a manutenção!"
+                echo "Banco já migrado; backup deste deploy em _backups/ no servidor."
+                echo "Opções: corrigir e lançar uma nova tag, ou re-deployar a versão anterior"
+                echo "(Actions → Release → Run workflow → tag anterior)." ;;
             *)
                 ftp "rm -rf _deploy" >/dev/null 2>&1 || true
                 echo "::error::O site FICOU EM MANUTENÇÃO, com a versão nova parcialmente publicada."

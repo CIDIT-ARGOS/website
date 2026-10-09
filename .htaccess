@@ -1,9 +1,27 @@
+# .htaccess de PRODUÇÃO (o Docker local usa docker/htaccess-local).
+#
+# As regras casam com o caminho RELATIVO a esta pasta (sem %{REQUEST_URI}),
+# então funcionam igual com o site na raiz do domínio ou num subdiretório
+# como /cidit/projetos/11/. A versão anterior comparava %{REQUEST_URI} com
+# "^/web/", o que num subdiretório nunca bate: cada requisição era
+# reescrita pra web/, web/web/, ... até o Apache estourar o limite de
+# redirecionamentos internos e responder 500 em tudo.
+#
+# Testado com Apache real em subdiretório no CI (scripts/ci/testes-apache.sh).
+
 <IfModule mod_rewrite.c>
-RewriteEngine On
+    RewriteEngine On
 
-RewriteCond %{REQUEST_URI} ^/(api|core|database)(/|$)
-RewriteRule ^ - [L]
+    # Código e dados internos nunca são servidos.
+    RewriteRule ^(core|database|_backups)(/|$) - [F,L]
 
-RewriteCond %{REQUEST_URI} !^/web/
-RewriteRule ^(.*)$ web/$1 [L]
+    # api/ e web/ são servidos como estão — e é isso que impede o loop: o
+    # que já foi reescrito pra web/ para aqui na segunda passada.
+    RewriteRule ^(api|web)(/|$) - [L]
+
+    # Qualquer outro caminho que não exista vira web/ (URLs curtas: /painel/,
+    # /app/, /ikarus37/). A raiz cai no index.html, que redireciona pra web/.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ web/$1 [L]
 </IfModule>

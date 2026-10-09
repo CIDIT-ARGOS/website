@@ -120,6 +120,9 @@ jobs:
       - name: Migrations + testes de integração
         run: bash scripts/ci/testes-integracao.sh
 
+      - name: Apache real em subdiretório (.htaccess de produção)
+        run: bash scripts/ci/testes-apache.sh
+
   deploy:
     name: Deploy em produção
     needs: [preparar, testes]
