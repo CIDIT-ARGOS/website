@@ -12,6 +12,8 @@
 
 $baseUrl = rtrim($argv[1] ?? getenv('BASE_URL') ?: 'http://127.0.0.1:8000', '/');
 $apiKey = getenv('ARGOS_API_KEY') ?: 'd0cf67c0a3b8464aacb2ed36f01b1fbb2af8d7623d804c3aa5eef732c6b3f058';
+// Chave de escopo admin (tests/fixtures/dados_teste.sql) — a de cima é a do app.
+$apiKeyAdmin = 'chave-admin-dos-testes-do-argos';
 $raizProjeto = dirname(__DIR__);
 
 // qrcode_hash dos alunos de tests/fixtures/dados_teste.sql

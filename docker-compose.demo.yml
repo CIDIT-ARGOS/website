@@ -26,6 +26,9 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # O banco nasce do init_db.sql (retrato até a migration 013); as migrations
+    # seguintes são aplicadas aqui, toda vez que o container sobe.
+    command: bash -c "php deploy/migrar.php migrar; exec apache2-foreground"
 
   db:
     image: mysql:8.0

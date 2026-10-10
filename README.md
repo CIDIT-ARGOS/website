@@ -37,7 +37,7 @@ O repositório principal fica no [Forgejo](https://cosmos.simioni.dev.br/cidit/p
 Toda mudança passa por `feat/<nome>` → `develop` → `release` → `main`, com lint e testes automáticos em cada push.
 Uma tag `vX.Y.Z` na `main` publica a versão em produção (backup do banco, migrations e smoke test incluídos).
 
-Detalhes — branches, testes, como lançar, rollback e migrations — em [docs/CI-CD.md](docs/CI-CD.md).
+Detalhes — branches, testes, como lançar, rollback e migrations — em [docs/CI-CD.md](docs/CI-CD.md). Como a API decide quem pode o quê: [docs/SEGURANCA-API.md](docs/SEGURANCA-API.md).
 Pra subir um Argos completo só com dados fictícios e testar as três interfaces: [docs/dev/COMO-TESTAR.md](docs/dev/COMO-TESTAR.md) (os alunos de teste e seus QR codes estão em [docs/dev/SEED-QRCODES.md](docs/dev/SEED-QRCODES.md)).
 
 ## Equipe do projeto

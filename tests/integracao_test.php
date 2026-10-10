@@ -237,7 +237,7 @@ teste('falta por dispensa médica sem dispensa lançada bloqueia o envio (409)',
     }
 
     $nova = api('POST', 'retiradas.php', $tokenPrata, [
-        'tipo' => 'pernoite', 'agrupamento_tipo' => 'esquadrilha', 'agrupamento_valor' => 'A', 'esquadrao' => 'Esquadrão Prata',
+        'tipo' => 'almoco', 'agrupamento_tipo' => 'esquadrilha', 'agrupamento_valor' => 'A', 'esquadrao' => 'Esquadrão Prata',
     ]);
     garantirStatus($nova, 201);
     $id = $nova['json']['id'];

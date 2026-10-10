@@ -16,6 +16,9 @@
 
 require __DIR__ . '/lib_teste.php';
 
+// Criar usuário do Painel e apagar retirada são endpoints administrativos.
+$apiKey = $apiKeyAdmin;
+
 const USUARIO_PAGINAS = 'ci.paginas';
 const SENHA_PAGINAS = 'senha-do-teste-de-paginas';
 

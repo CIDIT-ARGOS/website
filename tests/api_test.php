@@ -19,7 +19,14 @@
 
 require __DIR__ . '/lib_teste.php';
 
+// Este arquivo exercita os endpoints administrativos, então a chave padrão das
+// chamadas é a de escopo admin; a do app fica em $apiKeyApp pros testes que
+// provam que ela NÃO passa.
+$apiKeyApp = $apiKey;
+$apiKey = $apiKeyAdmin;
+
 const ESQUADRAO_TESTE = 'Esquadrão Teste API';
+const POSTO_TESTE = 'Posto Teste API';
 const GRUPO_TESTE = 'Grupo Teste API';
 
 // Apaga o que uma execução anterior deste arquivo deixou, pra dar pra rodar
@@ -43,6 +50,10 @@ function limparDadosDoTeste() {
     sql("DELETE FROM painel_usuarios WHERE usuario LIKE 'api.teste.%'");
     sql("DELETE FROM api_chaves WHERE nome = 'Chave inativa (teste)'");
     sql("DELETE FROM api_logs WHERE endpoint = 'teste-rate-limit'");
+    // Zera a contagem de 401 do rate limit (20 em 5 min por IP): os testes que
+    // rodaram antes e os deste arquivo, somados, passariam do limite.
+    sql("DELETE FROM api_logs WHERE status_code = 401");
+    sql("DELETE FROM postos_servico WHERE nome = '" . POSTO_TESTE . "'");
 }
 
 function dadosAluno($sufixo, $nomeGuerra, array $extra = []) {
@@ -107,6 +118,42 @@ teste('chave desativada é recusada (401)', function () {
     garantirStatus(api('GET', 'situacao.php', null, null, $chave), 401);
 });
 
+teste('respostas trazem os cabeçalhos de segurança; 401 traz WWW-Authenticate', function () {
+    $ok = api('GET', 'situacao.php');
+    garantir(($ok['headers']['x-content-type-options'] ?? '') === 'nosniff', 'falta X-Content-Type-Options: nosniff');
+    garantir(strpos($ok['headers']['cache-control'] ?? '', 'no-store') !== false, 'falta Cache-Control: no-store');
+
+    $semChave = requisicao('GET', '/api/situacao.php');
+    garantirStatus($semChave, 401);
+    garantir(!empty($semChave['headers']['www-authenticate']), '401 sem WWW-Authenticate');
+});
+
+teste('chave do app é recusada em todo endpoint administrativo (403)', function () use ($apiKeyApp) {
+    foreach ([
+        ['POST', 'alunos.php', dadosAluno('77', 'API INTRUSO')],
+        ['PUT', 'alunos.php?id=1', dadosAluno('77', 'API INTRUSO')],
+        ['DELETE', 'alunos.php?id=1', null],
+        ['GET', 'grupos.php', null],
+        ['POST', 'grupos.php', ['nome' => 'Grupo Intruso', 'categoria' => 'clube']],
+        ['GET', 'painel_usuarios.php', null],
+        ['POST', 'painel_usuarios.php', ['nome' => 'Intruso', 'usuario' => 'api.teste.intruso', 'senha' => 'senha-intrusa-1', 'cargo' => 'CMD_CA']],
+        ['PUT', 'painel_usuarios.php?id=1&acao=resetar_senha', ['nova_senha' => 'senha-intrusa-1']],
+        ['GET', 'relatorios.php', null],
+        ['GET', 'situacao.php', null],
+        ['DELETE', 'retiradas.php?id=1', null],
+    ] as [$metodo, $caminho, $corpo]) {
+        $r = api($metodo, $caminho, null, $corpo, $apiKeyApp);
+        garantir($r['status'] === 403, "$metodo $caminho com a chave do app deveria dar 403, deu {$r['status']}: " . substr($r['corpo'], 0, 200));
+    }
+    garantir(strpos(api('GET', 'situacao.php', null, null, $apiKeyApp)['headers']['www-authenticate'] ?? '', 'insufficient_scope') !== false, '403 sem insufficient_scope no WWW-Authenticate');
+    garantir((int) sqlLinha("SELECT COUNT(*) AS total FROM painel_usuarios WHERE usuario = 'api.teste.intruso'")['total'] === 0, 'a chave do app criou um usuário do Painel');
+});
+
+teste('chave do app sem sessão de aluno não lê retiradas (401)', function () use ($apiKeyApp) {
+    garantirStatus(api('GET', 'retiradas.php', null, null, $apiKeyApp), 401);
+    garantirStatus(api('GET', 'retiradas.php?id=1', null, null, $apiKeyApp), 401);
+});
+
 $ipDoTeste = null;
 teste('cada requisição fica registrada em api_logs', function () use (&$ipDoTeste) {
     garantirStatus(api('GET', 'situacao.php'), 200);
@@ -116,6 +163,12 @@ teste('cada requisição fica registrada em api_logs', function () use (&$ipDoTe
     garantir($log['api_chave_id'] !== null, 'log sem a chave que fez a requisição');
     garantir(!empty($log['ip']), 'log sem IP');
     $ipDoTeste = $log['ip'];
+});
+
+teste('a sessão do aluno também vale em Authorization: Bearer', function () use ($apiKeyApp) {
+    $token = login(QR_PRATA_2)['token'];
+    garantirStatus(requisicao('GET', '/api/motivos.php', ['X-API-Key' => $apiKeyApp, 'Authorization' => "Bearer $token"]), 200);
+    garantirStatus(requisicao('GET', '/api/motivos.php', ['X-API-Key' => $apiKeyApp, 'Authorization' => 'Bearer ' . str_repeat('0', 64)]), 401);
 });
 
 teste('usar a chave atualiza o ultimo_uso dela', function () use ($apiKey) {
@@ -267,6 +320,20 @@ if (!$retiradaId) {
     exit(1);
 }
 
+teste('aluno de serviço em outro esquadrão não lê esta retirada (403), nem ela aparece na lista dele', function () use ($tokenPrata, &$retiradaId) {
+    garantirStatus(api('GET', "retiradas.php?id=$retiradaId", $tokenPrata), 403);
+    $lista = api('GET', 'retiradas.php?esquadrao=' . rawurlencode(ESQUADRAO_TESTE), $tokenPrata);
+    garantirStatus($lista, 200);
+    garantir(!in_array($retiradaId, array_map('intval', array_column($lista['json'], 'id'))), 'a lista ignorou a sessão e obedeceu ao ?esquadrao= da URL');
+});
+
+teste('almoço é um tipo de retirada válido', function () use ($abrir) {
+    $r = $abrir(['tipo' => 'almoco']);
+    garantirStatus($r, 201);
+    garantir(api('GET', "retiradas.php?id={$r['json']['id']}")['json']['tipo'] === 'almoco', 'tipo não foi gravado como almoco');
+    garantirStatus(api('DELETE', "retiradas.php?id={$r['json']['id']}"), 200);
+});
+
 teste('retirada inexistente responde 404', function () use ($tokenEcho) {
     garantirStatus(api('GET', 'retiradas.php?id=999999'), 404);
     garantirStatus(api('PUT', 'retiradas.php?id=999999&acao=enviar', $tokenEcho), 404);
@@ -417,7 +484,7 @@ secao('Dispensas médicas pelo app (GET/POST /api/dispensas.php)');
 $hoje = date('Y-m-d');
 $dispensa = fn(array $extra = []) => $extra + [
     'aluno_id' => $alunos['API FOXTROT'], 'data_inicio' => $hoje, 'data_termino' => $hoje,
-    'numero' => '45/26', 'motivo' => 'Entorse de tornozelo (teste)',
+    'numero' => '45/26', 'motivo' => 'Entorse de tornozelo (teste)', 'medico_responsavel' => 'Cap Med Fulano (teste)',
 ];
 
 teste('exige sessão de aluno (401)', function () use ($dispensa) {
@@ -447,6 +514,9 @@ teste('não lança dispensa pra aluno de outro esquadrão (404)', function () us
 
 teste('sem motivo, com término antes do início ou com campo fora do formato é recusada (400)', function () use ($tokenEcho, $dispensa, $hoje) {
     garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['motivo' => ''])), 400);
+    $semMedico = api('POST', 'dispensas.php', $tokenEcho, $dispensa(['medico_responsavel' => '']));
+    garantirStatus($semMedico, 400);
+    garantir(stripos($semMedico['json']['erro'], 'Oficial Médico') !== false, 'a mensagem deveria pedir o Oficial Médico: ' . $semMedico['json']['erro']);
     garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['data_termino' => date('Y-m-d', strtotime("$hoje -1 day"))])), 400);
     garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['data_inicio' => '2000-01-01', 'data_termino' => '2000-01-02'])), 400);
     garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['motivo' => ['não', 'é', 'texto']])), 400);
@@ -461,6 +531,7 @@ teste('dispensa válida é lançada (201) e aparece na lista com o "dispensado d
     garantir(count($lista) === 1 && $lista[0]['nome_guerra'] === 'API FOXTROT', 'lista inesperada: ' . json_encode($lista));
     garantir($lista[0]['tags_nomes'] === $tiposDispensa[0]['nome'] && $lista[0]['dispensado_de'] === 'corrida', '"dispensado de" não foi gravado');
     garantir($lista[0]['numero'] === '45/26', 'número da dispensa não foi gravado');
+    garantir($lista[0]['medico_responsavel'] === 'Cap Med Fulano (teste)', 'Oficial Médico responsável não foi gravado');
 });
 
 teste('dispensa idêntica não é lançada duas vezes (400)', function () use ($tokenEcho, $dispensa) {
@@ -488,28 +559,124 @@ teste('data fora do formato é recusada (400)', function () use ($tokenEcho) {
     garantirStatus(api('GET', 'livro.php?data=2026-02-31', $tokenEcho), 400);
 });
 
-teste('livro de hoje traz a chamada enviada, a situação por extenso e a dispensa', function () use ($tokenEcho, $hoje) {
+$ontem = date('Y-m-d', strtotime("$hoje -1 day"));
+
+teste('as seções seguem a ordem do serviço: almoço, 2ª Jornada, pernoite, 1ª Jornada do dia seguinte', function () use ($tokenEcho, $hoje) {
     $r = api('GET', 'livro.php', $tokenEcho);
     garantirStatus($r, 200);
     $livro = $r['json'];
     garantir($livro['data'] === $hoje && $livro['esquadrao'] === ESQUADRAO_TESTE, 'data/esquadrão errados');
+    garantir(array_column($livro['secoes'], 'tipo') === ['almoco', '2_jornada', 'pernoite', '1_jornada'], 'ordem das seções errada: ' . implode(', ', array_column($livro['secoes'], 'tipo')));
 
     $jornada = porChave($livro['secoes'], 'tipo', '1_jornada');
-    garantir($jornada['chamadas_enviadas'] === 1, 'a 1ª Jornada deveria ter 1 chamada enviada');
-    garantir(count($jornada['ausencias']) === 1, 'a 1ª Jornada deveria ter 1 ausência: ' . json_encode($jornada['ausencias']));
-    garantir(strpos($jornada['ausencias'][0]['identificacao'], 'API FOXTROT') !== false, 'a ausência deveria ser do FOXTROT');
-    garantir(strpos($jornada['ausencias'][0]['situacao'], 'Falta') === 0, "a situação deveria vir por extenso (\"Falta\"), veio: {$jornada['ausencias'][0]['situacao']}");
-
-    garantir(porChave($livro['secoes'], 'tipo', 'pernoite')['chamadas_enviadas'] === 0, 'pernoite não teve chamada');
-    garantir(count($livro['dispensas']) === 1 && strpos($livro['dispensas'][0]['identificacao'], 'API FOXTROT') !== false, 'a dispensa do FOXTROT deveria estar no livro');
+    garantir($jornada['data'] === date('Y-m-d', strtotime("$hoje +1 day")), "a 1ª Jornada do livro de hoje deveria ser a de amanhã, veio {$jornada['data']}");
+    garantir($jornada['chamadas_enviadas'] === 0, 'a 1ª Jornada enviada HOJE não pertence ao livro de hoje');
+    garantir(porChave($livro['secoes'], 'tipo', 'almoco')['chamadas_enviadas'] === 0, 'almoço não teve chamada');
 });
 
-teste('o texto pronto segue o padrão e distingue "não há" de "chamada não enviada"', function () use ($tokenEcho) {
-    $texto = api('GET', 'livro.php', $tokenEcho)['json']['texto'];
-    foreach (['CORPO DE ALUNOS', 'RESUMO DO DIA', "PERNOITE\nChamada não enviada.", 'API FOXTROT — Falta', 'OCORRÊNCIAS MÉDICAS', 'MOTIVO: Entorse de tornozelo (teste)'] as $trecho) {
-        garantir(strpos($texto, $trecho) !== false, "o texto do livro não tem \"$trecho\":\n$texto");
+teste('a 1ª Jornada de hoje fecha o livro de ontem, com a situação por extenso', function () use ($tokenEcho, $ontem, $hoje) {
+    $jornada = porChave(api('GET', "livro.php?data=$ontem", $tokenEcho)['json']['secoes'], 'tipo', '1_jornada');
+    garantir($jornada['data'] === $hoje && $jornada['chamadas_enviadas'] === 1, 'a 1ª Jornada de hoje deveria estar no livro de ontem');
+    garantir(count($jornada['ausencias']) === 1, 'deveria ter 1 ausência: ' . json_encode($jornada['ausencias']));
+    garantir(strpos($jornada['ausencias'][0]['identificacao'], 'API FOXTROT') !== false, 'a ausência deveria ser do FOXTROT');
+    garantir(strpos($jornada['ausencias'][0]['situacao'], 'Falta') === 0, "a situação deveria vir por extenso (\"Falta\"), veio: {$jornada['ausencias'][0]['situacao']}");
+});
+
+teste('o livro de hoje traz a dispensa com o Oficial Médico', function () use ($tokenEcho) {
+    $dispensas = api('GET', 'livro.php', $tokenEcho)['json']['dispensas'];
+    garantir(count($dispensas) === 1 && strpos($dispensas[0]['identificacao'], 'API FOXTROT') !== false, 'a dispensa do FOXTROT deveria estar no livro');
+    garantir($dispensas[0]['medico_responsavel'] === 'Cap Med Fulano (teste)', 'o livro não traz o Oficial Médico');
+});
+
+teste('o texto pronto segue o padrão e distingue "não há" de "chamada não enviada"', function () use ($tokenEcho, $ontem) {
+    $deHoje = api('GET', 'livro.php', $tokenEcho)['json']['texto'];
+    foreach (['CORPO DE ALUNOS', 'RESUMO DO DIA', "ALMOÇO\nChamada não enviada.", 'OCORRÊNCIAS MÉDICAS', 'MOTIVO: Entorse de tornozelo (teste)', 'OFICIAL MÉDICO: Cap Med Fulano (teste)'] as $trecho) {
+        garantir(strpos($deHoje, $trecho) !== false, "o texto do livro de hoje não tem \"$trecho\":\n$deHoje");
     }
-    garantir(strpos($texto, 'FALT)') === false && strpos($texto, '(FALT') === false, 'o texto ainda usa a sigla do motivo');
+
+    $deOntem = api('GET', "livro.php?data=$ontem", $tokenEcho)['json']['texto'];
+    garantir(strpos($deOntem, 'API FOXTROT — Falta') !== false, "o texto do livro de ontem não tem a falta do FOXTROT:\n$deOntem");
+    garantir(strpos($deOntem, 'FALT)') === false && strpos($deOntem, '(FALT') === false, 'o texto ainda usa a sigla do motivo');
+});
+
+// =====================================================================
+secao('Posto de serviço da sessão (GET/PUT /api/servico.php)');
+
+// Sessão própria, pra trocar de posto sem mexer na que os outros testes usam.
+$tokenServico = null;
+teste('ao entrar, o aluno está de serviço no próprio esquadrão', function () use (&$tokenServico) {
+    $sessao = login(hash('sha256', 'api-teste-02'));
+    $tokenServico = $sessao['token'];
+    garantir($sessao['servico'] === ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z'], 'servico da sessão nova errado: ' . json_encode($sessao['servico'] ?? null));
+
+    $r = api('GET', 'servico.php', $tokenServico);
+    garantirStatus($r, 200);
+    garantir($r['json']['servico'] === ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z'], 'posto atual errado');
+    garantir($r['json']['origem']['esquadrao'] === ESQUADRAO_TESTE, 'origem errada');
+    $prata = porChave($r['json']['opcoes'], 'esquadrao', 'Esquadrão Prata');
+    garantir($prata && in_array('A', $prata['esquadrilhas']), 'as opções deveriam ter o Esquadrão Prata / A: ' . json_encode($r['json']['opcoes']));
+});
+
+teste('exige sessão (401) e recusa posto que não existe (400)', function () use (&$tokenServico) {
+    garantirStatus(api('GET', 'servico.php'), 401);
+    garantirStatus(api('PUT', 'servico.php', $tokenServico, ['esquadrao' => 'Esquadrão Prata']), 400);
+    garantirStatus(api('PUT', 'servico.php', $tokenServico, ['esquadrao' => 'Esquadrão Inexistente', 'esquadrilha' => 'A']), 400);
+    garantirStatus(api('PUT', 'servico.php', $tokenServico, ['esquadrao' => 'Esquadrão Prata', 'esquadrilha' => 'NAO-EXISTE']), 400);
+    garantirStatus(api('DELETE', 'servico.php', $tokenServico), 405);
+});
+
+teste('trocar o posto muda o que o app vê e pode lançar', function () use (&$tokenServico, $tokenEcho) {
+    garantirStatus(api('PUT', 'servico.php', $tokenServico, ['esquadrao' => 'Esquadrão Prata', 'esquadrilha' => 'A']), 200);
+    garantir(api('GET', 'servico.php', $tokenServico)['json']['servico'] === ['esquadrao' => 'Esquadrão Prata', 'esquadrilha' => 'A'], 'o posto não foi gravado');
+
+    $efetivo = array_column(api('GET', 'alunos.php', $tokenServico)['json'], 'nome_guerra');
+    garantir(in_array('TESTE ALFA', $efetivo) && !in_array('API ECHO', $efetivo), 'o efetivo deveria ser o do Esquadrão Prata: ' . implode(', ', $efetivo));
+
+    // Agora abre retirada do Prata, e não mais do esquadrão de origem.
+    $doPrata = api('POST', 'retiradas.php', $tokenServico, ['tipo' => 'pernoite', 'agrupamento_tipo' => 'esquadrilha', 'agrupamento_valor' => 'A', 'esquadrao' => 'Esquadrão Prata']);
+    garantirStatus($doPrata, 201);
+    garantir(strpos(api('GET', "retiradas.php?id={$doPrata['json']['id']}")['json']['responsavel_nome'], 'API ECHO') !== false, 'o responsável deveria ser quem está de serviço (API ECHO)');
+    garantirStatus(api('DELETE', "retiradas.php?id={$doPrata['json']['id']}"), 200);
+    garantirStatus(api('POST', 'retiradas.php', $tokenServico, ['tipo' => 'pernoite', 'agrupamento_tipo' => 'esquadrilha', 'agrupamento_valor' => 'Z', 'esquadrao' => ESQUADRAO_TESTE]), 403);
+
+    // A outra sessão do mesmo aluno não foi afetada.
+    garantir(api('GET', 'servico.php', $tokenEcho)['json']['servico']['esquadrao'] === ESQUADRAO_TESTE, 'trocar o posto numa sessão mudou a outra');
+});
+
+// =====================================================================
+secao('Postos de serviço na chamada (GET /api/postos_servico.php)');
+
+teste('catálogo exige sessão (401) e traz só os postos ativos', function () use ($tokenEcho) {
+    garantirStatus(api('GET', 'postos_servico.php'), 401);
+    sql("INSERT INTO postos_servico (nome, codigo, ativo) VALUES ('" . POSTO_TESTE . "', 'PTA', 1)");
+    sql("INSERT INTO postos_servico (nome, ativo) VALUES ('" . POSTO_TESTE . " inativo', 0)");
+    $r = api('GET', 'postos_servico.php', $tokenEcho);
+    garantirStatus($r, 200);
+    garantir(porChave($r['json'], 'nome', POSTO_TESTE) !== null, 'posto ativo não veio');
+    garantir(porChave($r['json'], 'nome', POSTO_TESTE . ' inativo') === null, 'posto inativo veio na lista');
+    sql("DELETE FROM postos_servico WHERE nome = '" . POSTO_TESTE . " inativo'");
+});
+
+teste('ausência por serviço guarda o posto; voltar pra presente limpa', function () use ($abrir, $tokenEcho, &$alunos) {
+    $posto = (int) sqlLinha("SELECT id FROM postos_servico WHERE nome = '" . POSTO_TESTE . "'")['id'];
+    $servico = porChave(api('GET', 'motivos.php', $tokenEcho)['json'], 'codigo', 'SV');
+    garantir($servico, 'motivo SV (Serviço) não existe no seed');
+
+    $r = $abrir(['tipo' => 'pernoite']);
+    garantirStatus($r, 201);
+    $id = (int) $r['json']['id'];
+    $url = "retirada_itens.php?retirada_id=$id&aluno_id={$alunos['API ECHO']}";
+
+    garantirStatus(api('PUT', $url, $tokenEcho, ['presente' => 0, 'motivo_falta_id' => (int) $servico['id'], 'servico_id' => 999999]), 400);
+    garantirStatus(api('PUT', $url, $tokenEcho, ['presente' => 0, 'motivo_falta_id' => (int) $servico['id'], 'servico_id' => $posto]), 200);
+    $item = porChave(api('GET', "retirada_itens.php?retirada_id=$id", $tokenEcho)['json'], 'aluno_id', $alunos['API ECHO']);
+    garantir((int) $item['servico_id'] === $posto && $item['servico_nome'] === POSTO_TESTE, 'o posto não foi gravado no item: ' . json_encode($item));
+
+    garantirStatus(api('PUT', $url, $tokenEcho, ['presente' => 1, 'servico_id' => $posto]), 200);
+    $item = porChave(api('GET', "retirada_itens.php?retirada_id=$id", $tokenEcho)['json'], 'aluno_id', $alunos['API ECHO']);
+    garantir($item['servico_id'] === null, 'aluno presente ficou com posto de serviço');
+
+    garantirStatus(api('DELETE', "retiradas.php?id=$id"), 200);
 });
 
 teste('dia sem chamada vem com todas as seções marcadas como não enviadas', function () use ($tokenEcho) {
@@ -783,6 +950,7 @@ teste('IP com 20 respostas 401 recentes é bloqueado (429), até com chave váli
         $bloqueado = api('GET', 'situacao.php');
         garantirStatus($bloqueado, 429);
         garantir(!empty($bloqueado['json']['erro']), 'resposta 429 sem mensagem');
+        garantir((int) ($bloqueado['headers']['retry-after'] ?? 0) > 0, '429 sem Retry-After');
 
         // 401 antigo (fora da janela de 5 minutos) não conta.
         sql("UPDATE api_logs SET criado_em = DATE_SUB(NOW(), INTERVAL 6 MINUTE) WHERE endpoint = 'teste-rate-limit' LIMIT 1");

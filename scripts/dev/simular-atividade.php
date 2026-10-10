@@ -35,13 +35,13 @@ function chamar($metodo, $caminho, $token = null, $corpo = null) {
 
 // [identidade do aluno de serviço (seed), esquadrão, esquadrilha, tipo, enviar?, faltas: nome de guerra => código do motivo]
 $chamadas = [
-    ['DEV-0001', 'Esquadrão Prata', 'A', '1_jornada', true, ['CARDOSO' => 'FALT']],
+    ['DEV-0001', 'Esquadrão Prata', 'A', 'almoco', true, ['CARDOSO' => 'FALT']],
     ['DEV-0001', 'Esquadrão Prata', 'A', '2_jornada', true, ['DUARTE' => 'HOSP']],
-    ['DEV-0005', 'Esquadrão Prata', 'B', '1_jornada', true, ['GOUVEIA' => 'CNTR', 'HENRIQUES' => 'FALT']],
-    ['DEV-0005', 'Esquadrão Prata', 'B', 'educacao_fisica', false, ['FARIAS' => 'ATL']],
-    ['DEV-0009', 'Esquadrão Azul', 'A', '1_jornada', true, []],
-    ['DEV-0013', 'Esquadrão Azul', 'B', '1_jornada', true, ['PACHECO' => 'ESTG', 'NOGUEIRA' => 'FALT']],
-    ['DEV-0017', 'Esquadrão Verde', 'A', '1_jornada', true, ['TAVARES' => 'INSP']],
+    ['DEV-0005', 'Esquadrão Prata', 'B', 'almoco', true, ['GOUVEIA' => 'CNTR', 'HENRIQUES' => 'FALT']],
+    ['DEV-0005', 'Esquadrão Prata', 'B', 'pernoite', false, ['FARIAS' => 'ATL']],
+    ['DEV-0009', 'Esquadrão Azul', 'A', 'almoco', true, []],
+    ['DEV-0013', 'Esquadrão Azul', 'B', 'almoco', true, ['PACHECO' => 'ESTG', 'NOGUEIRA' => 'FALT']],
+    ['DEV-0017', 'Esquadrão Verde', 'A', 'almoco', true, ['TAVARES' => 'INSP']],
     ['DEV-0021', 'Esquadrão Verde', 'B', 'pernoite', false, []],
 ];
 
