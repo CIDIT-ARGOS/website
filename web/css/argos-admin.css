@@ -14,7 +14,8 @@
  * continua exatamente como cada página define.
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+/* Fontes servidas pelo próprio sistema (web/css/fontes.css) — nada vem da internet. */
+@import url('fontes.css');
 
 @media screen {
     :root {
@@ -247,6 +248,8 @@
     .leitor-video { aspect-ratio: 1 / 1; background: #000; border-radius: var(--raio); overflow: hidden; }
     .leitor-video video { width: 100%; height: 100%; object-fit: cover; }
     .leitor-status { margin: 10px 0; font-size: 13px; color: var(--text-muted); }
+    .leitor-status.lido { color: var(--ok); font-weight: 600; }
+    .leitor-video.lido { outline: 4px solid var(--ok); outline-offset: -4px; }
     .qr-conferencia { border-left: 4px solid var(--accent); }
     .qr-ficha { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0; font-size: 14px; }
     .qr-ficha dt { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); padding-top: 3px; }

@@ -66,6 +66,8 @@ docker compose -f docker-compose.demo.yml down -v
 3. Ache o seu nome na lista (filtre por esquadrão ou busque pelo milhão) → "Cadastrar QR" → aponte de novo.
 4. Abra a Área Funcional no celular, "Escanear QR Code", aponte pra identidade.
 
+A câmera fica aberta até ler. Quando lê, a imagem congela, aparece "QR identificado" com o número de caracteres, e nada acontece até você confirmar — "Ler de novo" volta a procurar.
+
 A câmera do navegador só abre em HTTPS (produção) ou em `localhost`. No computador sem câmera, um leitor de mesa funciona: ele "digita" o conteúdo no campo do leitor.
 ### Conferir a segurança da API na mão
 
@@ -95,7 +97,7 @@ Precisa de PHP com `mysqli` e de um MySQL 8 acessível. **Atenção:** o script 
 |---|---|---|
 | `tests/integracao_test.php` | 38 | fluxo da PWA de ponta a ponta |
 | `tests/api_test.php` | 94 | cada endpoint e método da API: escopo das chaves, dispensas, Livro do Dia, posto de serviço |
-| `tests/paginas_test.php` | 44 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
+| `tests/paginas_test.php` | 50 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
 | `tests/smoke_producao.php` | 13 | o que roda em produção depois de cada deploy |
 
 Na prática, o jeito mais simples é dar push na `develop` e olhar **Actions** no Forgejo: roda tudo nos dois runners.

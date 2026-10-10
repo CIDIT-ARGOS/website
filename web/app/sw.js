@@ -3,7 +3,7 @@
 // /api/ NUNCA passam pelo cache: retirada de falta é dado vivo, servir uma
 // versão velha seria pior que não ter cache nenhum.
 
-const CACHE_NOME = 'argos-app-shell-v6';
+const CACHE_NOME = 'argos-app-shell-v7';
 
 const ARQUIVOS_SHELL = [
     'index.html',
@@ -11,6 +11,7 @@ const ARQUIVOS_SHELL = [
     'js/app.js',
     'js/livro.js',
     'js/qr-scanner.js',
+    'vendor/jsQR.js',
     'manifest.webmanifest',
     'icons/icon-192.png',
     'icons/icon-512.png',

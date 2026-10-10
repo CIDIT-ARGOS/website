@@ -99,6 +99,10 @@ foreach ([
     '/web/css/argos-admin.css' => 'folha comum do Painel e do Ikarus37',
     '/web/css/argos-ikarus.css' => 'tema do Ikarus37',
     '/web/js/argos-admin.js' => 'tabelas enxutas com painel lateral',
+    '/web/css/fontes.css' => 'fontes servidas pelo próprio sistema',
+    '/web/fonts/ibm-plex-sans-400-latin.woff2' => 'arquivo de fonte',
+    '/web/vendor/chart.umd.js' => 'Chart.js local (gráficos do Painel)',
+    '/web/app/vendor/jsQR.js' => 'jsQR local (leitor de QR)',
     '/web/images/argos-olho.svg' => 'marca do Argos',
     '/web/images/especialista.svg' => 'insígnia de especialista',
 ] as $caminho => $descricao) {
@@ -107,8 +111,46 @@ foreach ([
     });
 }
 
+// O Argos roda em intranet: nenhuma página pode buscar script, estilo, fonte
+// ou imagem na internet. (Link que o usuário clica, tipo o do GitHub na
+// landing, não é carregamento — por isso <a href> não entra.)
+teste('nenhuma página carrega recurso da internet', function () use ($raizProjeto) {
+    $padroes = [
+        '{<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc=["\']https?://}i',
+        '{<link\b[^>]*\bhref=["\']https?://}i',
+        '{@import\s+(?:url\()?["\']?https?://}i',
+        '{url\(\s*["\']?https?://}i',
+        '{\.src\s*=\s*["\']https?://}',
+        '{(?:fetch|importScripts)\(\s*["\']https?://}',
+    ];
+    $achados = [];
+    $arquivos = new RecursiveIteratorIterator(new RecursiveDirectoryIterator("$raizProjeto/web", FilesystemIterator::SKIP_DOTS));
+    foreach ($arquivos as $arquivo) {
+        $caminho = str_replace('\\', '/', substr($arquivo->getPathname(), strlen($raizProjeto) + 1));
+        // Bibliotecas de terceiros trazem URL em comentário de licença — não são carregamento.
+        if (!preg_match('/\.(php|html|css|js)$/', $caminho) || strpos($caminho, '/vendor/') !== false) {
+            continue;
+        }
+        foreach (file($arquivo->getPathname()) as $n => $linha) {
+            foreach ($padroes as $padrao) {
+                if (preg_match($padrao, $linha)) {
+                    $achados[] = "$caminho:" . ($n + 1) . ' ' . trim(substr($linha, 0, 120));
+                }
+            }
+        }
+    }
+    garantir($achados === [], "recurso externo em:\n          " . implode("\n          ", $achados));
+});
+
+teste('o leitor de QR usa o decodificador local', function () use ($raizProjeto) {
+    $leitor = file_get_contents("$raizProjeto/web/app/js/qr-scanner.js");
+    garantir(strpos($leitor, '../vendor/jsQR.js') !== false, 'qr-scanner.js não aponta pro vendor/jsQR.js local');
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/vendor/jsQR.js"), 'jsQR') !== false, 'vendor/jsQR.js não parece ser o jsQR');
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/sw.js"), "'vendor/jsQR.js'") !== false, 'o service worker não guarda o jsQR pra uso offline');
+});
+
 teste('as folhas de estilo só usam caminho relativo', function () use ($raizProjeto) {
-    foreach (['web/css/argos-admin.css', 'web/css/argos-ikarus.css', 'web/app/css/app.css'] as $arquivo) {
+    foreach (['web/css/argos-admin.css', 'web/css/argos-ikarus.css', 'web/css/fontes.css', 'web/app/css/app.css'] as $arquivo) {
         // Caminho absoluto quebra em produção, onde o site fica num subdiretório.
         garantir(!preg_match('{url\(\s*[\'"]?/(?!/)}', file_get_contents("$raizProjeto/$arquivo")), "$arquivo tem url() com caminho absoluto");
     }

@@ -255,7 +255,7 @@ function renderizarControleQr($conexao, $escopo, array $estado, $caminhoLeitor) 
             <input type="hidden" name="acao" id="leitorAcao">
             <input type="hidden" name="aluno_id" id="leitorAlunoId">
             <h3 id="leitorTitulo" style="margin-top:0;"></h3>
-            <div class="leitor-video"><video id="leitorVideo" autoplay playsinline muted></video></div>
+            <div class="leitor-video" id="leitorQuadro"><video id="leitorVideo" autoplay playsinline muted></video></div>
             <p id="leitorStatus" class="leitor-status">Aponte a câmera para o QR.</p>
             <label style="display:block; font-size:12px; color:var(--text-muted);">
                 Sem câmera? Use um leitor de mesa ou cole o conteúdo do QR aqui:
@@ -263,6 +263,7 @@ function renderizarControleQr($conexao, $escopo, array $estado, $caminhoLeitor) 
             </label>
             <div class="form-linha" style="margin-top:14px; justify-content:flex-end;">
                 <button type="button" class="ghost" onclick="fecharLeitorQr()">Cancelar</button>
+                <button type="button" class="ghost" id="leitorDeNovo" onclick="lerQrDeNovo()" hidden>Ler de novo</button>
                 <button type="submit">Confirmar</button>
             </div>
         </form>
@@ -270,25 +271,44 @@ function renderizarControleQr($conexao, $escopo, array $estado, $caminhoLeitor) 
 
     <script src="<?= $e($caminhoLeitor) ?>"></script>
     <script>
+        // A câmera fica aberta até ler. Quando lê, a imagem congela, o status diz
+        // que o QR foi identificado e a tela espera o "Confirmar" — nada é enviado sozinho.
+        function estadoDoLeitor(lido, texto) {
+            const status = document.getElementById('leitorStatus');
+            status.textContent = texto;
+            status.classList.toggle('lido', lido);
+            document.getElementById('leitorQuadro').classList.toggle('lido', lido);
+            document.getElementById('leitorDeNovo').hidden = !lido;
+        }
+
+        function procurarQr() {
+            estadoDoLeitor(false, 'Aponte a câmera para o QR.');
+            ArgosQrScanner.iniciar(
+                document.getElementById('leitorVideo'),
+                (valor) => {
+                    document.getElementById('leitorConteudo').value = valor;
+                    estadoDoLeitor(true, `QR identificado — ${valor.length} caracteres. Confira e toque em Confirmar.`);
+                },
+                (mensagem) => estadoDoLeitor(false, mensagem)
+            );
+        }
+
         function abrirLeitorQr({ acao, alunoId = '', titulo }) {
             document.getElementById('leitorAcao').value = acao;
             document.getElementById('leitorAlunoId').value = alunoId;
             document.getElementById('leitorTitulo').textContent = titulo;
             document.getElementById('leitorConteudo').value = '';
-            const status = document.getElementById('leitorStatus');
-            status.textContent = 'Aponte a câmera para o QR.';
             document.getElementById('leitorQr').showModal();
+            procurarQr();
+        }
 
-            ArgosQrScanner.iniciar(
-                document.getElementById('leitorVideo'),
-                (valor) => {
-                    // Leu: preenche e envia. O conteúdo vai direto pro servidor, que só guarda a impressão digital.
-                    document.getElementById('leitorConteudo').value = valor;
-                    status.textContent = 'QR lido. Enviando…';
-                    document.getElementById('formLeitorQr').submit();
-                },
-                () => { status.textContent = 'Não consegui abrir a câmera. Use um leitor de mesa ou cole o conteúdo do QR no campo abaixo.'; }
-            );
+        function lerQrDeNovo() {
+            document.getElementById('leitorConteudo').value = '';
+            if (ArgosQrScanner.retomar()) {
+                estadoDoLeitor(false, 'Aponte a câmera para o QR.');
+            } else {
+                procurarQr();
+            }
         }
 
         function fecharLeitorQr() {

@@ -12,9 +12,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/fontes.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body class="tela-login">
@@ -44,8 +42,17 @@
     <div class="camera-frame" id="cameraFrame">
       <video id="videoQr" autoplay playsinline muted></video>
       <div class="mira"></div>
+      <div class="camera-lido" role="status">
+        <span class="i" style="--icon-url:url('../../images/icons/circle-check.svg')"></span>QR identificado
+      </div>
     </div>
-    <canvas id="canvasQr" style="display:none;"></canvas>
+    <div class="camera-acoes" id="cameraAcoes" hidden>
+      <p id="cameraResumo"></p>
+      <div class="acoes-duplas">
+        <button type="button" class="secundario" id="btnLerDeNovo">Ler de novo</button>
+        <button type="button" class="primario" id="btnEntrarComQr">Entrar</button>
+      </div>
+    </div>
 
     <div id="loginErro"></div>
 

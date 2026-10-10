@@ -144,9 +144,23 @@ function escapeHtml(texto) {
 }
 
 // ---------- Login ----------
+// O QR que a câmera leu e ainda espera o "Entrar".
+let qrLido = null;
+
 function pararCamera() {
     ArgosQrScanner.parar();
-    document.getElementById('cameraFrame').classList.remove('ativo');
+    qrLido = null;
+    document.getElementById('cameraFrame').classList.remove('ativo', 'lido');
+    document.getElementById('cameraAcoes').hidden = true;
+    rotuloDoBotaoDaCamera(false);
+}
+
+// O mesmo botão abre e fecha a câmera.
+function rotuloDoBotaoDaCamera(aberta) {
+    const botao = document.getElementById('btnEscanear');
+    botao.lastChild.textContent = aberta ? ' Fechar câmera' : ' Escanear QR Code';
+    botao.classList.toggle('primario', !aberta);
+    botao.classList.toggle('secundario', aberta);
 }
 
 async function tentarLogin(qrcodeHash, botao) {
@@ -249,17 +263,45 @@ function atualizarInfoSessao() {
     document.getElementById('sessaoInfo').innerHTML = `<strong>${escapeHtml(aluno.nome_guerra)}</strong>${posto}`;
 }
 
+// A câmera fica aberta até ler. Quando lê, a imagem congela, aparece
+// "QR identificado" e o app espera o "Entrar" — nada é enviado sozinho.
 document.getElementById('btnEscanear').addEventListener('click', async () => {
     const frame = document.getElementById('cameraFrame');
-    const video = document.getElementById('videoQr');
-    frame.classList.add('ativo');
+    const estavaAberta = ArgosQrScanner.ligado();
+    pararCamera();
     exibirErro('loginErro', '');
+    if (estavaAberta) return; // era um "Fechar câmera"
+
+    frame.classList.add('ativo');
+    rotuloDoBotaoDaCamera(true);
 
     await ArgosQrScanner.iniciar(
-        video,
-        (valor) => tentarLogin(valor, null),
-        (mensagem) => { exibirErro('loginErro', mensagem); frame.classList.remove('ativo'); }
+        document.getElementById('videoQr'),
+        (valor) => {
+            qrLido = valor;
+            frame.classList.add('lido');
+            document.getElementById('cameraResumo').textContent =
+                `Li um QR de ${valor.length} caracteres. Toque em Entrar para confirmar.`;
+            document.getElementById('cameraAcoes').hidden = false;
+        },
+        (mensagem) => { pararCamera(); exibirErro('loginErro', mensagem); }
     );
+});
+
+document.getElementById('btnLerDeNovo').addEventListener('click', () => {
+    exibirErro('loginErro', '');
+    qrLido = null;
+    document.getElementById('cameraFrame').classList.remove('lido');
+    document.getElementById('cameraAcoes').hidden = true;
+    // Se a câmera já tiver sido desligada, abre de novo.
+    if (!ArgosQrScanner.retomar()) {
+        pararCamera();
+        document.getElementById('btnEscanear').click();
+    }
+});
+
+document.getElementById('btnEntrarComQr').addEventListener('click', (evento) => {
+    if (qrLido) tentarLogin(qrLido, evento.currentTarget);
 });
 
 document.getElementById('formColar').addEventListener('submit', (evento) => {
