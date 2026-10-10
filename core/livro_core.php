@@ -1,8 +1,12 @@
 <?php
 
 // Livro do Dia (Livro de Serviço do Aluno de Dia): o resumo padronizado de um
-// esquadrão numa data, montado a partir das chamadas enviadas e das dispensas
-// médicas — o que antes era digitado à mão e passado por WhatsApp/e-mail.
+// esquadrão num dia de serviço, montado a partir das chamadas enviadas e das
+// dispensas médicas — o que antes era digitado à mão e passado por
+// WhatsApp/e-mail.
+//
+// O dia de serviço segue a ordem dos lançamentos: almoço, 2ª Jornada e
+// pernoite do próprio dia, e fecha com a 1ª Jornada do DIA SEGUINTE.
 //
 // Usado pelo Painel (web/painel/livro_do_dia.php) e pela API (/api/livro.php,
 // que alimenta a Área Funcional). A fonte é uma só, então o livro que o aluno
@@ -12,12 +16,18 @@ require_once __DIR__ . '/retiradas_core.php';
 require_once __DIR__ . '/dispensas_core.php';
 require_once __DIR__ . '/alunos_core.php';
 
-// Ordem das seções no livro.
-const LIVRO_TIPOS_RETIRADA = [
-    'pernoite' => 'PERNOITE',
-    '1_jornada' => '1ª JORNADA',
-    '2_jornada' => '2ª JORNADA',
-    'educacao_fisica' => 'EDUCAÇÃO FÍSICA',
+// Seções do livro, na ordem do serviço. `dia` é o deslocamento em relação à
+// data do livro: a 1ª Jornada que entra é a do dia seguinte.
+const LIVRO_SECOES = [
+    'almoco' => ['rotulo' => 'ALMOÇO', 'dia' => 0],
+    '2_jornada' => ['rotulo' => '2ª JORNADA', 'dia' => 0],
+    'pernoite' => ['rotulo' => 'PERNOITE', 'dia' => 0],
+    '1_jornada' => ['rotulo' => '1ª JORNADA', 'dia' => 1],
+];
+
+// Tipos que saíram de uso: só viram seção se houver chamada enviada no dia.
+const LIVRO_SECOES_LEGADAS = [
+    'educacao_fisica' => ['rotulo' => 'EDUCAÇÃO FÍSICA', 'dia' => 0],
 ];
 
 // Formato "19 AGO 2026" do documento de referência — sem depender de locale
@@ -37,42 +47,66 @@ function rotuloEsquadrao($esquadrao) {
 
 /**
  * Situação do aluno por extenso, como vai escrita no livro: o nome do motivo
- * ("Dispensa médica (atrás da tropa)"), nunca a sigla ("DMED"), seguido da
- * observação quando houver.
+ * ("Dispensa médica (atrás da tropa)"), nunca a sigla ("DMED"); o posto,
+ * quando o motivo é serviço; e a observação, quando houver.
  */
 function descricaoSituacaoLivro($item) {
-    $descricao = trim((string) ($item['motivo_nome'] ?? '')) ?: 'Sem motivo informado';
-    $observacao = trim((string) ($item['observacao'] ?? ''));
-    return $observacao !== '' ? "$descricao — $observacao" : $descricao;
+    $partes = [trim((string) ($item['motivo_nome'] ?? '')) ?: 'Sem motivo informado'];
+    foreach (['servico_nome', 'observacao'] as $campo) {
+        $valor = trim((string) ($item[$campo] ?? ''));
+        if ($valor !== '') {
+            $partes[] = $valor;
+        }
+    }
+    return implode(' — ', $partes);
 }
 
 /**
- * Monta os dados de um esquadrão pro Livro do Dia: por tipo de retirada, as
- * ausências de todas as chamadas enviadas naquele dia (ex: todas as
- * esquadrilhas da 1ª Jornada) e quantas chamadas foram enviadas — pra
- * distinguir "não há alteração" de "a chamada ainda não foi enviada" — mais
- * as dispensas médicas ativas na data.
+ * Monta o livro de um esquadrão pra um dia de serviço: por seção, as ausências
+ * de todas as chamadas enviadas daquele tipo (ex: todas as esquadrilhas do
+ * pernoite) e quantas chamadas foram enviadas — pra distinguir "não há
+ * alteração" de "a chamada ainda não foi enviada" — mais as dispensas médicas
+ * ativas na data.
  */
 function montarLivroEsquadrao($conexao, $esquadrao, $data) {
-    $porTipo = array_fill_keys(array_keys(LIVRO_TIPOS_RETIRADA), []);
-    $chamadasEnviadas = array_fill_keys(array_keys(LIVRO_TIPOS_RETIRADA), 0);
+    $secoes = [];
+    foreach (LIVRO_SECOES + LIVRO_SECOES_LEGADAS as $tipo => $secao) {
+        $dataSecao = date('Y-m-d', strtotime("$data +{$secao['dia']} day"));
+        $secoes[$tipo] = [
+            'tipo' => $tipo,
+            'rotulo' => $secao['dia'] > 0 ? "{$secao['rotulo']} — " . dataEstiloLivro($dataSecao) : $secao['rotulo'],
+            'data' => $dataSecao,
+            'chamadas_enviadas' => 0,
+            'ausencias' => [],
+        ];
+    }
 
-    foreach (listarRetiradasDoDia($conexao, $esquadrao, $data) as $r) {
-        if (!isset($porTipo[$r['tipo']])) {
+    $retiradas = array_merge(
+        listarRetiradasDoDia($conexao, $esquadrao, $data),
+        listarRetiradasDoDia($conexao, $esquadrao, date('Y-m-d', strtotime("$data +1 day")))
+    );
+    foreach ($retiradas as $r) {
+        $tipo = $r['tipo'];
+        if (!isset($secoes[$tipo]) || substr($r['data_hora'], 0, 10) !== $secoes[$tipo]['data']) {
             continue;
         }
-        $chamadasEnviadas[$r['tipo']]++;
+        $secoes[$tipo]['chamadas_enviadas']++;
         foreach (listarItensRetirada($conexao, $r['id']) as $item) {
             if ((int) $item['presente'] === 0) {
-                $porTipo[$r['tipo']][] = $item;
+                $secoes[$tipo]['ausencias'][] = $item;
             }
+        }
+    }
+
+    foreach (array_keys(LIVRO_SECOES_LEGADAS) as $tipo) {
+        if ($secoes[$tipo]['chamadas_enviadas'] === 0) {
+            unset($secoes[$tipo]);
         }
     }
 
     return [
         'esquadrao' => $esquadrao,
-        'por_tipo' => $porTipo,
-        'chamadas_enviadas' => $chamadasEnviadas,
+        'secoes' => $secoes,
         'dispensas' => listarDispensas($conexao, ['esquadrao' => $esquadrao, 'ativas_em' => $data]),
     ];
 }
@@ -93,15 +127,15 @@ function livroComoTexto($livro, $data) {
         mb_strtoupper(rotuloEsquadrao($livro['esquadrao'])) . ' — RESUMO DO DIA ' . dataEstiloLivro($data),
     ];
 
-    foreach (LIVRO_TIPOS_RETIRADA as $tipo => $rotulo) {
+    foreach ($livro['secoes'] as $secao) {
         $linhas[] = '';
-        $linhas[] = $rotulo;
-        if ($livro['chamadas_enviadas'][$tipo] === 0) {
+        $linhas[] = $secao['rotulo'];
+        if ($secao['chamadas_enviadas'] === 0) {
             $linhas[] = 'Chamada não enviada.';
-        } elseif (empty($livro['por_tipo'][$tipo])) {
+        } elseif (empty($secao['ausencias'])) {
             $linhas[] = 'Não há.';
         } else {
-            foreach ($livro['por_tipo'][$tipo] as $item) {
+            foreach ($secao['ausencias'] as $item) {
                 $linhas[] = '- ' . identificacaoAluno($item) . ' — ' . descricaoSituacaoLivro($item);
             }
         }
@@ -120,6 +154,9 @@ function livroComoTexto($livro, $data) {
             $linhas[] = '  Nº DA DISPENSA: ' . $d['numero'];
         }
         $linhas[] = '  MOTIVO: ' . $d['motivo'];
+        if (!empty($d['medico_responsavel'])) {
+            $linhas[] = '  OFICIAL MÉDICO: ' . $d['medico_responsavel'];
+        }
         if (_livroDispensadoDe($d) !== '') {
             $linhas[] = '  DISPENSADO DE: ' . _livroDispensadoDe($d);
         }
@@ -137,16 +174,17 @@ function livroComoTexto($livro, $data) {
  */
 function livroParaApi($livro, $data) {
     $secoes = [];
-    foreach (LIVRO_TIPOS_RETIRADA as $tipo => $rotulo) {
+    foreach ($livro['secoes'] as $secao) {
         $secoes[] = [
-            'tipo' => $tipo,
-            'rotulo' => $rotulo,
-            'chamadas_enviadas' => $livro['chamadas_enviadas'][$tipo],
+            'tipo' => $secao['tipo'],
+            'rotulo' => $secao['rotulo'],
+            'data' => $secao['data'],
+            'chamadas_enviadas' => $secao['chamadas_enviadas'],
             'ausencias' => array_map(fn($item) => [
                 'aluno_id' => (int) $item['aluno_id'],
                 'identificacao' => identificacaoAluno($item),
                 'situacao' => descricaoSituacaoLivro($item),
-            ], $livro['por_tipo'][$tipo]),
+            ], $secao['ausencias']),
         ];
     }
 
@@ -162,6 +200,7 @@ function livroParaApi($livro, $data) {
             'data_termino' => $d['data_termino'],
             'numero' => $d['numero'],
             'motivo' => $d['motivo'],
+            'medico_responsavel' => $d['medico_responsavel'] ?? null,
             'dispensado_de' => _livroDispensadoDe($d),
         ], $livro['dispensas']),
         'texto' => livroComoTexto($livro, $data),

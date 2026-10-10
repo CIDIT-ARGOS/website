@@ -219,7 +219,8 @@ $logado = !empty($_SESSION['painel_id']);
             $filtroSituacao = ['esquadrao' => escopoEsquadrao()];
             $resumoAgora = situacaoResumo($conexao, $filtroSituacao);
             $emPane = situacaoAtualAlunos($conexao, $filtroSituacao + ['somente_ausentes' => true]);
-            $tiposChamada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+            require_once __DIR__ . '/../../core/retiradas_core.php';
+            $tiposChamada = TIPOS_RETIRADA_ROTULOS;
         ?>
         <section class="card situacao-agora">
             <div class="situacao-cabecalho">

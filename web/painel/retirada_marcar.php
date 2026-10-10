@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['itens']) && $retirada
         $presente = isset($item['presente']) ? 1 : 0;
         $motivoFaltaId = !empty($item['motivo_falta_id']) ? (int)$item['motivo_falta_id'] : null;
         $observacao = trim($item['observacao'] ?? '') ?: null;
-        marcarItem($conexao, $id, (int)$alunoId, $presente, $motivoFaltaId, $observacao);
+        marcarItem($conexao, $id, (int)$alunoId, $presente, $motivoFaltaId, $observacao, $item['servico_id'] ?? null);
     }
     $mensagem = "Marcações salvas.";
 
@@ -78,7 +78,7 @@ $tiposDispensa = $podeLancarDispensa ? listarDispensaTipos($conexao) : [];
 $dataInicioMin = date('Y-m-d', strtotime('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days'));
 $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days'));
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+$tiposRetirada = TIPOS_RETIRADA_ROTULOS;
 $somenteLeitura = $retirada['status'] === 'enviada';
 
 $servicos = listarServicos($conexao);
@@ -174,10 +174,15 @@ $servicos = listarServicos($conexao);
             data_termino: document.getElementById('disp_termino_' + alunoId).value,
             numero: document.getElementById('disp_numero_' + alunoId).value,
             motivo: document.getElementById('disp_motivo_' + alunoId).value,
+            medico_responsavel: document.getElementById('disp_medico_' + alunoId).value,
             dispensado_de: document.getElementById('disp_dispensado_de_' + alunoId).value,
         };
         if (!campos.motivo.trim()) {
             alert('Informe o motivo da dispensa.');
+            return;
+        }
+        if (!campos.medico_responsavel.trim()) {
+            alert('Informe o Oficial Médico responsável pela dispensa.');
             return;
         }
         const form = document.createElement('form');
@@ -274,6 +279,7 @@ $servicos = listarServicos($conexao);
                                 <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" id="disp_termino_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Nº <input type="text" id="disp_numero_<?= $item['aluno_id'] ?>" style="width:70px;"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Motivo <input type="text" id="disp_motivo_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Oficial Médico <input type="text" id="disp_medico_<?= $item['aluno_id'] ?>" maxlength="100" placeholder="Posto e nome" style="min-width:180px;"></label>
                             </div>
                             <div class="form-linha" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:0 0 8px;">
                                 <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>

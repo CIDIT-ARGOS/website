@@ -31,7 +31,7 @@ $retiradas = relatorioRetiradas($conexao, $filtrosRelatorio);
 
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+$tiposRetirada = TIPOS_RETIRADA_ROTULOS;
 
 ?>
 <!DOCTYPE html>

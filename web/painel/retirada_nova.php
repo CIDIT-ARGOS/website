@@ -16,7 +16,8 @@ if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_reti
 $escopo = escopoEsquadrao(); // null = pode escolher esquadrão/grupo livremente
 $erro = null;
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+// Só os lançamentos em uso: almoço, 2ª Jornada, pernoite e 1ª Jornada.
+$tiposRetirada = tiposRetiradaEmUso();
 $rotulosCategorias = ['clube' => 'Clube', 'servico' => 'Serviço', 'comissao' => 'Comissão'];
 
 // O responsável pela retirada é sempre quem está logado nesse exato momento —

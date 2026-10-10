@@ -1,32 +1,28 @@
 <?php
 
-// Lógica de negócio dos motivos de falta. Usada tanto pela API (/api/motivos.php)
-// quanto pelas telas do painel.
+// Postos de serviço (ex: Aluno de Dia, Plantão, Sentinela): catálogo editável
+// em Controle do Domínio de Negócio → Postos de serviço. Quando o motivo da
+// ausência numa chamada é "Serviço", o posto diz onde o aluno está.
+// Usado pela chamada do Painel e pela API (/api/postos_servico.php).
 
+/**
+ * Postos ativos, na ordem do cadastro. Se a tabela ainda não existir (banco
+ * sem a migration 014), devolve lista vazia em vez de derrubar a tela.
+ */
 function listarServicos($conexao) {
-    $resultado = mysqli_query($conexao, "
-        SELECT id, nome, ativo FROM postos_servico
-    ");
-    // A tabela postos_servico ainda não é criada por nenhum schema/migration:
-    // sem ela a consulta falha e a tela de chamada inteira caía com erro
-    // fatal. Sem a tabela, a lista de serviços só fica vazia.
+    $resultado = mysqli_query($conexao, "SELECT id, nome, codigo, ativo FROM postos_servico WHERE ativo = 1 ORDER BY ordem, nome");
     if (!$resultado) {
         return [];
     }
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
 }
 
-function buscarServicoPorNome($conexao, $nome) {
-    $stmt = mysqli_prepare($conexao, "SELECT * FROM postos_servico WHERE nome = ?");
-    mysqli_stmt_bind_param($stmt, "s", $nome);
+function buscarServicoPorId($conexao, $id) {
+    $stmt = mysqli_prepare($conexao, "SELECT * FROM postos_servico WHERE id = ? AND ativo = 1");
+    if (!$stmt) {
+        return null;
+    }
+    mysqli_stmt_bind_param($stmt, "i", $id);
     mysqli_stmt_execute($stmt);
     return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
 }
-
-function buscarServicosPorCodigo($conexao, $codigo) {
-    $stmt = mysqli_prepare($conexao, "SELECT * FROM postos_servico WHERE codigo = ? AND ativo = 1");
-    mysqli_stmt_bind_param($stmt, "s", $codigo);
-    mysqli_stmt_execute($stmt);
-    return mysqli_fetch_assoc(mysqli_stmt_get_result($stmt)) ?: null;
-}
-?>

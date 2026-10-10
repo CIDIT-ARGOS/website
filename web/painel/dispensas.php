@@ -143,6 +143,7 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
             <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" name="data_termino" required></label>
             <input type="text" name="numero" placeholder="Nº da dispensa">
             <input type="text" name="motivo" placeholder="Motivo" required style="min-width:180px;">
+            <input type="text" name="medico_responsavel" placeholder="Oficial Médico responsável (posto e nome)" maxlength="100" required style="min-width:260px;">
             <button type="submit"><span class="i" style="--icon-url:url('../images/icons/plus.svg')"></span>Cadastrar</button>
             <div style="width:100%; display:flex; gap:14px; flex-wrap:wrap; align-items:center; margin-top:4px;">
                 <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
@@ -159,7 +160,7 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
         <div class="scroll-x">
         <table>
             <tr>
-                <th>Aluno</th><th>Status</th><th>Ações</th>
+                <th>Aluno</th><th>Período</th><th>Oficial Médico</th><th>Status</th><th>Ações</th>
             </tr>
             <?php $hoje = date('Y-m-d'); ?>
             <?php foreach ($dispensas as $d): ?>
@@ -169,6 +170,8 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
                 <?php $tagsIdsAtuais = array_column(listarTagsDispensa($conexao, $d['id']), 'id'); ?>
                 <tr>
                     <td><?= htmlspecialchars(identificacaoAluno($d)) ?></td>
+                    <td style="white-space:nowrap;"><?= htmlspecialchars(date('d/m/Y', strtotime($d['data_inicio']))) ?> a <?= htmlspecialchars(date('d/m/Y', strtotime($d['data_termino']))) ?></td>
+                    <td><?= htmlspecialchars($d['medico_responsavel'] ?? '—') ?></td>
                     <td><span class="badge <?= $ativa ? 'ativa' : 'encerrada' ?>"><?= $ativa ? 'ativa' : 'encerrada' ?></span></td>
                     <td style="white-space:nowrap;">
                         <button type="button" onclick="alternarDetalheDispensa('<?= $detalheId ?>', this)"><span class="i" style="--icon-url:url('../images/icons/eye.svg')"></span><span class="rotulo-abrir">Abrir</span></button>
@@ -176,12 +179,13 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
                     </td>
                 </tr>
                 <tr id="<?= $detalheId ?>" hidden>
-                    <td colspan="3">
+                    <td colspan="5">
                         <div class="form-linha" style="padding:10px 0;">
                             <label style="font-size:12px; color:var(--text-muted);">Início <input form="<?= $formId ?>" type="date" name="data_inicio" value="<?= htmlspecialchars($d['data_inicio']) ?>" min="<?= $dataInicioMin ?>" max="<?= $dataInicioMax ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Término <input form="<?= $formId ?>" type="date" name="data_termino" value="<?= htmlspecialchars($d['data_termino']) ?>"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Nº <input form="<?= $formId ?>" type="text" name="numero" value="<?= htmlspecialchars($d['numero'] ?? '') ?>" style="width:70px;"></label>
                             <label style="font-size:12px; color:var(--text-muted);">Motivo <input form="<?= $formId ?>" type="text" name="motivo" value="<?= htmlspecialchars($d['motivo']) ?>" style="min-width:180px;"></label>
+                            <label style="font-size:12px; color:var(--text-muted);">Oficial Médico responsável <input form="<?= $formId ?>" type="text" name="medico_responsavel" value="<?= htmlspecialchars($d['medico_responsavel'] ?? '') ?>" maxlength="100" required style="min-width:220px;"></label>
                         </div>
                         <div class="form-linha" style="padding:0 0 10px;">
                             <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>
@@ -203,7 +207,7 @@ $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO .
                 </form>
             <?php endforeach; ?>
             <?php if (empty($dispensas)): ?>
-                <tr><td colspan="3" style="color:var(--text-muted);">Nenhuma dispensa cadastrada ainda.</td></tr>
+                <tr><td colspan="5" style="color:var(--text-muted);">Nenhuma dispensa cadastrada ainda.</td></tr>
             <?php endif; ?>
         </table>
         </div>

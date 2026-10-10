@@ -10,7 +10,6 @@ $escopo = escopoEsquadrao();
 $data = $_GET['data'] ?? date('Y-m-d');
 $esquadraoEscolhido = $escopo ?? ($_GET['esquadrao'] ?? 'todos');
 
-$tiposRetirada = LIVRO_TIPOS_RETIRADA;
 
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [$escopo];
 $esquadroesParaMontar = ($escopo === null && $esquadraoEscolhido === 'todos')
@@ -109,10 +108,10 @@ foreach ($esquadroesParaMontar as $esq) {
             <h2 class="esquadrao"><?= htmlspecialchars(rotuloEsquadrao($livro['esquadrao'])) ?></h2>
             <p style="text-align:center;">Resumo do dia <?= htmlspecialchars(dataEstiloLivro($data)) ?> — gerado pelo Argos</p>
 
-            <?php foreach ($tiposRetirada as $tipoChave => $tipoRotulo): ?>
-                <h3 class="secao"><?= htmlspecialchars($tipoRotulo) ?></h3>
-                <?php $faltas = $livro['por_tipo'][$tipoChave]; ?>
-                <?php if ($livro['chamadas_enviadas'][$tipoChave] === 0): ?>
+            <?php foreach ($livro['secoes'] as $secao): ?>
+                <h3 class="secao"><?= htmlspecialchars($secao['rotulo']) ?></h3>
+                <?php $faltas = $secao['ausencias']; ?>
+                <?php if ($secao['chamadas_enviadas'] === 0): ?>
                     <p class="sem-chamada">Chamada não enviada.</p>
                 <?php elseif (empty($faltas)): ?>
                     <p>Não há.</p>
@@ -138,6 +137,7 @@ foreach ($esquadroesParaMontar as $esq) {
                         <span>TÉRMINO: <?= htmlspecialchars(dataEstiloLivro($d['data_termino'])) ?></span><br>
                         <?php if ($d['numero']): ?><span>Nº DA DISPENSA: <?= htmlspecialchars($d['numero']) ?></span><br><?php endif; ?>
                         <span>MOTIVO: <?= htmlspecialchars($d['motivo']) ?></span><br>
+                        <?php if (!empty($d['medico_responsavel'])): ?><span>OFICIAL MÉDICO: <?= htmlspecialchars($d['medico_responsavel']) ?></span><br><?php endif; ?>
                         <?php
                             $dispensadoDePartes = array_filter([$d['tags_nomes'] ?? null, $d['dispensado_de'] ?? null]);
                         ?>

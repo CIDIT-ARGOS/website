@@ -7,7 +7,25 @@ require_once __DIR__ . '/dispensas_core.php';
 require_once __DIR__ . '/motivos_core.php';
 require_once __DIR__ . '/validacao_core.php';
 
-const TIPOS_RETIRADA_VALIDOS = ['1_jornada', '2_jornada', 'educacao_fisica', 'pernoite'];
+// Lançamentos do serviço, na ordem em que acontecem: almoço, 2ª Jornada,
+// pernoite e 1ª Jornada do dia seguinte. É a única lista de tipos e rótulos —
+// as telas usam estas constantes em vez de repetir o array.
+const TIPOS_RETIRADA_ROTULOS = [
+    'almoco' => 'Almoço',
+    '2_jornada' => '2ª Jornada',
+    'pernoite' => 'Pernoite',
+    '1_jornada' => '1ª Jornada',
+    'educacao_fisica' => 'Educação Física',
+];
+// Os que as telas oferecem pra abrir chamada nova. Educação Física saiu de uso
+// por enquanto: continua válida (histórico, integrações), só não é oferecida.
+const TIPOS_RETIRADA_EM_USO = ['almoco', '2_jornada', 'pernoite', '1_jornada'];
+const TIPOS_RETIRADA_VALIDOS = ['almoco', '2_jornada', 'pernoite', '1_jornada', 'educacao_fisica'];
+
+// Rótulos só dos tipos em uso, pra montar <select>.
+function tiposRetiradaEmUso() {
+    return array_intersect_key(TIPOS_RETIRADA_ROTULOS, array_flip(TIPOS_RETIRADA_EM_USO));
+}
 const AGRUPAMENTOS_VALIDOS = ['esquadrilha', 'grupo']; // 'especialidade' ainda não implementado
 
 // Limites batendo com o VARCHAR de retiradas (database/init_db.sql). A
@@ -117,9 +135,12 @@ function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $es
 
 /**
  * Marca presença/falta de um aluno específico dentro de uma retirada já aberta.
+ * $servicoId: posto de serviço (postos_servico.id), pra quando o motivo da
+ * ausência é serviço — só vale junto com falta.
  */
-function marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, $observacao) {
+function marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, $observacao, $servicoId = null) {
     $motivoFaltaId = $presente ? null : $motivoFaltaId;
+    $servicoId = ($presente || empty($servicoId)) ? null : (int) $servicoId;
 
     // observacao é TEXT no banco (até 64KB) — sem limite aqui, dava pra
     // lotar o banco mandando um arquivo gigante por item marcado numa
@@ -130,10 +151,10 @@ function marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, 
     }
 
     $stmt = mysqli_prepare($conexao, "
-        UPDATE retirada_itens SET presente = ?, motivo_falta_id = ?, observacao = ?
+        UPDATE retirada_itens SET presente = ?, motivo_falta_id = ?, servico_id = ?, observacao = ?
         WHERE retirada_id = ? AND aluno_id = ?
     ");
-    mysqli_stmt_bind_param($stmt, "iisii", $presente, $motivoFaltaId, $observacao, $retiradaId, $alunoId);
+    mysqli_stmt_bind_param($stmt, "iiisii", $presente, $motivoFaltaId, $servicoId, $observacao, $retiradaId, $alunoId);
     return mysqli_stmt_execute($stmt);
 }
 
@@ -279,11 +300,13 @@ function listarRetiradasDoDia($conexao, $esquadrao, $data) {
 function listarItensRetirada($conexao, $retiradaId) {
     $stmt = mysqli_prepare($conexao, "
         SELECT ri.*, a.posto_graduacao, COALESCE(p.exibicao, a.posto_graduacao) AS posto_exibicao,
-               a.especialidade, a.nome_guerra, a.milhao, m.nome as motivo_nome, m.codigo as motivo_codigo
+               a.especialidade, a.nome_guerra, a.milhao, m.nome as motivo_nome, m.codigo as motivo_codigo,
+               ps.nome AS servico_nome
         FROM retirada_itens ri
         JOIN alunos a ON a.id = ri.aluno_id
         LEFT JOIN postos_graduacao p ON p.codigo = a.posto_graduacao
         LEFT JOIN motivos_falta m ON m.id = ri.motivo_falta_id
+        LEFT JOIN postos_servico ps ON ps.id = ri.servico_id
         WHERE ri.retirada_id = ?
         ORDER BY a.nome_guerra
     ");

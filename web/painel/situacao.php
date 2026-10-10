@@ -3,6 +3,7 @@
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/situacao_core.php';
+require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
 $conexao = conectarBanco();
@@ -25,7 +26,7 @@ $alunos = situacaoAtualAlunos($conexao, $filtros);
 
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+$tiposRetirada = TIPOS_RETIRADA_ROTULOS;
 
 ?>
 <!DOCTYPE html>
