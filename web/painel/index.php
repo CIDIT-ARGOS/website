@@ -267,6 +267,11 @@ $logado = !empty($_SESSION['painel_id']);
                 <h3>Retiradas de falta</h3>
                 <p>Abrir chamada, marcar presença/falta e enviar.</p>
             </a>
+            <a href="postos_servico.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/shield-check.svg')"></span>
+                <h3>Postos de serviço</h3>
+                <p>Criar os postos e registrar quem está de serviço agora — troca na rendição ou na pane.</p>
+            </a>
             <?php endif; ?>
             <a href="efetivo.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/users.svg')"></span>

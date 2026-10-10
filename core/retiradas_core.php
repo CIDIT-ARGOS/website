@@ -6,6 +6,7 @@
 require_once __DIR__ . '/dispensas_core.php';
 require_once __DIR__ . '/motivos_core.php';
 require_once __DIR__ . '/validacao_core.php';
+require_once __DIR__ . '/servicos_core.php';
 
 // Lançamentos do serviço, na ordem em que acontecem: almoço, 2ª Jornada,
 // pernoite e 1ª Jornada do dia seguinte. É a única lista de tipos e rótulos —
@@ -110,23 +111,31 @@ function abrirRetirada($conexao, $tipo, $agrupamentoTipo, $agrupamentoValor, $es
     $retiradaId = mysqli_insert_id($conexao);
 
     // ---------- Cria um item por aluno, presente por padrão ----------
-    // Exceção: aluno com dispensa médica ativa hoje já nasce marcado como
-    // falta com o motivo DMED — sugestão automática, mas o Xerife pode
-    // sobrepor normalmente na tela de chamada.
+    // Exceções, as duas como sugestão automática que o Xerife pode sobrepor
+    // normalmente na tela de chamada:
+    //   - aluno com dispensa médica ativa hoje nasce como ausente com o motivo DMED;
+    //   - aluno de serviço num posto agora nasce como ausente por Serviço (SV),
+    //     já com o posto.
     $motivoDispensa = buscarMotivoPorCodigo($conexao, 'DMED');
+    $motivoServico = buscarMotivoPorCodigo($conexao, 'SV');
     $hoje = date('Y-m-d');
 
-    $stmtItem = mysqli_prepare($conexao, "INSERT INTO retirada_itens (retirada_id, aluno_id, presente, motivo_falta_id) VALUES (?, ?, ?, ?)");
+    $stmtItem = mysqli_prepare($conexao, "INSERT INTO retirada_itens (retirada_id, aluno_id, presente, motivo_falta_id, servico_id) VALUES (?, ?, ?, ?, ?)");
     foreach ($alunoIds as $alunoId) {
         $presente = 1;
         $motivoFaltaId = null;
+        $servicoId = null;
 
         if ($motivoDispensa && dispensaAtivaParaAluno($conexao, $alunoId, $hoje)) {
             $presente = 0;
             $motivoFaltaId = $motivoDispensa['id'];
+        } elseif ($motivoServico && ($servico = servicoAtualDoAluno($conexao, $alunoId))) {
+            $presente = 0;
+            $motivoFaltaId = $motivoServico['id'];
+            $servicoId = (int) $servico['posto_servico_id'];
         }
 
-        mysqli_stmt_bind_param($stmtItem, "iiii", $retiradaId, $alunoId, $presente, $motivoFaltaId);
+        mysqli_stmt_bind_param($stmtItem, "iiiii", $retiradaId, $alunoId, $presente, $motivoFaltaId, $servicoId);
         mysqli_stmt_execute($stmtItem);
     }
 

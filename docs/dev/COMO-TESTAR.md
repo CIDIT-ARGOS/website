@@ -29,7 +29,7 @@ Pra abrir no celular de verdade, use o IP da máquina na rede (`http://192.168.x
 
 **Área Funcional**
 1. Entre com o código do aluno `ESTEVES` (Esquadrão Prata, esquadrilha B). A primeira tela pergunta **onde você está de serviço**: confirme o próprio esquadrão ou escolha outro (ex: Esquadrão Azul / B) — é o esquadrão escolhido que o app passa a mostrar. Dá pra trocar depois tocando no nome, no cabeçalho.
-2. De serviço no Esquadrão Prata / B: abra a retirada pendente de Pernoite, marque uma falta (escolha o motivo), volte um aluno pra presente — o placar acima do botão acompanha. Com o motivo **Serviço**, aparece a lista de postos de serviço (cadastre um antes, no Painel).
+2. De serviço no Esquadrão Prata / B: abra a retirada pendente de Pernoite, marque uma falta (escolha o motivo), volte um aluno pra presente — o placar acima do botão acompanha. Com o motivo **Serviço**, aparece a lista de postos de serviço (crie um antes, no Painel → Postos de serviço).
 3. Envie a chamada: aparece o protocolo e ela vira "Enviada" na lista.
 4. "Abrir nova retirada" → os tipos são os do serviço, na ordem: Almoço, 2ª Jornada, Pernoite e 1ª Jornada (do dia seguinte). A esquadrilha já vem na que você está de serviço.
 5. Aba **Dispensas** → "Lançar dispensa": escolha o aluno, o período, o motivo, o **Oficial Médico responsável** e do que ele está dispensado. Ela aparece na lista e, na próxima chamada, o aluno já entra marcado como dispensa médica.
@@ -39,10 +39,11 @@ Pra abrir no celular de verdade, use o IP da máquina na rede (`http://192.168.x
 
 **Painel de Comando**
 1. Entre como `dev.ca`. A primeira coisa na tela é **Situação do efetivo agora**: quantos estão prontos, quantos em pane e a lista de quem está em pane, com a situação por extenso. A falta que você marcou na PWA já aparece ali.
+2. **Postos de serviço**: crie um posto (ex: "Aluno de Dia ao Esquadrão"), coloque um aluno de serviço e depois outro rendendo o primeiro, com o motivo. Abra uma chamada da esquadrilha dele: quem está de serviço já entra como ausente por Serviço, com o posto.
 2. **Retiradas**: a tabela mostra só o essencial; "Ver / editar" abre o painel lateral com o resto e as ações (continuar a chamada, excluir). O mesmo vale pra Usuários, Turmas, Efetivo e Controle do Domínio.
 3. **Efetivo**: clique em qualquer número dos quadros (esquadrilha, total, M/F, especialidade) — a listagem embaixo já vem filtrada.
 4. **Livro do Dia** → "Baixar PDF" (a impressão não mudou com o redesign); a situação de cada aluno vem por extenso.
-5. **Controle do Domínio de Negócio**: a aba selecionada fica em azul cheio com texto branco. Na aba **Postos de serviço**, cadastre um posto (ex: "Aluno de Dia ao Esquadrão") — ele passa a aparecer na chamada, do Painel e do app, quando o motivo é Serviço.
+5. **Controle do Domínio de Negócio**: a aba selecionada fica em azul cheio com texto branco.
 6. **Dispensas médicas**: o cadastro pede o Oficial Médico responsável, que aparece na lista e no Livro do Dia.
 7. Saia e entre como `dev.prata`: só o Esquadrão Prata aparece, e some o que é só do CA (Grupos, por exemplo).
 
@@ -84,7 +85,7 @@ Precisa de PHP com `mysqli` e de um MySQL 8 acessível. **Atenção:** o script 
 |---|---|---|
 | `tests/integracao_test.php` | 37 | fluxo da PWA de ponta a ponta |
 | `tests/api_test.php` | 94 | cada endpoint e método da API: escopo das chaves, dispensas, Livro do Dia, posto de serviço |
-| `tests/paginas_test.php` | 38 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
+| `tests/paginas_test.php` | 40 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
 | `tests/smoke_producao.php` | 13 | o que roda em produção depois de cada deploy |
 
 Na prática, o jeito mais simples é dar push na `develop` e olhar **Actions** no Forgejo: roda tudo nos dois runners.

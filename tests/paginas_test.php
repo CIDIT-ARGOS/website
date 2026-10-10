@@ -76,6 +76,10 @@ function conferirPagina($caminho, array &$cookies, $folhaDeEstilo) {
 }
 
 function apagarUsuarioDoTeste() {
+    // Sobras do teste de posto de serviço, se ele tiver parado no meio.
+    sql("DELETE FROM posto_servico_escalas WHERE posto_servico_id IN (SELECT id FROM postos_servico WHERE nome = 'Posto Teste das Páginas')");
+    sql("DELETE FROM retirada_itens WHERE servico_id IN (SELECT id FROM postos_servico WHERE nome = 'Posto Teste das Páginas')");
+    sql("DELETE FROM postos_servico WHERE nome = 'Posto Teste das Páginas'");
     sql("DELETE FROM painel_usuarios WHERE usuario = '" . USUARIO_PAGINAS . "'");
 }
 
@@ -150,7 +154,7 @@ teste('login com usuário e senha', function () use (&$cookiesPainel) {
 if ($cookiesPainel && $retiradaId) {
     foreach ([
         'index.php', 'retiradas.php', 'retirada_nova.php', "retirada_marcar.php?id=$retiradaId",
-        'efetivo.php', "efetivo_editar.php?id=$alunoId", 'situacao.php', 'dashboard.php', 'relatorios.php',
+        'postos_servico.php', 'efetivo.php', "efetivo_editar.php?id=$alunoId", 'situacao.php', 'dashboard.php', 'relatorios.php',
         'livro_do_dia.php', 'dispensas.php', 'grupos.php', 'usuarios.php', 'dominio.php',
         'grupo_acesso_detalhe.php?id=1', 'permissoes_cargo.php', 'turmas.php',
     ] as $pagina) {
@@ -158,6 +162,59 @@ if ($cookiesPainel && $retiradaId) {
             conferirPagina("/web/painel/$pagina", $cookiesPainel, 'css/argos-admin.css');
         });
     }
+
+    // Posto de serviço de ponta a ponta, pela tela: cria o posto, coloca um
+    // aluno de serviço, rende por outro — e a chamada aberta em seguida já
+    // traz quem está de serviço como ausente por Serviço, com o posto.
+    teste('posto de serviço: criar, colocar de serviço, render, e a chamada já sabe', function () use (&$cookiesPainel) {
+        $posto = 'Posto Teste das Páginas';
+        $enviar = fn(array $campos) => navegar('POST', '/web/painel/postos_servico.php', $cookiesPainel, $campos);
+        $deServico = fn() => array_column(mysqli_fetch_all(sql("
+            SELECT a.nome_guerra FROM posto_servico_escalas e
+            JOIN alunos a ON a.id = e.aluno_id
+            JOIN postos_servico p ON p.id = e.posto_servico_id
+            WHERE p.nome = '$posto' AND e.fim IS NULL"), MYSQLI_ASSOC), 'nome_guerra');
+
+        $r = $enviar(['acao' => 'criar_posto', 'nome' => $posto, 'sigla' => 'PTP']);
+        garantirStatus($r, 200);
+        semErroPhp($r);
+        garantir(strpos($r['corpo'], 'Posto de serviço criado.') !== false, 'a tela não confirmou a criação do posto');
+        $postoId = (int) sqlLinha("SELECT id FROM postos_servico WHERE nome = '$posto'")['id'];
+
+        garantir(strpos($enviar(['acao' => 'criar_posto', 'nome' => $posto])['corpo'], 'Já existe um posto de serviço ativo') !== false, 'aceitou posto com nome repetido');
+        garantir(strpos($enviar(['acao' => 'escalar', 'posto_id' => $postoId, 'milhao_aluno' => '00/0000'])['corpo'], 'Aluno não encontrado') !== false, 'aceitou aluno inexistente');
+
+        // TESTE ALFA assume; TESTE BRAVO rende o ALFA no meio do serviço.
+        semErroPhp($enviar(['acao' => 'escalar', 'posto_id' => $postoId, 'milhao_aluno' => '26/9001']));
+        garantir($deServico() === ['TESTE ALFA'], 'ALFA deveria estar de serviço: ' . implode(', ', $deServico()));
+
+        $escalaAlfa = (int) sqlLinha("SELECT id FROM posto_servico_escalas WHERE posto_servico_id = $postoId AND fim IS NULL")['id'];
+        semErroPhp($enviar(['acao' => 'escalar', 'posto_id' => $postoId, 'milhao_aluno' => '26/9002', 'substitui_escala_id' => $escalaAlfa, 'motivo' => 'pane no meio do serviço']));
+        garantir($deServico() === ['TESTE BRAVO'], 'BRAVO deveria ter rendido o ALFA: ' . implode(', ', $deServico()));
+        $saida = sqlLinha("SELECT fim, motivo_saida FROM posto_servico_escalas WHERE id = $escalaAlfa");
+        garantir($saida['fim'] !== null && $saida['motivo_saida'] === 'pane no meio do serviço', 'a saída do ALFA não ficou no histórico com o motivo');
+
+        // A chamada aberta agora já sabe que o BRAVO está de serviço.
+        $token = login(QR_PRATA_1)['token'];
+        $retirada = api('POST', 'retiradas.php', $token, ['tipo' => 'almoco', 'agrupamento_tipo' => 'esquadrilha', 'agrupamento_valor' => 'A', 'esquadrao' => 'Esquadrão Prata']);
+        garantirStatus($retirada, 201);
+        $itens = array_column(api('GET', "retirada_itens.php?retirada_id={$retirada['json']['id']}", $token)['json'], null, 'nome_guerra');
+        garantir((int) $itens['TESTE BRAVO']['presente'] === 0 && $itens['TESTE BRAVO']['motivo_codigo'] === 'SV', 'quem está de serviço deveria entrar na chamada como ausente por Serviço');
+        garantir($itens['TESTE BRAVO']['servico_nome'] === $posto, 'a chamada não trouxe o posto de quem está de serviço');
+        garantir((int) $itens['TESTE ALFA']['presente'] === 1, 'quem já foi rendido deveria entrar como presente');
+        api('DELETE', "retiradas.php?id={$retirada['json']['id']}");
+
+        // Encerrar tira do serviço; desativar o posto some com ele da lista.
+        $escalaBravo = (int) sqlLinha("SELECT id FROM posto_servico_escalas WHERE posto_servico_id = $postoId AND fim IS NULL")['id'];
+        semErroPhp($enviar(['acao' => 'encerrar', 'escala_id' => $escalaBravo, 'motivo' => 'fim do serviço']));
+        garantir($deServico() === [], 'ainda há alguém de serviço depois de encerrar');
+        $depois = $enviar(['acao' => 'desativar_posto', 'posto_id' => $postoId]);
+        garantir(strpos($depois['corpo'], 'Posto desativado.') !== false, 'a tela não confirmou a desativação');
+        garantir((int) sqlLinha("SELECT ativo FROM postos_servico WHERE id = $postoId")['ativo'] === 0, 'o posto continua ativo');
+
+        sql("DELETE FROM posto_servico_escalas WHERE posto_servico_id = $postoId");
+        sql("DELETE FROM postos_servico WHERE id = $postoId");
+    });
 
     teste('sair encerra a sessão', function () use (&$cookiesPainel) {
         navegar('GET', '/web/painel/index.php?logout=1', $cookiesPainel);
