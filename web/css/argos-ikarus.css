@@ -1,0 +1,59 @@
+/* Tema do Ikarus37 (administração técnica): os mesmos componentes de
+ * argos-admin.css em tema escuro, com cara de console. Só troca tokens e os
+ * poucos detalhes que são do Ikarus37 — carregue depois de argos-admin.css.
+ */
+
+@media screen {
+    :root {
+        color-scheme: dark;
+
+        --bg: #0d1320;
+        --bg-card: #151d2e;
+        --border: #26324a;
+        --text: #e6ebf5;
+        --text-muted: #93a1ba;
+        --accent: #5b93f5;
+        --azul-eear: #5b93f5;
+        --danger: #ff6b61;
+        --ok: #4fd08f;
+        --alerta: #f0b25a;
+
+        --azul-escuro: #0a0f1a;
+        --azul-claro: #1b2742;
+        --barra-bg: #0a0f1a;
+        --campo-bg: #0f1727;
+        --th-bg: #1b2742;
+        --th-texto: #a9c4f7;
+        --linha-hover: #19233a;
+        --ok-bg: rgba(79, 208, 143, .12);
+        --danger-bg: rgba(255, 107, 97, .12);
+        --alerta-bg: rgba(240, 178, 90, .14);
+        --anel: rgba(91, 147, 245, .4);
+        --sombra: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .22);
+    }
+
+    .topbar { border-bottom: 1px solid var(--border); box-shadow: none; }
+    .topbar strong, .topbar .brand { font-family: var(--fonte-mono); font-weight: 500; font-size: 16px; letter-spacing: .16em; }
+    /* A marca do painel técnico é a insígnia de especialista, não o olho. */
+    .topbar > :first-child::before {
+        background: url('../images/especialista.svg') center / contain no-repeat;
+        -webkit-mask: none; mask: none;
+    }
+
+    button:where(:not(.link-btn, .toggle-senha)), a.btn { color: #0a0f1a; }
+    button.danger { color: #1a0605; }
+    button.ghost { color: var(--accent); }
+    .topbar button { color: #fff; }
+
+    code, pre, input[type=text][name=sql], textarea { font-family: var(--fonte-mono); }
+    pre { background: var(--campo-bg); border: 1px solid var(--border); border-radius: 10px; }
+
+    .login-wrap {
+        background:
+            radial-gradient(900px 420px at 50% -120px, rgba(91, 147, 245, .14), transparent 70%),
+            var(--bg);
+    }
+    .login-box::before { height: 76px; background-image: url('../images/especialista.svg'); }
+    .login-box h1 { font-family: var(--fonte-mono); font-weight: 500; font-size: 26px; letter-spacing: .22em; margin-right: -.22em; color: var(--text); }
+    .login-box button[type=submit] { box-shadow: 0 8px 20px rgba(91, 147, 245, .22); }
+}

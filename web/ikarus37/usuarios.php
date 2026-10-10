@@ -282,6 +282,8 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     .campo-senha .toggle-senha { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 0; width: 18px; }
     .campo-senha .toggle-senha:hover { color: var(--text); }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<link rel="stylesheet" href="../css/argos-ikarus.css">
 </head>
 <body>
 

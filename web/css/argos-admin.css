@@ -1,0 +1,240 @@
+/* Identidade visual comum do Painel de Comando e do Ikarus37.
+ *
+ * Cada página ainda tem o próprio <style> (layout e detalhes só dela); esta
+ * folha entra DEPOIS e redefine o que todas compartilham — tokens, barra
+ * superior, cartões, tabelas, botões, campos, badges — pra o sistema ter uma
+ * cara só. O Ikarus37 carrega também argos-ikarus.css, que troca os tokens
+ * pro tema escuro.
+ *
+ * Especificação: docs/design/sistema/brief.md
+ * Tudo dentro de @media screen: a impressão (Livro do Dia, "Baixar PDF")
+ * continua exatamente como cada página define.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@media screen {
+    :root {
+        /* nomes que as páginas já usam */
+        --bg: #f4f6fb;
+        --bg-card: #ffffff;
+        --border: #e1e7f0;
+        --text: #16202e;
+        --text-muted: #5b6b82;
+        --accent: #17468c;
+        --azul-eear: #17468c;
+        --danger: #b3261e;
+        --ok: #17794a;
+        --alerta: #a8500c;
+
+        /* novos */
+        --azul-escuro: #0f3472;
+        --azul-claro: #e9f0fb;
+        --barra-bg: #17468c;
+        --campo-bg: #ffffff;
+        --th-bg: #e9f0fb;
+        --th-texto: #17468c;
+        --linha-hover: #f7f9fd;
+        --ok-bg: #e4f5ec;
+        --danger-bg: #fbe9e7;
+        --alerta-bg: #fdecd8;
+        --anel: rgba(23, 70, 140, .32);
+        --sombra: 0 1px 2px rgba(15, 52, 114, .06), 0 6px 20px rgba(15, 52, 114, .06);
+        --fonte-display: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+        --fonte-corpo: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+        --fonte-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+    }
+
+    body {
+        font-family: var(--fonte-corpo);
+        font-size: 14px;
+        line-height: 1.45;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, h3, h4, h5 { font-family: var(--fonte-display); font-weight: 600; letter-spacing: .01em; line-height: 1.15; }
+    h2 { font-size: 28px; margin: 4px 0 14px; }
+    h3 { font-size: 19px; }
+    h4 { font-size: 17px; }
+    h5 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+    a { color: var(--accent); }
+    code, pre { font-family: var(--fonte-mono); font-size: .92em; }
+
+    :focus-visible { outline: 3px solid var(--anel); outline-offset: 2px; }
+
+    /* ---------- Barra superior ---------- */
+    .topbar {
+        position: sticky; top: 0; z-index: 20;
+        gap: 12px; flex-wrap: wrap;
+        padding: 12px 24px;
+        background: var(--barra-bg);
+        border-bottom: 1px solid rgba(255, 255, 255, .08);
+        color: #fff;
+        box-shadow: 0 2px 10px rgba(8, 24, 56, .18);
+    }
+    .topbar > :first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; min-width: 0; }
+    .topbar > :first-child::before {
+        content: ''; flex: none; width: 24px; height: 24px; margin-right: -4px;
+        background-color: currentColor;
+        -webkit-mask: url('../images/argos-olho.svg') center / contain no-repeat;
+        mask: url('../images/argos-olho.svg') center / contain no-repeat;
+    }
+    .topbar strong, .topbar .brand {
+        font-family: var(--fonte-display); font-weight: 700; font-size: 20px;
+        letter-spacing: .2em; text-transform: uppercase; color: #fff;
+    }
+    .topbar .brand span {
+        font-family: var(--fonte-corpo); font-weight: 400; font-size: 13px;
+        letter-spacing: 0; text-transform: none; color: rgba(255, 255, 255, .78); margin-left: 0;
+    }
+    .topbar a {
+        font-family: var(--fonte-corpo); font-weight: 400; font-size: 13px; letter-spacing: 0; text-transform: none;
+        color: rgba(255, 255, 255, .82); text-decoration: none; margin-left: 0; padding: 6px 2px; white-space: nowrap;
+    }
+    .topbar a:hover { color: #fff; }
+    .topbar > :last-child { display: flex; align-items: center; gap: 14px; }
+    .topbar button {
+        background: rgba(255, 255, 255, .14); color: #fff; border: 1px solid rgba(255, 255, 255, .22);
+        box-shadow: none; min-height: 34px; padding: 6px 12px;
+    }
+    .topbar button:hover { background: rgba(255, 255, 255, .22); }
+
+    .container { padding: 28px 24px 56px; }
+    .container > p:first-of-type { max-width: 72ch; }
+
+    /* ---------- Cartões ---------- */
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--sombra);
+    }
+    a.card { transition: border-color .15s, transform .15s, box-shadow .15s; }
+    a.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .card h3 { font-size: 18px; margin-bottom: 6px; }
+    .card p { line-height: 1.45; }
+    .card-icon { width: 30px; height: 30px; margin-bottom: 14px; }
+
+    /* ---------- Números ---------- */
+    .kpi {
+        background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+        padding: 16px 14px; box-shadow: var(--sombra);
+    }
+    .kpi .valor { font-family: var(--fonte-display); font-weight: 700; font-size: 34px; line-height: 1; }
+    .kpi .rotulo { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; margin-top: 8px; }
+
+    /* ---------- Botões ---------- */
+    button:where(:not(.link-btn, .toggle-senha)), a.btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+        min-height: 40px; padding: 8px 16px;
+        font-family: var(--fonte-corpo); font-size: 14px; font-weight: 600; line-height: 1.2;
+        background: var(--accent); color: #fff;
+        border: 1px solid transparent; border-radius: 10px;
+        text-decoration: none; cursor: pointer;
+        transition: filter .12s, background-color .12s;
+    }
+    button:where(:not(.link-btn, .toggle-senha)):hover, a.btn:hover { filter: brightness(1.1); }
+    button:disabled, button[disabled] { opacity: .55; cursor: not-allowed; filter: none; }
+    button.danger { background: var(--danger); }
+    button.ghost { background: transparent; color: var(--accent); border-color: var(--border); }
+    .link-btn { font-family: var(--fonte-corpo); font-weight: 600; }
+
+    /* ---------- Campos ---------- */
+    input:where(:not([type=checkbox], [type=radio], [type=file])), select, textarea {
+        min-height: 40px; padding: 8px 12px;
+        font-family: var(--fonte-corpo); font-size: 14px;
+        background: var(--campo-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 10px;
+        transition: border-color .12s, box-shadow .12s;
+    }
+    input:where(:not([type=checkbox], [type=radio], [type=file])):focus, select:focus, textarea:focus {
+        outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--anel);
+    }
+    input[readonly] { background: var(--bg); color: var(--text-muted); }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: .8; }
+    input[type=checkbox], input[type=radio] { accent-color: var(--accent); width: 16px; height: 16px; }
+    label { font-size: 13px; }
+    fieldset { border: 1px solid var(--border); border-radius: 12px; }
+    legend { font-family: var(--fonte-display); font-weight: 600; font-size: 15px; padding: 0 6px; }
+
+    /* ---------- Tabelas ---------- */
+    table { border-collapse: collapse; font-size: 13.5px; }
+    th, td { border: none; border-bottom: 1px solid var(--border); padding: 10px 12px; }
+    th {
+        background: var(--th-bg); color: var(--th-texto);
+        font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+    }
+    th:first-child { border-top-left-radius: 8px; }
+    th:last-child { border-top-right-radius: 8px; }
+    tbody tr:hover td, tr:hover td { background: var(--linha-hover); }
+    tr.inativo td, tr.inativa td { opacity: .55; }
+    tr.linha-total td { font-weight: 600; background: var(--th-bg); }
+
+    /* ---------- Badges e mensagens ---------- */
+    .badge, .badge-mf, .badge-esq, .badge-inativo, .motivo-tag, .metodo-tag {
+        display: inline-block; padding: 3px 9px; border-radius: 999px;
+        font-size: 11px; font-weight: 600; letter-spacing: .04em; line-height: 1.4; white-space: nowrap;
+    }
+    p.ok, div.ok, p.erro, div.erro {
+        padding: 10px 14px; border-radius: 10px; border-left: 4px solid; font-size: 13.5px;
+    }
+    p.ok, div.ok { background: var(--ok-bg); color: var(--ok); }
+    p.erro, div.erro { background: var(--danger-bg); color: var(--danger); }
+    .vazio { padding: 28px 0; }
+
+    /* ---------- Abas e menu lateral ---------- */
+    .tabs { gap: 4px; border-bottom: 1px solid var(--border); }
+    .tabs a { font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    .tabs a.ativo { color: var(--accent); border-bottom-color: var(--accent); }
+    .sidebar a.active, .lista-grupos a.ativo { font-weight: 600; }
+    details summary { cursor: pointer; font-weight: 600; }
+
+    /* ---------- Login ---------- */
+    .login-wrap {
+        padding: 24px 16px;
+        background:
+            radial-gradient(900px 420px at 50% -120px, rgba(23, 70, 140, .16), transparent 70%),
+            var(--bg);
+    }
+    .login-box {
+        max-width: 380px; padding: 36px 32px 32px;
+        border-radius: 18px; box-shadow: var(--sombra);
+        text-align: center;
+    }
+    .login-box::before {
+        content: ''; display: block; height: 92px; margin-bottom: 14px;
+        background: url('../images/logo-eear.png') center / contain no-repeat;
+    }
+    .login-box h1 {
+        font-family: var(--fonte-display); font-weight: 700; font-size: 38px; line-height: 1;
+        letter-spacing: .3em; margin: 0 -.3em 8px 0; text-transform: uppercase; color: var(--accent);
+    }
+    .login-box p.sub {
+        font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em;
+        padding-bottom: 22px; margin-bottom: 22px; border-bottom: 1px solid var(--border);
+    }
+    .login-box input { min-height: 48px; font-size: 15px; text-align: left; }
+    .login-box button[type=submit] {
+        width: 100%; min-height: 50px; margin-top: 6px;
+        font-family: var(--fonte-display); font-size: 17px; letter-spacing: .12em; text-transform: uppercase;
+        box-shadow: 0 8px 20px rgba(23, 70, 140, .28);
+    }
+    .login-box p.erro { text-align: left; }
+    .campo-senha .toggle-senha { width: 36px; height: 36px; right: 6px; }
+
+    /* ---------- Celular ---------- */
+    @media (max-width: 640px) {
+        .topbar { padding: 10px 16px; }
+        .topbar strong, .topbar .brand { font-size: 18px; }
+        .container { padding: 20px 16px 56px; }
+        h2 { font-size: 24px; }
+        .card { border-radius: 12px; }
+        button:where(:not(.link-btn, .toggle-senha)), a.btn,
+        input:where(:not([type=checkbox], [type=radio], [type=file])), select { min-height: 44px; }
+        .topbar button { min-height: 36px; }
+        .kpi .valor { font-size: 30px; }
+        .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+}

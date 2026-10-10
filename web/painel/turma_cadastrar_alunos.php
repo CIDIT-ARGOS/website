@@ -81,6 +81,7 @@ $postosDisponiveis = listarPostosGraduacao($conexao);
     .exemplo { background: #f8fafc; border: 1px dashed var(--border); border-radius: 6px; padding: 10px 12px; font-family: 'Consolas', 'Courier New', monospace; font-size: 12px; white-space: pre; overflow-x: auto; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
 </head>
 <body>
 

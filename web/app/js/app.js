@@ -14,6 +14,14 @@ const TIPOS_RETIRADA = {
     'pernoite': 'Pernoite',
 };
 
+// Sigla que vai no selo de cada cartão da lista de retiradas.
+const SIGLAS_RETIRADA = {
+    '1_jornada': '1ªJ',
+    '2_jornada': '2ªJ',
+    'educacao_fisica': 'EF',
+    'pernoite': 'PN',
+};
+
 let sessaoAtual = carregarSessao();
 let motivosCache = null;
 let itensMarcarAtual = [];
@@ -72,6 +80,9 @@ async function api(caminho, { method = 'GET', body = null, exigirSessao = true }
 function mostrarView(id) {
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('ativa'));
     document.getElementById(id).classList.add('ativa');
+    document.body.classList.toggle('tela-login', id === 'view-login');
+    document.body.classList.toggle('tela-retiradas', id === 'view-retiradas');
+    window.scrollTo(0, 0);
 
     const navInferior = document.getElementById('navInferior');
     const sessaoInfo = document.getElementById('sessaoInfo');
@@ -180,6 +191,14 @@ async function carregarRetiradas() {
 
     try {
         const retiradas = await api(`retiradas.php?esquadrao=${encodeURIComponent(sessaoAtual.aluno.esquadrao)}`);
+        const dataDe = (r) => new Date(r.data_hora.replace(' ', 'T'));
+        const hoje = new Date().toDateString();
+
+        document.getElementById('retiradasData').textContent =
+            new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/\./g, '');
+        document.getElementById('resumoPendentes').textContent = retiradas.filter((r) => r.status !== 'enviada').length;
+        document.getElementById('resumoEnviadas').textContent =
+            retiradas.filter((r) => r.status === 'enviada' && dataDe(r).toDateString() === hoje).length;
 
         if (retiradas.length === 0) {
             lista.innerHTML = '<p class="vazio">Nenhuma retirada ainda para o seu esquadrão.</p>';
@@ -188,17 +207,25 @@ async function carregarRetiradas() {
 
         lista.innerHTML = '';
         retiradas.slice(0, 20).forEach((r) => {
-            const item = document.createElement('div');
+            const item = document.createElement('button');
+            item.type = 'button';
             item.className = 'card retirada-item';
-            const dataFormatada = new Date(r.data_hora.replace(' ', 'T')).toLocaleString('pt-BR', {
-                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-            });
+            const data = dataDe(r);
+            const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const dia = data.toDateString() === hoje ? 'hoje' : data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
             item.innerHTML = `
-                <div class="info">
-                    <strong>${escapeHtml(TIPOS_RETIRADA[r.tipo] || r.tipo)} · Esq. ${escapeHtml(r.agrupamento_valor)}</strong>
-                    <small>${dataFormatada}${r.protocolo ? ' · ' + escapeHtml(r.protocolo) : ''}</small>
+                <div class="selo">
+                    <b>${escapeHtml(SIGLAS_RETIRADA[r.tipo] || '—')}</b>
+                    <small>${hora}</small>
                 </div>
-                <span class="status-pill ${r.status}">${r.status === 'enviada' ? 'Enviada' : 'Pendente'}</span>
+                <div class="info">
+                    <strong>${escapeHtml(TIPOS_RETIRADA[r.tipo] || r.tipo)}</strong>
+                    <small>Esquadrilha ${escapeHtml(r.agrupamento_valor)} · ${dia}${r.protocolo ? ' · ' + escapeHtml(r.protocolo) : ''}</small>
+                </div>
+                <div class="lado">
+                    <span class="status-pill ${r.status}">${r.status === 'enviada' ? 'Enviada' : 'Pendente'}</span>
+                    <span class="i seta" style="--icon-url:url('../../images/icons/arrow-left.svg')" aria-hidden="true"></span>
+                </div>
             `;
             item.addEventListener('click', () => abrirMarcar(r.id));
             lista.appendChild(item);
@@ -260,6 +287,7 @@ async function abrirMarcar(retiradaId) {
         somenteLeituraMarcar = retirada.status === 'enviada';
 
         renderizarMarcar(itens, motivos, '', somenteLeituraMarcar);
+        atualizarPlacar();
 
         document.getElementById('marcarTitulo').textContent =
             `${TIPOS_RETIRADA[retirada.tipo] || retirada.tipo} · Esq. ${retirada.agrupamento_valor}`;
@@ -287,7 +315,7 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
     filtrados.forEach((item) => {
         const presente = Number(item.presente) === 1;
         const el = document.createElement('div');
-        el.className = 'aluno-item';
+        el.className = 'aluno-item' + (presente ? '' : ' em-falta');
         el.dataset.alunoId = item.aluno_id;
 
         const opcoesMotivo = motivos.map((m) =>
@@ -324,6 +352,9 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
             btnFalta.classList.toggle('ativo', !presenteNovo);
             btnFalta.classList.toggle('falta', !presenteNovo);
             blocoMotivo.classList.toggle('ativo', !presenteNovo);
+            el.classList.toggle('em-falta', !presenteNovo);
+            item.presente = presenteNovo ? 1 : 0;
+            atualizarPlacar();
             enviarMarcacao(item.aluno_id, presenteNovo, presenteNovo ? null : Number(selectMotivo.value), inputObs.value);
         }
 
@@ -342,6 +373,13 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
 
         lista.appendChild(el);
     });
+}
+
+// Placar acima do botão de enviar: quantos presentes e quantas faltas até agora.
+function atualizarPlacar() {
+    const faltas = itensMarcarAtual.filter((it) => Number(it.presente) !== 1).length;
+    document.getElementById('placarChamada').innerHTML =
+        `<span class="presentes">${itensMarcarAtual.length - faltas} presentes</span><span class="faltas">${faltas} ${faltas === 1 ? 'falta' : 'faltas'}</span>`;
 }
 
 let marcacaoEmAndamento = new Map();
@@ -397,6 +435,7 @@ async function carregarEfetivo() {
 function renderizarEfetivo(alunos, filtro) {
     const lista = document.getElementById('listaEfetivo');
     const termo = filtro.trim().toLowerCase();
+    document.getElementById('efetivoTotal').textContent = `${alunos.length} alunos`;
     const filtrados = alunos.filter((a) =>
         !termo || a.nome_guerra.toLowerCase().includes(termo) || String(a.milhao).includes(termo)
     );
