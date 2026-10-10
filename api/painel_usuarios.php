@@ -6,6 +6,9 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../core/painel_usuarios_core.php';
 
+// Endpoint administrativo: só com chave de escopo admin (a chave do app recebe 403).
+exigirEscopoAdmin();
+
 $metodo = $_SERVER['REQUEST_METHOD'];
 $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 

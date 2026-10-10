@@ -82,11 +82,13 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
     tr.inativa { opacity: 0.55; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
@@ -157,7 +159,7 @@ $turmas = listarTurmas($conexao, $mostrarInativas);
             </a>
         </div>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Nome|Curso/Série|Alunos ativos|Status">
             <tr>
                 <th>Nome</th><th>Curso/Série</th><th>Ingresso</th><th>Formatura prevista</th>
                 <th>Esquadrão atual</th><th>Alunos ativos</th><th>Status</th><th>Ações</th>

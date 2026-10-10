@@ -3,6 +3,9 @@
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../core/retiradas_core.php';
 
+// Endpoint administrativo: só com chave de escopo admin (a chave do app recebe 403).
+exigirEscopoAdmin();
+
 if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     erro("Método não suportado.", 405);
 }

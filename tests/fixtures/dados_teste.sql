@@ -20,3 +20,8 @@ INSERT INTO alunos
   (posto_graduacao, especialidade, nome_guerra, sexo, identidade_militar, qrcode_hash, milhao, esquadrao, esquadrilha, curso, serie, ativo)
 VALUES
   ('GS', 'SIN', 'TESTE INATIVO', 'M', 'CI-0004', '4444444444444444444444444444444444444444444444444444444444444444', '26/9004', 'Esquadrão Prata', 'A', 'CFS', '1', 0);
+
+-- Chave de API de escopo admin, só pros testes (tests/lib_teste.php): os
+-- endpoints administrativos não aceitam mais a chave do app.
+INSERT INTO api_chaves (nome, chave_hash, chave_preview, escopo, criado_por)
+VALUES ('Chave admin (testes)', SHA2('chave-admin-dos-testes-do-argos', 256), '...argos', 'admin', 'testes');

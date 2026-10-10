@@ -16,7 +16,8 @@ if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_reti
 $escopo = escopoEsquadrao(); // null = pode escolher esquadrão/grupo livremente
 $erro = null;
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+// Só os lançamentos em uso: almoço, 2ª Jornada, pernoite e 1ª Jornada.
+$tiposRetirada = tiposRetiradaEmUso();
 $rotulosCategorias = ['clube' => 'Clube', 'servico' => 'Serviço', 'comissao' => 'Comissão'];
 
 // O responsável pela retirada é sempre quem está logado nesse exato momento —
@@ -77,6 +78,8 @@ $grupos = listarGrupos($conexao);
     .responsavel .rotulo { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 <script>
     function alternarTipo() {
         const tipoAlto = document.getElementById('tipo_alto_nivel').value;
@@ -110,7 +113,7 @@ $grupos = listarGrupos($conexao);
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="retiradas.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>retiradas</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="retiradas.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>retiradas</a></div>
     <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 

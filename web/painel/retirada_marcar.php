@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['itens']) && $retirada
         $presente = isset($item['presente']) ? 1 : 0;
         $motivoFaltaId = !empty($item['motivo_falta_id']) ? (int)$item['motivo_falta_id'] : null;
         $observacao = trim($item['observacao'] ?? '') ?: null;
-        marcarItem($conexao, $id, (int)$alunoId, $presente, $motivoFaltaId, $observacao);
+        marcarItem($conexao, $id, (int)$alunoId, $presente, $motivoFaltaId, $observacao, $item['servico_id'] ?? null);
     }
     $mensagem = "Marcações salvas.";
 
@@ -78,7 +78,7 @@ $tiposDispensa = $podeLancarDispensa ? listarDispensaTipos($conexao) : [];
 $dataInicioMin = date('Y-m-d', strtotime('-' . DISPENSA_TOLERANCIA_DIAS_PASSADO . ' days'));
 $dataInicioMax = date('Y-m-d', strtotime('+' . DISPENSA_TOLERANCIA_DIAS_FUTURO . ' days'));
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+$tiposRetirada = TIPOS_RETIRADA_ROTULOS;
 $somenteLeitura = $retirada['status'] === 'enviada';
 
 $servicos = listarServicos($conexao);
@@ -121,6 +121,8 @@ $servicos = listarServicos($conexao);
     .tag-check input { margin: 0; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 <script>
     function alternarMotivo(alunoId, presenteCheckbox) {
         const linha = document.getElementById('linha_' + alunoId);
@@ -172,10 +174,15 @@ $servicos = listarServicos($conexao);
             data_termino: document.getElementById('disp_termino_' + alunoId).value,
             numero: document.getElementById('disp_numero_' + alunoId).value,
             motivo: document.getElementById('disp_motivo_' + alunoId).value,
+            medico_responsavel: document.getElementById('disp_medico_' + alunoId).value,
             dispensado_de: document.getElementById('disp_dispensado_de_' + alunoId).value,
         };
         if (!campos.motivo.trim()) {
             alert('Informe o motivo da dispensa.');
+            return;
+        }
+        if (!campos.medico_responsavel.trim()) {
+            alert('Informe o Oficial Médico responsável pela dispensa.');
             return;
         }
         const form = document.createElement('form');
@@ -202,7 +209,7 @@ $servicos = listarServicos($conexao);
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="retiradas.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>retiradas</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="retiradas.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>retiradas</a></div>
     <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
@@ -272,6 +279,7 @@ $servicos = listarServicos($conexao);
                                 <label style="font-size:12px; color:var(--text-muted);">Término <input type="date" id="disp_termino_<?= $item['aluno_id'] ?>" value="<?= date('Y-m-d') ?>"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Nº <input type="text" id="disp_numero_<?= $item['aluno_id'] ?>" style="width:70px;"></label>
                                 <label style="font-size:12px; color:var(--text-muted);">Motivo <input type="text" id="disp_motivo_<?= $item['aluno_id'] ?>" style="min-width:160px;"></label>
+                                <label style="font-size:12px; color:var(--text-muted);">Oficial Médico <input type="text" id="disp_medico_<?= $item['aluno_id'] ?>" maxlength="100" placeholder="Posto e nome" style="min-width:180px;"></label>
                             </div>
                             <div class="form-linha" style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:0 0 8px;">
                                 <span style="font-size:12px; color:var(--text-muted);">Dispensado de:</span>

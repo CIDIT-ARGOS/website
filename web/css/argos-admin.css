@@ -1,0 +1,304 @@
+/* Identidade visual comum do Painel de Comando e do Ikarus37.
+ *
+ * Cada página ainda tem o próprio <style> (layout e detalhes só dela); esta
+ * folha entra DEPOIS e redefine o que todas compartilham — tokens, barra
+ * superior, cartões, tabelas, botões, campos, badges, painel lateral — pra o
+ * sistema ter uma cara só. O Ikarus37 carrega também argos-ikarus.css, que
+ * troca os tokens pro tema escuro.
+ *
+ * Tom institucional: azul EEAR, filete dourado, cantos pouco arredondados,
+ * quase sem sombra, rótulos em maiúsculas. Especificação em
+ * docs/design/sistema/brief.md.
+ *
+ * Tudo dentro de @media screen: a impressão (Livro do Dia, "Baixar PDF")
+ * continua exatamente como cada página define.
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+@media screen {
+    :root {
+        /* nomes que as páginas já usam */
+        --bg: #f3f5f9;
+        --bg-card: #ffffff;
+        --border: #d5dce8;
+        --text: #16202e;
+        --text-muted: #55637a;
+        --accent: #123c7a;
+        --azul-eear: #0a2e5c;
+        --danger: #a8221b;
+        --ok: #17794a;
+        --alerta: #96500c;
+
+        /* novos */
+        --azul-escuro: #061c3a;
+        --azul-claro: #e8eef8;
+        --dourado: #c9a227;
+        --barra-bg: #0a2e5c;
+        --campo-bg: #ffffff;
+        --th-bg: #e8eef8;
+        --th-texto: #0a2e5c;
+        --linha-hover: #f6f8fc;
+        --ok-bg: #e4f3ea;
+        --danger-bg: #f9e6e4;
+        --alerta-bg: #fbecd6;
+        --anel: rgba(18, 60, 122, .32);
+        --sombra: 0 1px 2px rgba(10, 46, 92, .07);
+        --raio: 6px;
+        --fonte-display: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+        --fonte-corpo: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+        --fonte-mono: 'IBM Plex Mono', ui-monospace, Consolas, monospace;
+    }
+
+    body {
+        font-family: var(--fonte-corpo);
+        font-size: 14px;
+        line-height: 1.45;
+        background: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+    }
+    body.painel-aberto { overflow: hidden; }
+
+    h1, h2, h3, h4, h5 { font-family: var(--fonte-display); font-weight: 600; letter-spacing: .01em; line-height: 1.15; }
+    h2 { font-size: 26px; margin: 4px 0 14px; padding-bottom: 10px; border-bottom: 2px solid var(--accent); }
+    .card h2, .livro h2 { border-bottom: none; padding-bottom: 0; }
+    h3 { font-size: 18px; }
+    h4 { font-size: 16px; }
+    h3.subtitulo, h5 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+    a { color: var(--accent); }
+    code, pre { font-family: var(--fonte-mono); font-size: .92em; }
+
+    :focus-visible { outline: 3px solid var(--anel); outline-offset: 2px; }
+
+    /* ---------- Marca: A R G (olho) S — o olho no lugar do O ---------- */
+    .marca-argos { white-space: nowrap; }
+    .marca-argos .olho {
+        display: inline-block; width: 1.05em; height: .74em; margin-right: .2em; vertical-align: -.02em;
+        background-color: currentColor;
+        -webkit-mask: url('../images/argos-olho.svg') center / 100% auto no-repeat;
+        mask: url('../images/argos-olho.svg') center / 100% auto no-repeat;
+    }
+
+    /* ---------- Barra superior ---------- */
+    .topbar {
+        position: sticky; top: 0; z-index: 20;
+        gap: 12px; flex-wrap: wrap;
+        padding: 12px 24px;
+        background: var(--barra-bg);
+        border-bottom: 3px solid var(--dourado);
+        color: #fff;
+    }
+    .topbar > :first-child { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 16px; min-width: 0; }
+    .topbar strong, .topbar .brand {
+        font-family: var(--fonte-display); font-weight: 700; font-size: 20px;
+        letter-spacing: .2em; text-transform: uppercase; color: #fff;
+    }
+    .topbar .brand span.marca-argos, .topbar strong .marca-argos { font: inherit; letter-spacing: inherit; color: #fff; margin: 0; }
+    .topbar .brand span:not(.marca-argos) {
+        font-family: var(--fonte-corpo); font-weight: 400; font-size: 13px;
+        letter-spacing: 0; text-transform: none; color: rgba(255, 255, 255, .78); margin-left: 0;
+    }
+    .topbar a {
+        font-family: var(--fonte-corpo); font-weight: 400; font-size: 13px; letter-spacing: 0; text-transform: none;
+        color: rgba(255, 255, 255, .82); text-decoration: none; margin-left: 0; padding: 6px 2px; white-space: nowrap;
+    }
+    .topbar a:hover { color: #fff; }
+    .topbar > :last-child { display: flex; align-items: center; gap: 14px; }
+    .topbar button {
+        background: rgba(255, 255, 255, .12); color: #fff; border: 1px solid rgba(255, 255, 255, .24);
+        min-height: 34px; padding: 6px 12px;
+    }
+    .topbar button:hover { background: rgba(255, 255, 255, .2); }
+
+    .container { padding: 28px 24px 24px; }
+    .container > p:first-of-type { max-width: 76ch; }
+
+    /* ---------- Cartões ---------- */
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: var(--raio);
+        box-shadow: var(--sombra);
+    }
+    a.card { border-left: 4px solid var(--accent); transition: background-color .12s, border-color .12s; transform: none; }
+    a.card:hover { background: var(--linha-hover); border-color: var(--accent); transform: none; }
+    .card h3 { font-size: 17px; margin-bottom: 6px; }
+    .card p { line-height: 1.45; }
+    .card-icon { width: 28px; height: 28px; margin-bottom: 12px; }
+
+    /* ---------- Números ---------- */
+    .kpi {
+        display: block; text-decoration: none; color: inherit;
+        background: var(--bg-card); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: var(--raio);
+        padding: 14px;
+    }
+    .kpi .valor { font-family: var(--fonte-display); font-weight: 700; font-size: 34px; line-height: 1; }
+    .kpi .rotulo { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; margin-top: 8px; }
+    a.kpi-link:hover { background: var(--linha-hover); }
+    .kpi-pane { border-top-color: var(--danger); background: var(--danger-bg); }
+    .kpi-pane .valor { color: var(--danger); }
+
+    /* ---------- Situação agora (página inicial do Painel) ---------- */
+    .situacao-agora { margin: 20px 0 8px; padding: 20px; }
+    .situacao-agora .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .situacao-cabecalho { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    .situacao-cabecalho h3 { margin: 0 0 4px; font-size: 20px; }
+    .situacao-cabecalho p { margin: 0; font-size: 13px; color: var(--text-muted); }
+    .situacao-agora h4 { margin: 20px 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+    .badge.pane-falta { background: var(--danger-bg); color: var(--danger); }
+    .badge.pane-justificada { background: var(--alerta-bg); color: var(--alerta); }
+    .pane-obs { display: block; margin-top: 3px; color: var(--text-muted); }
+    .situacao-agora td:first-child, .situacao-agora td:last-child { white-space: nowrap; }
+    .situacao-agora .badge { white-space: normal; }
+
+    /* ---------- Botões ---------- */
+    button:where(:not(.link-btn, .toggle-senha)), a.btn {
+        display: inline-flex; align-items: center; justify-content: center; gap: 2px;
+        min-height: 38px; padding: 7px 14px;
+        font-family: var(--fonte-corpo); font-size: 13.5px; font-weight: 600; line-height: 1.2;
+        background: var(--accent); color: #fff;
+        border: 1px solid transparent; border-radius: var(--raio);
+        text-decoration: none; cursor: pointer;
+        transition: filter .12s, background-color .12s;
+    }
+    button:where(:not(.link-btn, .toggle-senha)):hover, a.btn:hover { filter: brightness(1.12); }
+    button:disabled, button[disabled] { opacity: .55; cursor: not-allowed; filter: none; }
+    button.danger { background: var(--danger); }
+    button.ghost { background: transparent; color: var(--accent); border-color: var(--border); }
+    button.ghost:hover { background: var(--azul-claro); filter: none; }
+    .link-btn { font-family: var(--fonte-corpo); font-weight: 600; }
+
+    /* ---------- Campos ---------- */
+    input:where(:not([type=checkbox], [type=radio], [type=file])), select, textarea {
+        min-height: 38px; padding: 7px 10px;
+        font-family: var(--fonte-corpo); font-size: 14px;
+        background: var(--campo-bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: var(--raio);
+        transition: border-color .12s, box-shadow .12s;
+    }
+    input:where(:not([type=checkbox], [type=radio], [type=file])):focus, select:focus, textarea:focus {
+        outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--anel);
+    }
+    input[readonly] { background: var(--bg); color: var(--text-muted); }
+    input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: .8; }
+    input[type=checkbox], input[type=radio] { accent-color: var(--accent); width: 16px; height: 16px; }
+    label { font-size: 13px; }
+    fieldset { border: 1px solid var(--border); border-radius: var(--raio); }
+    legend { font-family: var(--fonte-display); font-weight: 600; font-size: 15px; padding: 0 6px; }
+
+    /* ---------- Tabelas ---------- */
+    table { border-collapse: collapse; font-size: 13.5px; }
+    th, td { border: none; border-bottom: 1px solid var(--border); padding: 9px 12px; }
+    th {
+        background: var(--th-bg); color: var(--th-texto);
+        border-bottom: 2px solid var(--accent);
+        font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+    }
+    tbody tr:hover td, tr:hover td { background: var(--linha-hover); }
+    tr.inativo td, tr.inativa td { opacity: .55; }
+    tr.linha-total td { font-weight: 600; background: var(--th-bg); }
+
+    /* Números clicáveis que aplicam filtro (Efetivo). */
+    .filtro-link { display: inline-block; min-width: 28px; padding: 2px 6px; border-radius: 4px; color: inherit; text-decoration: none; }
+    td.num .filtro-link { color: var(--accent); font-weight: 600; text-decoration: underline; text-decoration-color: var(--border); text-underline-offset: 3px; }
+    .filtro-link:hover { background: var(--azul-claro); text-decoration-color: var(--accent); }
+    .filtro-ativo { display: inline-block; margin: 0 4px; padding: 2px 8px; border-radius: 4px; background: var(--azul-claro); color: var(--th-texto); font-size: 12px; }
+    .dica { margin: -6px 0 6px; font-size: 12px; color: var(--text-muted); }
+
+    /* ---------- Tabelas enxutas + painel lateral (web/js/argos-admin.js) ---------- */
+    .coluna-oculta { display: none; }
+    .celula-abrir { width: 1%; white-space: nowrap; text-align: right; }
+    .botao-abrir { min-height: 32px; padding: 4px 12px; font-size: 13px; }
+
+    .painel-fundo { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: flex-end; background: rgba(6, 28, 58, .45); }
+    .painel-fundo[hidden] { display: none; }
+    .painel-lateral {
+        display: flex; flex-direction: column;
+        width: min(460px, 100%); height: 100%;
+        background: var(--bg-card); border-left: 4px solid var(--dourado);
+        box-shadow: -8px 0 30px rgba(6, 28, 58, .25);
+        outline: none;
+    }
+    .painel-cabecalho {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        padding: 16px 20px; background: var(--barra-bg); color: #fff;
+    }
+    .painel-cabecalho h3 { margin: 0; font-size: 19px; color: #fff; overflow-wrap: anywhere; }
+    .painel-cabecalho .painel-fechar { flex: none; background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .24); min-height: 34px; }
+    .painel-corpo { flex: 1; overflow-y: auto; padding: 8px 20px 24px; }
+    .painel-campo { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .painel-campo:last-child { border-bottom: none; }
+    .painel-rotulo { margin-bottom: 6px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); }
+    .painel-valor { font-size: 14px; overflow-wrap: anywhere; }
+    .painel-valor input:where(:not([type=checkbox], [type=radio], [type=file])), .painel-valor select, .painel-valor textarea { width: 100%; max-width: 100%; }
+    .painel-valor .celula-original { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .painel-valor .celula-original[hidden] { display: none; }
+    .painel-valor form { display: inline-flex !important; }
+    .painel-valor a.link-btn, .painel-valor button.link-btn { margin: 0 !important; }
+
+    /* ---------- Badges e mensagens ---------- */
+    .badge, .badge-mf, .badge-esq, .badge-inativo, .motivo-tag, .metodo-tag {
+        display: inline-block; padding: 2px 8px; border-radius: 4px;
+        font-size: 11px; font-weight: 600; letter-spacing: .04em; line-height: 1.5; white-space: nowrap;
+    }
+    p.ok, div.ok, p.erro, div.erro {
+        padding: 10px 14px; border-radius: var(--raio); border-left: 4px solid; font-size: 13.5px;
+    }
+    p.ok, div.ok { background: var(--ok-bg); color: var(--ok); }
+    p.erro, div.erro { background: var(--danger-bg); color: var(--danger); }
+    .vazio { padding: 24px 0; }
+
+    /* ---------- Abas e menu lateral ---------- */
+    .tabs { gap: 4px; border-bottom: 2px solid var(--accent); margin-bottom: 18px; }
+    .tabs a {
+        padding: 8px 14px; border: 1px solid var(--border); border-bottom: none; border-radius: var(--raio) var(--raio) 0 0;
+        background: var(--bg-card); color: var(--text-muted);
+        font-weight: 600; font-size: 13.5px; text-decoration: none;
+    }
+    .tabs a:hover { color: var(--accent); background: var(--azul-claro); }
+    /* Aba selecionada: fundo cheio com texto claro — os dois vêm de tokens diferentes, pra nunca ficarem da mesma cor. */
+    .tabs a.ativo, .tabs a.ativo:hover { background: var(--accent); border-color: var(--accent); color: var(--texto-sobre-accent, #fff); }
+    .sidebar a.active, .lista-grupos a.ativo { font-weight: 600; }
+    details summary { cursor: pointer; font-weight: 600; }
+
+    /* ---------- Login ---------- */
+    .login-wrap { flex-direction: column; padding: 24px 16px; background: var(--bg); min-height: calc(100vh - 110px); }
+    .login-box {
+        max-width: 380px; padding: 32px 30px 28px;
+        border-radius: var(--raio); border-top: 4px solid var(--azul-eear); box-shadow: var(--sombra);
+        text-align: center;
+    }
+    .login-box::before {
+        content: ''; display: block; height: 92px; margin-bottom: 14px;
+        background: url('../images/logo-eear.png') center / contain no-repeat;
+    }
+    .login-box h1 {
+        font-family: var(--fonte-display); font-weight: 700; font-size: 38px; line-height: 1;
+        letter-spacing: .3em; margin: 0 -.3em 8px 0; text-transform: uppercase; color: var(--azul-eear);
+    }
+    .login-box p.sub {
+        font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .14em;
+        padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border);
+    }
+    .login-box input { min-height: 46px; font-size: 15px; text-align: left; }
+    .login-box button[type=submit] {
+        width: 100%; min-height: 48px; margin-top: 6px;
+        font-family: var(--fonte-display); font-size: 16px; letter-spacing: .12em; text-transform: uppercase;
+    }
+    .login-box p.erro { text-align: left; }
+    .campo-senha .toggle-senha { width: 36px; height: 36px; right: 6px; }
+
+    /* ---------- Celular ---------- */
+    @media (max-width: 640px) {
+        .topbar { padding: 10px 16px; }
+        .topbar strong, .topbar .brand { font-size: 18px; }
+        .container { padding: 20px 16px 16px; }
+        h2 { font-size: 22px; }
+        button:where(:not(.link-btn, .toggle-senha)), a.btn,
+        input:where(:not([type=checkbox], [type=radio], [type=file])), select { min-height: 44px; }
+        .topbar button, .botao-abrir { min-height: 38px; }
+        .kpi .valor { font-size: 30px; }
+        .kpis, .situacao-agora .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+}

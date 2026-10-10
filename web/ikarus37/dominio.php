@@ -114,6 +114,9 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
     .badge-inativo { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: var(--danger); color: #fff; font-size: 11px; vertical-align: middle; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
+<link rel="stylesheet" href="../css/argos-ikarus.css">
 </head>
 <body>
 
@@ -169,7 +172,7 @@ function dominioCampoInputIkarus($campo, $valor, $formId, $unidadesDisponiveis) 
             <?php endif; ?>
         </div>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="2">
             <tr>
                 <?php foreach ($entidade['campos'] as $campo): ?>
                     <th><?= htmlspecialchars($campo['rotulo']) ?></th>
