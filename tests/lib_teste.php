@@ -119,6 +119,41 @@ function semErroPhp($resposta) {
     }
 }
 
+// ---------- Acesso direto ao banco de teste ----------
+// Pra montar cenários que a aplicação de propósito não deixa (expirar sessão,
+// simular IP bloqueado) e limpar o que o teste criou. Mesmas variáveis do
+// tests/ci_banco.php: DB_HOST, DB_PORTA, DB_ROOT_SENHA, DB_NOME (argos_teste).
+function banco() {
+    static $conexao = null;
+    if (!$conexao) {
+        mysqli_report(MYSQLI_REPORT_OFF);
+        $conexao = @mysqli_connect(
+            getenv('DB_HOST') ?: '127.0.0.1',
+            'root',
+            getenv('DB_ROOT_SENHA') ?: 'argos_root',
+            getenv('DB_NOME') ?: 'argos_teste',
+            (int) (getenv('DB_PORTA') ?: 3306)
+        );
+        if (!$conexao) {
+            throw new RuntimeException('sem acesso ao banco de teste (DB_HOST/DB_PORTA/DB_ROOT_SENHA/DB_NOME): ' . mysqli_connect_error());
+        }
+        mysqli_set_charset($conexao, 'utf8mb4');
+    }
+    return $conexao;
+}
+
+function sql($comando) {
+    $resultado = mysqli_query(banco(), $comando);
+    if ($resultado === false) {
+        throw new RuntimeException('SQL falhou: ' . mysqli_error(banco()) . " — $comando");
+    }
+    return $resultado;
+}
+
+function sqlLinha($comando) {
+    return mysqli_fetch_assoc(sql($comando));
+}
+
 // Imprime o placar e encerra com código 1 se algum teste falhou.
 function encerrarTestes() {
     global $falhas, $total;

@@ -86,6 +86,9 @@ php tests/integracao_test.php "http://127.0.0.1:$PORTA_WEB" || falhou=1
 etapa "Testes da API (endpoint por endpoint)"
 DB_NOME=argos_teste php tests/api_test.php "http://127.0.0.1:$PORTA_WEB" || falhou=1
 
+etapa "Testes das telas logadas (Painel e Ikarus37)"
+DB_NOME=argos_teste php tests/paginas_test.php "http://127.0.0.1:$PORTA_WEB" || falhou=1
+
 etapa "Smoke test (o mesmo que roda em produção)"
 php tests/smoke_producao.php "http://127.0.0.1:$PORTA_WEB" || falhou=1
 

@@ -21,38 +21,6 @@ require __DIR__ . '/lib_teste.php';
 const ESQUADRAO_TESTE = 'Esquadrão Teste API';
 const GRUPO_TESTE = 'Grupo Teste API';
 
-// ---------- Acesso direto ao banco de teste ----------
-function banco() {
-    static $conexao = null;
-    if (!$conexao) {
-        mysqli_report(MYSQLI_REPORT_OFF);
-        $conexao = @mysqli_connect(
-            getenv('DB_HOST') ?: '127.0.0.1',
-            'root',
-            getenv('DB_ROOT_SENHA') ?: 'argos_root',
-            getenv('DB_NOME') ?: 'argos_teste',
-            (int) (getenv('DB_PORTA') ?: 3306)
-        );
-        if (!$conexao) {
-            throw new RuntimeException('sem acesso ao banco de teste (DB_HOST/DB_PORTA/DB_ROOT_SENHA/DB_NOME): ' . mysqli_connect_error());
-        }
-        mysqli_set_charset($conexao, 'utf8mb4');
-    }
-    return $conexao;
-}
-
-function sql($comando) {
-    $resultado = mysqli_query(banco(), $comando);
-    if ($resultado === false) {
-        throw new RuntimeException('SQL falhou: ' . mysqli_error(banco()) . " — $comando");
-    }
-    return $resultado;
-}
-
-function sqlLinha($comando) {
-    return mysqli_fetch_assoc(sql($comando));
-}
-
 // Apaga o que uma execução anterior deste arquivo deixou, pra dar pra rodar
 // de novo no mesmo banco (no CI o banco é recriado, então não acha nada).
 function limparDadosDoTeste() {
