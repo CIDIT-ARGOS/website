@@ -17,3 +17,7 @@ echo 'window.ARGOS_API_KEY = ' . json_encode($APP_PWA_API_KEY ?? '', JSON_UNESCA
 // fica num subdiretório (ex: /cidit/projetos/11/api/).
 $raizProjeto = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'], 3)), '/');
 echo "\n" . 'window.ARGOS_API_BASE = ' . json_encode($raizProjeto . '/api/', JSON_UNESCAPED_SLASHES) . ';';
+
+// Versão publicada (core/versao.php, gerado no deploy) — o app mostra no rodapé.
+$versaoArgos = require __DIR__ . '/../../core/versao.php';
+echo "\n" . 'window.ARGOS_VERSAO = ' . json_encode($versaoArgos['versao'] ?? '', JSON_UNESCAPED_UNICODE) . ';';

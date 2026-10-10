@@ -105,6 +105,9 @@ if (!$registro) {
     .ok { color: var(--ok); font-size: 13px; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
+<link rel="stylesheet" href="../css/argos-ikarus.css">
 </head>
 <body>
 

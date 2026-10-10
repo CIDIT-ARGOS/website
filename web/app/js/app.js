@@ -7,15 +7,31 @@
 const ARGOS_API_BASE = window.ARGOS_API_BASE || '../../api/';
 const CHAVE_SESSAO = 'argos_sessao';
 
+// Lançamentos do serviço, na ordem em que acontecem (a 1ª Jornada é a do dia
+// seguinte). Educação Física só aparece pra retirada antiga.
 const TIPOS_RETIRADA = {
-    '1_jornada': '1ª Jornada',
+    'almoco': 'Almoço',
     '2_jornada': '2ª Jornada',
-    'educacao_fisica': 'Educação Física',
     'pernoite': 'Pernoite',
+    '1_jornada': '1ª Jornada',
+    'educacao_fisica': 'Educação Física',
 };
+
+// Sigla que vai no selo de cada cartão da lista de retiradas.
+const SIGLAS_RETIRADA = {
+    'almoco': 'ALM',
+    '2_jornada': '2ªJ',
+    'pernoite': 'PN',
+    '1_jornada': '1ªJ',
+    'educacao_fisica': 'EF',
+};
+
+// Código do motivo "Serviço": é o que faz a chamada perguntar o posto.
+const CODIGO_MOTIVO_SERVICO = 'SV';
 
 let sessaoAtual = carregarSessao();
 let motivosCache = null;
+let postosServicoCache = null;
 let itensMarcarAtual = [];
 let retiradaMarcarAtual = null;
 let somenteLeituraMarcar = false;
@@ -31,9 +47,20 @@ function carregarSessao() {
     }
 }
 
-function salvarSessao(token, aluno) {
-    sessaoAtual = { token, aluno };
+// `servico` é onde o aluno está de serviço nesta sessão ({ esquadrao,
+// esquadrilha }) — fica null até ele confirmar na tela de posto de serviço.
+function salvarSessao(token, aluno, servico = null) {
+    sessaoAtual = { token, aluno, servico };
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessaoAtual));
+}
+
+// O esquadrão que vale pro que o app mostra e lança: o do serviço, não o de origem.
+function esquadraoDeServico() {
+    return (sessaoAtual.servico || sessaoAtual.aluno).esquadrao;
+}
+
+function esquadrilhaDeServico() {
+    return (sessaoAtual.servico || sessaoAtual.aluno).esquadrilha;
 }
 
 function limparSessao() {
@@ -72,6 +99,9 @@ async function api(caminho, { method = 'GET', body = null, exigirSessao = true }
 function mostrarView(id) {
     document.querySelectorAll('.view').forEach((v) => v.classList.remove('ativa'));
     document.getElementById(id).classList.add('ativa');
+    document.body.classList.toggle('tela-login', id === 'view-login');
+    document.body.classList.toggle('tela-retiradas', id === 'view-retiradas');
+    window.scrollTo(0, 0);
 
     const navInferior = document.getElementById('navInferior');
     const sessaoInfo = document.getElementById('sessaoInfo');
@@ -80,6 +110,10 @@ function mostrarView(id) {
         navInferior.classList.add('oculta');
         sessaoInfo.style.display = 'none';
         pararCamera();
+    } else if (id === 'view-servico') {
+        // Ainda não dá pra navegar: primeiro ele diz onde está de serviço.
+        navInferior.classList.add('oculta');
+        sessaoInfo.style.display = '';
     } else {
         navInferior.classList.remove('oculta');
         sessaoInfo.style.display = '';
@@ -88,8 +122,14 @@ function mostrarView(id) {
         });
     }
 
+    if (id === 'view-servico') prepararPostoDeServico();
+    if (id === 'view-nova-retirada') document.getElementById('novaEsquadrilha').value = esquadrilhaDeServico();
     if (id === 'view-retiradas') carregarRetiradas();
     if (id === 'view-efetivo') carregarEfetivo();
+    // Estas três vivem em js/livro.js.
+    if (id === 'view-livro') carregarLivro();
+    if (id === 'view-dispensas') carregarDispensas();
+    if (id === 'view-nova-dispensa') prepararFormDispensa();
 }
 
 function exibirErro(elId, mensagem) {
@@ -122,7 +162,8 @@ async function tentarLogin(qrcodeHash, botao) {
         salvarSessao(resultado.token, resultado.aluno);
         pararCamera();
         atualizarInfoSessao();
-        mostrarView('view-retiradas');
+        // Antes de qualquer coisa: em qual esquadrão/esquadrilha ele está de serviço.
+        mostrarView('view-servico');
     } catch (e) {
         exibirErro('loginErro', e.message);
     } finally {
@@ -130,11 +171,81 @@ async function tentarLogin(qrcodeHash, botao) {
     }
 }
 
+// ---------- Posto de serviço ----------
+// Quem tira as faltas de um esquadrão quase sempre é de outro, então ao entrar
+// o aluno escolhe onde está de serviço. Vale pra sessão inteira e dá pra
+// trocar tocando no cabeçalho.
+let opcoesDeServico = [];
+
+function preencherEsquadrilhasDeServico(selecionada) {
+    const esquadrao = document.getElementById('servicoEsquadrao').value;
+    const opcao = opcoesDeServico.find((o) => o.esquadrao === esquadrao);
+    const campo = document.getElementById('servicoEsquadrilha');
+    campo.innerHTML = (opcao ? opcao.esquadrilhas : []).map((e) =>
+        `<option value="${escapeHtml(e)}">Esquadrilha ${escapeHtml(e)}</option>`
+    ).join('');
+    if (selecionada && opcao && opcao.esquadrilhas.includes(selecionada)) campo.value = selecionada;
+}
+
+async function prepararPostoDeServico() {
+    exibirErro('servicoErro', '');
+    try {
+        const dados = await api('servico.php');
+        opcoesDeServico = dados.opcoes;
+        const atual = sessaoAtual.servico || dados.servico;
+
+        const campoEsquadrao = document.getElementById('servicoEsquadrao');
+        campoEsquadrao.innerHTML = opcoesDeServico.map((o) =>
+            `<option value="${escapeHtml(o.esquadrao)}">${escapeHtml(rotuloEsquadrao(o.esquadrao))}</option>`
+        ).join('');
+        campoEsquadrao.value = atual.esquadrao;
+        preencherEsquadrilhasDeServico(atual.esquadrilha);
+
+        document.getElementById('servicoOrigem').textContent =
+            `Você é do ${rotuloEsquadrao(dados.origem.esquadrao)}, esquadrilha ${dados.origem.esquadrilha}.`;
+    } catch (e) {
+        exibirErro('servicoErro', e.message);
+    }
+}
+
+document.getElementById('servicoEsquadrao').addEventListener('change', () => preencherEsquadrilhasDeServico(null));
+
+document.getElementById('formServico').addEventListener('submit', async (evento) => {
+    evento.preventDefault();
+    exibirErro('servicoErro', '');
+    try {
+        const resultado = await api('servico.php', {
+            method: 'PUT',
+            body: {
+                esquadrao: document.getElementById('servicoEsquadrao').value,
+                esquadrilha: document.getElementById('servicoEsquadrilha').value,
+            },
+        });
+        salvarSessao(sessaoAtual.token, sessaoAtual.aluno, resultado.servico);
+        efetivoCache = null; // o efetivo é o do esquadrão de serviço
+        atualizarInfoSessao();
+        mostrarView('view-retiradas');
+    } catch (e) {
+        exibirErro('servicoErro', e.message);
+    }
+});
+
+document.getElementById('sessaoInfo').addEventListener('click', () => {
+    if (sessaoAtual) mostrarView('view-servico');
+});
+
+// "Esquadrão Prata" tanto se o cadastro guarda "Prata" quanto "Esquadrão Prata".
+function rotuloEsquadrao(esquadrao) {
+    return /^esquadr[ãa]o(\s|$)/i.test(esquadrao) ? esquadrao : `Esquadrão ${esquadrao}`;
+}
+
 function atualizarInfoSessao() {
     if (!sessaoAtual) return;
-    const { aluno } = sessaoAtual;
-    document.getElementById('sessaoInfo').innerHTML =
-        `<strong>${escapeHtml(aluno.nome_guerra)}</strong>${escapeHtml(aluno.milhao)} · Esq. ${escapeHtml(aluno.esquadrao)}`;
+    const { aluno, servico } = sessaoAtual;
+    const posto = servico
+        ? `De serviço: ${escapeHtml(rotuloEsquadrao(servico.esquadrao))} · ${escapeHtml(servico.esquadrilha)} <u>trocar</u>`
+        : escapeHtml(aluno.milhao);
+    document.getElementById('sessaoInfo').innerHTML = `<strong>${escapeHtml(aluno.nome_guerra)}</strong>${posto}`;
 }
 
 document.getElementById('btnEscanear').addEventListener('click', async () => {
@@ -179,26 +290,43 @@ async function carregarRetiradas() {
     exibirErro('retiradasErro', '');
 
     try {
-        const retiradas = await api(`retiradas.php?esquadrao=${encodeURIComponent(sessaoAtual.aluno.esquadrao)}`);
+        // A API já limita ao esquadrão em que ele está de serviço.
+        const retiradas = await api('retiradas.php');
+        const dataDe = (r) => new Date(r.data_hora.replace(' ', 'T'));
+        const hoje = new Date().toDateString();
+
+        document.getElementById('retiradasData').textContent =
+            new Date().toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/\./g, '');
+        document.getElementById('resumoPendentes').textContent = retiradas.filter((r) => r.status !== 'enviada').length;
+        document.getElementById('resumoEnviadas').textContent =
+            retiradas.filter((r) => r.status === 'enviada' && dataDe(r).toDateString() === hoje).length;
 
         if (retiradas.length === 0) {
-            lista.innerHTML = '<p class="vazio">Nenhuma retirada ainda para o seu esquadrão.</p>';
+            lista.innerHTML = '<p class="vazio">Nenhuma retirada ainda para este esquadrão.</p>';
             return;
         }
 
         lista.innerHTML = '';
         retiradas.slice(0, 20).forEach((r) => {
-            const item = document.createElement('div');
+            const item = document.createElement('button');
+            item.type = 'button';
             item.className = 'card retirada-item';
-            const dataFormatada = new Date(r.data_hora.replace(' ', 'T')).toLocaleString('pt-BR', {
-                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-            });
+            const data = dataDe(r);
+            const hora = data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            const dia = data.toDateString() === hoje ? 'hoje' : data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
             item.innerHTML = `
-                <div class="info">
-                    <strong>${escapeHtml(TIPOS_RETIRADA[r.tipo] || r.tipo)} · Esq. ${escapeHtml(r.agrupamento_valor)}</strong>
-                    <small>${dataFormatada}${r.protocolo ? ' · ' + escapeHtml(r.protocolo) : ''}</small>
+                <div class="selo">
+                    <b>${escapeHtml(SIGLAS_RETIRADA[r.tipo] || '—')}</b>
+                    <small>${hora}</small>
                 </div>
-                <span class="status-pill ${r.status}">${r.status === 'enviada' ? 'Enviada' : 'Pendente'}</span>
+                <div class="info">
+                    <strong>${escapeHtml(TIPOS_RETIRADA[r.tipo] || r.tipo)}</strong>
+                    <small>Esquadrilha ${escapeHtml(r.agrupamento_valor)} · ${dia}${r.protocolo ? ' · ' + escapeHtml(r.protocolo) : ''}</small>
+                </div>
+                <div class="lado">
+                    <span class="status-pill ${r.status}">${r.status === 'enviada' ? 'Enviada' : 'Pendente'}</span>
+                    <span class="i seta" style="--icon-url:url('../../images/icons/arrow-left.svg')" aria-hidden="true"></span>
+                </div>
             `;
             item.addEventListener('click', () => abrirMarcar(r.id));
             lista.appendChild(item);
@@ -224,7 +352,7 @@ document.getElementById('formNovaRetirada').addEventListener('submit', async (ev
                 tipo,
                 agrupamento_tipo: 'esquadrilha',
                 agrupamento_valor: esquadrilha,
-                esquadrao: sessaoAtual.aluno.esquadrao,
+                esquadrao: esquadraoDeServico(),
             },
         });
         await abrirMarcar(resultado.id);
@@ -234,9 +362,10 @@ document.getElementById('formNovaRetirada').addEventListener('submit', async (ev
 });
 
 // ---------- Marcar ----------
+// Motivos de falta e postos de serviço, buscados juntos uma vez por sessão.
 async function carregarMotivos() {
     if (motivosCache) return motivosCache;
-    motivosCache = await api('motivos.php');
+    [motivosCache, postosServicoCache] = await Promise.all([api('motivos.php'), api('postos_servico.php')]);
     return motivosCache;
 }
 
@@ -260,6 +389,7 @@ async function abrirMarcar(retiradaId) {
         somenteLeituraMarcar = retirada.status === 'enviada';
 
         renderizarMarcar(itens, motivos, '', somenteLeituraMarcar);
+        atualizarPlacar();
 
         document.getElementById('marcarTitulo').textContent =
             `${TIPOS_RETIRADA[retirada.tipo] || retirada.tipo} · Esq. ${retirada.agrupamento_valor}`;
@@ -287,11 +417,15 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
     filtrados.forEach((item) => {
         const presente = Number(item.presente) === 1;
         const el = document.createElement('div');
-        el.className = 'aluno-item';
+        el.className = 'aluno-item' + (presente ? '' : ' em-falta');
         el.dataset.alunoId = item.aluno_id;
 
         const opcoesMotivo = motivos.map((m) =>
             `<option value="${m.id}" ${Number(item.motivo_falta_id) === Number(m.id) ? 'selected' : ''}>${escapeHtml(m.nome)}</option>`
+        ).join('');
+        const postos = postosServicoCache || [];
+        const opcoesPosto = '<option value="">Posto de serviço…</option>' + postos.map((p) =>
+            `<option value="${p.id}" ${Number(item.servico_id) === Number(p.id) ? 'selected' : ''}>${escapeHtml(p.nome)}</option>`
         ).join('');
 
         el.innerHTML = `
@@ -306,7 +440,8 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
                 </div>
             </div>
             <div class="bloco-motivo ${!presente ? 'ativo' : ''}">
-                <select class="select-motivo" ${somenteLeitura ? 'disabled' : ''}>${opcoesMotivo}</select>
+                <select class="select-motivo" aria-label="Motivo" ${somenteLeitura ? 'disabled' : ''}>${opcoesMotivo}</select>
+                <select class="select-posto" aria-label="Posto de serviço" hidden ${somenteLeitura ? 'disabled' : ''}>${opcoesPosto}</select>
                 <input type="text" class="input-observacao" placeholder="Observação (opcional)" value="${escapeHtml(item.observacao || '')}" ${somenteLeitura ? 'disabled' : ''}>
             </div>
         `;
@@ -316,6 +451,24 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
         const blocoMotivo = el.querySelector('.bloco-motivo');
         const selectMotivo = el.querySelector('.select-motivo');
         const inputObs = el.querySelector('.input-observacao');
+        const selectPosto = el.querySelector('.select-posto');
+
+        // O posto só é perguntado quando o motivo é "Serviço" (e há postos cadastrados).
+        function motivoEhServico() {
+            const motivo = motivos.find((m) => Number(m.id) === Number(selectMotivo.value));
+            return !!motivo && motivo.codigo === CODIGO_MOTIVO_SERVICO && postos.length > 0;
+        }
+        function ajustarPosto() {
+            selectPosto.hidden = !motivoEhServico();
+            if (selectPosto.hidden) selectPosto.value = '';
+        }
+        function salvarFalta() {
+            const posto = motivoEhServico() && selectPosto.value ? Number(selectPosto.value) : null;
+            item.motivo_falta_id = Number(selectMotivo.value);
+            item.servico_id = posto;
+            enviarMarcacao(item.aluno_id, false, Number(selectMotivo.value), inputObs.value, posto);
+        }
+        selectPosto.hidden = !motivoEhServico();
 
         function marcar(presenteNovo) {
             if (somenteLeitura) return;
@@ -324,19 +477,33 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
             btnFalta.classList.toggle('ativo', !presenteNovo);
             btnFalta.classList.toggle('falta', !presenteNovo);
             blocoMotivo.classList.toggle('ativo', !presenteNovo);
-            enviarMarcacao(item.aluno_id, presenteNovo, presenteNovo ? null : Number(selectMotivo.value), inputObs.value);
+            el.classList.toggle('em-falta', !presenteNovo);
+            item.presente = presenteNovo ? 1 : 0;
+            atualizarPlacar();
+            if (presenteNovo) {
+                enviarMarcacao(item.aluno_id, true, null, inputObs.value, null);
+            } else {
+                ajustarPosto();
+                salvarFalta();
+            }
         }
 
         btnPresente.addEventListener('click', () => marcar(true));
         btnFalta.addEventListener('click', () => marcar(false));
         selectMotivo.addEventListener('change', () => {
+            ajustarPosto();
             if (!btnPresente.classList.contains('ativo')) {
-                enviarMarcacao(item.aluno_id, false, Number(selectMotivo.value), inputObs.value);
+                salvarFalta();
+            }
+        });
+        selectPosto.addEventListener('change', () => {
+            if (!btnPresente.classList.contains('ativo')) {
+                salvarFalta();
             }
         });
         inputObs.addEventListener('blur', () => {
             if (!btnPresente.classList.contains('ativo')) {
-                enviarMarcacao(item.aluno_id, false, Number(selectMotivo.value), inputObs.value);
+                salvarFalta();
             }
         });
 
@@ -344,21 +511,40 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
     });
 }
 
+// Placar acima do botão de enviar: quantos presentes e quantas faltas até agora.
+function atualizarPlacar() {
+    const faltas = itensMarcarAtual.filter((it) => Number(it.presente) !== 1).length;
+    document.getElementById('placarChamada').innerHTML =
+        `<span class="presentes">${itensMarcarAtual.length - faltas} presentes</span><span class="faltas">${faltas} ${faltas === 1 ? 'falta' : 'faltas'}</span>`;
+}
+
+// Uma gravação por aluno de cada vez. Se ele mexer de novo enquanto a anterior
+// ainda está indo (marca falta, troca o motivo, escolhe o posto), a última
+// versão fica na fila e vai em seguida — antes ela era descartada em silêncio.
 let marcacaoEmAndamento = new Map();
-async function enviarMarcacao(alunoId, presente, motivoFaltaId, observacao) {
+let marcacaoNaFila = new Map();
+async function enviarMarcacao(alunoId, presente, motivoFaltaId, observacao, servicoId = null) {
     const chave = alunoId;
-    if (marcacaoEmAndamento.get(chave)) return;
+    if (marcacaoEmAndamento.get(chave)) {
+        marcacaoNaFila.set(chave, [alunoId, presente, motivoFaltaId, observacao, servicoId]);
+        return;
+    }
     marcacaoEmAndamento.set(chave, true);
 
     try {
         await api(`retirada_itens.php?retirada_id=${retiradaMarcarAtual}&aluno_id=${alunoId}`, {
             method: 'PUT',
-            body: { presente: presente ? 1 : 0, motivo_falta_id: motivoFaltaId, observacao: observacao || null },
+            body: { presente: presente ? 1 : 0, motivo_falta_id: motivoFaltaId, servico_id: servicoId, observacao: observacao || null },
         });
     } catch (e) {
         exibirErro('marcarMensagem', e.message);
     } finally {
         marcacaoEmAndamento.set(chave, false);
+        const pendente = marcacaoNaFila.get(chave);
+        if (pendente) {
+            marcacaoNaFila.delete(chave);
+            enviarMarcacao(...pendente);
+        }
     }
 }
 
@@ -397,6 +583,7 @@ async function carregarEfetivo() {
 function renderizarEfetivo(alunos, filtro) {
     const lista = document.getElementById('listaEfetivo');
     const termo = filtro.trim().toLowerCase();
+    document.getElementById('efetivoTotal').textContent = `${alunos.length} alunos`;
     const filtrados = alunos.filter((a) =>
         !termo || a.nome_guerra.toLowerCase().includes(termo) || String(a.milhao).includes(termo)
     );
@@ -423,9 +610,14 @@ document.getElementById('efetivoBusca').addEventListener('input', (evento) => {
 });
 
 // ---------- Inicialização ----------
+document.querySelectorAll('.versao-app').forEach((el) => {
+    el.textContent = window.ARGOS_VERSAO ? `Argos ${window.ARGOS_VERSAO}` : '';
+});
+
 if (sessaoAtual && sessaoAtual.token) {
     atualizarInfoSessao();
-    mostrarView('view-retiradas');
+    // Sessão guardada sem posto de serviço (ou de antes dessa escolha existir): pergunta.
+    mostrarView(sessaoAtual.servico ? 'view-retiradas' : 'view-servico');
 } else {
     mostrarView('view-login');
 }

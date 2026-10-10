@@ -10,17 +10,24 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : null;
 switch ($metodo) {
 
     // ---------- LISTAR / BUSCAR ----------
+    // Pelo app (sessão do aluno): só o esquadrão em que ele está de serviço.
+    // Com chave admin e sem sessão: tudo, com os filtros da query string.
     case 'GET':
+        $alunoSessao = exigirSessaoOuAdmin($conexao);
+
         if ($id) {
             $retirada = buscarRetiradaPorId($conexao, $id);
             if (!$retirada) {
                 erro("Retirada não encontrada.", 404);
             }
+            if ($alunoSessao && $retirada['esquadrao'] !== null && $retirada['esquadrao'] !== $alunoSessao['esquadrao_servico']) {
+                erro("Você só pode ver retiradas do esquadrão em que está de serviço.", 403);
+            }
             responder($retirada);
         }
 
         $filtros = [
-            'esquadrao' => $_GET['esquadrao'] ?? null,
+            'esquadrao' => $alunoSessao ? $alunoSessao['esquadrao_servico'] : ($_GET['esquadrao'] ?? null),
             'status' => $_GET['status'] ?? null,
             'tipo' => $_GET['tipo'] ?? null,
         ];
@@ -39,8 +46,8 @@ switch ($metodo) {
         }
 
         $esquadraoAlvo = $dados['esquadrao'] ?? null;
-        if ($dados['agrupamento_tipo'] === 'esquadrilha' && $esquadraoAlvo !== $alunoSessao['esquadrao']) {
-            erro("Você só pode abrir retirada do seu próprio esquadrão.", 403);
+        if ($dados['agrupamento_tipo'] === 'esquadrilha' && $esquadraoAlvo !== $alunoSessao['esquadrao_servico']) {
+            erro("Você só pode abrir retirada do esquadrão em que está de serviço.", 403);
         }
 
         // responsavel_nome não vem mais do cliente — é sempre quem está de
@@ -79,8 +86,8 @@ switch ($metodo) {
         if (!$retiradaAlvo) {
             erro("Retirada não encontrada.", 404);
         }
-        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao']) {
-            erro("Você só pode enviar retiradas do seu próprio esquadrão.", 403);
+        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao_servico']) {
+            erro("Você só pode enviar retiradas do esquadrão em que está de serviço.", 403);
         }
 
         $resultado = enviarRetirada($conexao, $id);
@@ -91,8 +98,9 @@ switch ($metodo) {
         responder(['protocolo' => $resultado['protocolo']]);
         break;
 
-    // ---------- EXCLUIR ----------
+    // ---------- EXCLUIR (administrativo) ----------
     case 'DELETE':
+        exigirEscopoAdmin();
         if (!$id) {
             erro("Informe o id da retirada (?id=).");
         }

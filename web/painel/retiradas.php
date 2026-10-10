@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'excluir
 
 $retiradas = listarRetiradas($conexao, ['esquadrao' => $escopo, 'limite' => 100]);
 
-$tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+$tiposRetirada = TIPOS_RETIRADA_ROTULOS;
 
 ?>
 <!DOCTYPE html>
@@ -56,11 +56,13 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
     .link-btn { color: var(--accent); text-decoration: none; font-size: 12px; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
@@ -77,7 +79,7 @@ $tiposRetirada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'e
             <p style="color: var(--text-muted); font-size: 13px;">Nenhuma retirada registrada ainda.</p>
         <?php else: ?>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Data/Hora|Tipo|Agrupamento|Status">
             <tr><th>Data/Hora</th><th>Tipo</th><th>Agrupamento</th><th>Esquadrão</th><th>Responsável</th><th>Status</th><th>Protocolo</th><th>Ações</th></tr>
             <?php foreach ($retiradas as $r): ?>
                 <tr>

@@ -3,6 +3,10 @@
 *.sh text eol=lf
 deploy/htaccess-manutencao text eol=lf
 
+# Arquivos gerados por scripts/dev/gerar-seed-qrcodes.php (o lint confere se estão em dia).
+database/seed_dev.sql text eol=lf
+docs/dev/qrcodes-seed.html text eol=lf
+
 # Fora do pacote de produção (git archive — scripts/release/gerar-pacote.sh):
 # só serve pra desenvolvimento, CI e deploy.
 /.forgejo export-ignore
@@ -12,6 +16,7 @@ deploy/htaccess-manutencao text eol=lf
 /.gitignore export-ignore
 /docker export-ignore
 /docker-compose.yml export-ignore
+/docker-compose.demo.yml export-ignore
 /deploy export-ignore
 # SQL não vai pro servidor (seria baixável se o .htaccess for ignorado) — as
 # migrations sobem só durante o deploy, dentro de _deploy/, e são apagadas no fim.

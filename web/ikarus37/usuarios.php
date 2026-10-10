@@ -282,6 +282,9 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     .campo-senha .toggle-senha { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-muted); background: none; border: none; padding: 0; width: 18px; }
     .campo-senha .toggle-senha:hover { color: var(--text); }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
+<link rel="stylesheet" href="../css/argos-ikarus.css">
 </head>
 <body>
 
@@ -324,7 +327,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     <div class="card">
         <h4>Contas existentes</h4>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Nome|Usuário|Nível|Status">
             <tr>
                 <th>Nome</th><th>Usuário</th><th>Nível</th><th>Status</th><th>Criado em</th><th>Último login</th>
                 <?php if ($souSuperAdmin): ?><th>Ações</th><?php endif; ?>
@@ -420,7 +423,7 @@ $usuariosPainel = mysqli_fetch_all(mysqli_query($conexao, "SELECT * FROM painel_
     <div class="card">
         <h4>Contas existentes</h4>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Nome|Cargo|Esquadrão|Status">
             <tr>
                 <th>Nome</th><th>Usuário</th><th>Cargo</th><th>Esquadrão</th><th>Status</th><th>Último login</th>
                 <?php if ($podeGerenciarPainel): ?><th>Ações</th><?php endif; ?>

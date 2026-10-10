@@ -13,6 +13,9 @@ $chaveGerada = null;
 // ---------- Criar nova chave ----------
 if ($podeGerenciar && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?? '') === 'criar') {
     $nome = trim($_POST['nome'] ?? '');
+    // Escopo: "app" (só as rotas do app, junto com a sessão do aluno) ou
+    // "admin" (também os endpoints administrativos). Qualquer outro valor vira "app".
+    $escopo = ($_POST['escopo'] ?? '') === 'admin' ? 'admin' : 'app';
 
     if ($nome === '') {
         $erro = "Dê um nome pra identificar essa chave (ex: \"App Android v1\").";
@@ -21,8 +24,8 @@ if ($podeGerenciar && $_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['acao'] ?
         $hash = hash('sha256', $chaveGerada);
         $preview = '...' . substr($chaveGerada, -6);
 
-        $stmt = mysqli_prepare($conexao, "INSERT INTO api_chaves (nome, chave_hash, chave_preview, criado_por) VALUES (?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, "ssss", $nome, $hash, $preview, $_SESSION['admin_usuario']);
+        $stmt = mysqli_prepare($conexao, "INSERT INTO api_chaves (nome, chave_hash, chave_preview, escopo, criado_por) VALUES (?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, "sssss", $nome, $hash, $preview, $escopo, $_SESSION['admin_usuario']);
         mysqli_stmt_execute($stmt);
 
         $mensagem = "Chave criada. Copie agora — ela não será mostrada de novo.";
@@ -109,6 +112,9 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
     details summary { cursor: pointer; color: var(--accent); font-size: 12px; margin-top: 6px; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
+<link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
+<link rel="stylesheet" href="../css/argos-ikarus.css">
 </head>
 <body>
 
@@ -147,22 +153,31 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
         <form method="post" class="form-linha">
             <input type="hidden" name="acao" value="criar">
             <input type="text" name="nome" placeholder='Nome do app (ex: "App Android v1")' required style="flex:1; min-width:200px;">
+            <select name="escopo" aria-label="Escopo da chave">
+                <option value="app">Escopo app — só as rotas do app, com sessão do aluno</option>
+                <option value="admin">Escopo admin — também os endpoints administrativos</option>
+            </select>
             <button type="submit">Gerar chave</button>
         </form>
+        <p style="color: var(--text-muted); font-size: 12px; margin-bottom:0;">
+            A chave que vai no <code>config.php</code> da PWA (<code>APP_PWA_API_KEY</code>) tem que ser de escopo <strong>app</strong>: ela chega ao navegador de quem abre o app.
+            Chave <strong>admin</strong> é pra integração de servidor — nunca coloque numa página ou num aplicativo distribuído.
+        </p>
     </div>
     <?php endif; ?>
 
     <div class="card">
         <h4>Chaves existentes (apps conectados)</h4>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Nome|Escopo|Status|Último uso">
             <tr>
-                <th>Nome</th><th>Preview</th><th>Status</th><th>Criada por</th><th>Criada em</th><th>Último uso</th>
+                <th>Nome</th><th>Escopo</th><th>Preview</th><th>Status</th><th>Criada por</th><th>Criada em</th><th>Último uso</th>
                 <?php if ($podeGerenciar): ?><th>Ações</th><?php endif; ?>
             </tr>
             <?php foreach ($chaves as $c): ?>
                 <tr>
                     <td><?= htmlspecialchars($c['nome']) ?></td>
+                    <td><span class="badge <?= $c['escopo'] === 'admin' ? 'inativo' : 'ativo' ?>"><?= htmlspecialchars($c['escopo']) ?></span></td>
                     <td><code><?= htmlspecialchars($c['chave_preview']) ?></code></td>
                     <td><span class="badge <?= $c['ativo'] ? 'ativo' : 'inativo' ?>"><?= $c['ativo'] ? 'ativa' : 'revogada' ?></span></td>
                     <td><?= htmlspecialchars($c['criado_por'] ?? '—') ?></td>
@@ -185,7 +200,7 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
                 </tr>
             <?php endforeach; ?>
             <?php if (empty($chaves)): ?>
-                <tr><td colspan="7" style="color: var(--text-muted);">Nenhuma chave cadastrada.</td></tr>
+                <tr><td colspan="8" style="color: var(--text-muted);">Nenhuma chave cadastrada.</td></tr>
             <?php endif; ?>
         </table>
         </div>
@@ -218,6 +233,7 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
         <p style="color: var(--text-muted); font-size: 13px;">
             Base: <code class="rota">https://sigsaeear.com/cidit/projetos/11/api/</code><br>
             Toda requisição precisa do header <code>X-API-Key: &lt;sua chave&gt;</code>. Corpo em JSON, respostas em JSON.<br>
+            <strong>Toda chave tem um escopo.</strong> Chave <code>app</code> só serve nas rotas do app e sempre junto com a sessão do aluno; os endpoints administrativos (criar/alterar/inativar aluno, grupos, usuários do Painel, relatórios, situação, excluir retirada) exigem chave <code>admin</code> e respondem <code>403</code> pra chave de app. Modelo completo em <code>docs/SEGURANCA-API.md</code>.<br>
             <strong>Endpoints marcados "requer sessão"</strong> também exigem o header <code>X-Session-Token: &lt;token&gt;</code>, obtido em <code>POST /sessao.php</code> — a chave sozinha só identifica o aplicativo, a sessão identifica o aluno (issue #26). Sem sessão válida, essas rotas respondem 401.
         </p>
 

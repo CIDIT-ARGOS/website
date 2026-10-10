@@ -725,3 +725,12 @@ a {
     gap: 32px;
   }
 }
+
+/* ---------- Marca: A R G (olho) S — o olho no lugar do O ---------- */
+.marca-argos { white-space: nowrap; }
+.marca-argos .olho {
+  display: inline-block; width: .98em; height: .7em; vertical-align: 0;
+  background-color: currentColor;
+  -webkit-mask: url('../images/argos-olho.svg') center / 100% auto no-repeat;
+  mask: url('../images/argos-olho.svg') center / 100% auto no-repeat;
+}

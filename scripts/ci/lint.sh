@@ -39,6 +39,9 @@ if git ls-files | grep -E '(^|/)(backup_|reparo_producao_).*\.sql$'; then
     erros=$((erros + 1))
 fi
 
+echo "== Seed de desenvolvimento (QR codes) =="
+php scripts/dev/gerar-seed-qrcodes.php --checar || erros=$((erros + 1))
+
 echo "== Migrations =="
 php -r '
 require "deploy/migracoes.php";

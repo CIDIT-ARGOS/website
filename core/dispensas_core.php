@@ -1,14 +1,14 @@
 <?php
 
-// Dispensas médicas: período (início/término), número da dispensa, motivo e
-// "dispensado de quê" — mesmos campos do Livro de Serviço do Aluno de Dia.
+// Dispensas médicas: período (início/término), número da dispensa, motivo,
+// Oficial Médico responsável (quem concedeu) e "dispensado de quê" — mesmos campos do Livro de Serviço do Aluno de Dia.
 // Usada pela tela de gestão (dispensas.php), pela sugestão automática na
 // chamada (retiradas_core.php::abrirRetirada) e pelo Livro do Dia.
 
 require_once __DIR__ . '/validacao_core.php';
 
 // Limites batendo com o VARCHAR de dispensas (database/init_db.sql).
-const DISPENSA_LIMITES_CAMPOS = ['numero' => 20, 'motivo' => 255, 'dispensado_de' => 255];
+const DISPENSA_LIMITES_CAMPOS = ['numero' => 20, 'motivo' => 255, 'medico_responsavel' => 100, 'dispensado_de' => 255];
 
 // Janela de tolerância pro início da dispensa em torno de hoje (issue #30) —
 // evita tanto lançar uma dispensa já totalmente expirada há meses (ex: um
@@ -191,6 +191,7 @@ function criarDispensa($conexao, $dados) {
     $dataTermino = trim($dados['data_termino'] ?? '');
     $numero = trim($dados['numero'] ?? '') ?: null;
     $motivo = trim($dados['motivo'] ?? '');
+    $medicoResponsavel = trim($dados['medico_responsavel'] ?? '');
     $dispensadoDe = trim($dados['dispensado_de'] ?? '') ?: null;
     $painelUsuarioId = $dados['painel_usuario_id'] ?? null;
 
@@ -210,7 +211,10 @@ function criarDispensa($conexao, $dados) {
     if ($motivo === '') {
         return ['ok' => false, 'erro' => 'Informe o motivo da dispensa.'];
     }
-    $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
+    if ($medicoResponsavel === '') {
+        return ['ok' => false, 'erro' => 'Informe o Oficial Médico responsável pela dispensa.'];
+    }
+    $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'medico_responsavel' => $medicoResponsavel, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
     if ($erroComprimento) {
         return ['ok' => false, 'erro' => $erroComprimento];
     }
@@ -219,10 +223,10 @@ function criarDispensa($conexao, $dados) {
     }
 
     $stmt = mysqli_prepare($conexao, "
-        INSERT INTO dispensas (aluno_id, data_inicio, data_termino, numero, motivo, dispensado_de, painel_usuario_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO dispensas (aluno_id, data_inicio, data_termino, numero, motivo, medico_responsavel, dispensado_de, painel_usuario_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     ");
-    mysqli_stmt_bind_param($stmt, "isssssi", $alunoId, $dataInicio, $dataTermino, $numero, $motivo, $dispensadoDe, $painelUsuarioId);
+    mysqli_stmt_bind_param($stmt, "issssssi", $alunoId, $dataInicio, $dataTermino, $numero, $motivo, $medicoResponsavel, $dispensadoDe, $painelUsuarioId);
     if (!mysqli_stmt_execute($stmt)) {
         return ['ok' => false, 'erro' => 'Erro ao criar dispensa: ' . mysqli_error($conexao)];
     }
@@ -236,6 +240,7 @@ function atualizarDispensa($conexao, $id, $dados) {
     $dataTermino = trim($dados['data_termino'] ?? '');
     $numero = trim($dados['numero'] ?? '') ?: null;
     $motivo = trim($dados['motivo'] ?? '');
+    $medicoResponsavel = trim($dados['medico_responsavel'] ?? '');
     $dispensadoDe = trim($dados['dispensado_de'] ?? '') ?: null;
 
     if ($dataInicio === '' || $dataTermino === '') {
@@ -251,7 +256,10 @@ function atualizarDispensa($conexao, $id, $dados) {
     if ($motivo === '') {
         return ['ok' => false, 'erro' => 'Informe o motivo da dispensa.'];
     }
-    $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
+    if ($medicoResponsavel === '') {
+        return ['ok' => false, 'erro' => 'Informe o Oficial Médico responsável pela dispensa.'];
+    }
+    $erroComprimento = validarComprimentos(['numero' => $numero, 'motivo' => $motivo, 'medico_responsavel' => $medicoResponsavel, 'dispensado_de' => $dispensadoDe], DISPENSA_LIMITES_CAMPOS);
     if ($erroComprimento) {
         return ['ok' => false, 'erro' => $erroComprimento];
     }
@@ -265,10 +273,10 @@ function atualizarDispensa($conexao, $id, $dados) {
     }
 
     $stmt = mysqli_prepare($conexao, "
-        UPDATE dispensas SET data_inicio = ?, data_termino = ?, numero = ?, motivo = ?, dispensado_de = ?
+        UPDATE dispensas SET data_inicio = ?, data_termino = ?, numero = ?, motivo = ?, medico_responsavel = ?, dispensado_de = ?
         WHERE id = ?
     ");
-    mysqli_stmt_bind_param($stmt, "sssssi", $dataInicio, $dataTermino, $numero, $motivo, $dispensadoDe, $id);
+    mysqli_stmt_bind_param($stmt, "ssssssi", $dataInicio, $dataTermino, $numero, $motivo, $medicoResponsavel, $dispensadoDe, $id);
     if (!mysqli_stmt_execute($stmt)) {
         return ['ok' => false, 'erro' => 'Erro ao atualizar dispensa: ' . mysqli_error($conexao)];
     }

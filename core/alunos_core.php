@@ -89,7 +89,7 @@ function validarAluno($dados, $parcial = false) {
 
 /**
  * Lista alunos com filtros opcionais.
- * $filtros aceitos: esquadrilha, especialidade, esquadrao, curso, qrcode_hash,
+ * $filtros aceitos: esquadrilha, especialidade, esquadrao, curso, sexo, qrcode_hash,
  * busca (nome_guerra/milhao), incluir_inativos (bool), com_posto_exibicao (bool),
  * order_by (padrão "nome_guerra ASC").
  */
@@ -116,6 +116,11 @@ function listarAlunos($conexao, $filtros = []) {
     if (!empty($filtros['curso'])) {
         $condicoes[] = "a.curso = ?";
         $params[] = $filtros['curso'];
+        $tipos .= "s";
+    }
+    if (!empty($filtros['sexo'])) {
+        $condicoes[] = "a.sexo = ?";
+        $params[] = $filtros['sexo'];
         $tipos .= "s";
     }
     if (!empty($filtros['turma_id'])) {
