@@ -38,7 +38,7 @@ Toda mudança passa por `feat/<nome>` → `develop` → `release` → `main`, co
 Uma tag `vX.Y.Z` na `main` publica a versão em produção (backup do banco, migrations e smoke test incluídos).
 
 Detalhes — branches, testes, como lançar, rollback e migrations — em [docs/CI-CD.md](docs/CI-CD.md).
-Pra testar a Área Funcional num banco local, há alunos fictícios com QR code: [docs/dev/SEED-QRCODES.md](docs/dev/SEED-QRCODES.md).
+Pra subir um Argos completo só com dados fictícios e testar as três interfaces: [docs/dev/COMO-TESTAR.md](docs/dev/COMO-TESTAR.md) (os alunos de teste e seus QR codes estão em [docs/dev/SEED-QRCODES.md](docs/dev/SEED-QRCODES.md)).
 
 ## Equipe do projeto
 

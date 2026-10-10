@@ -1,0 +1,53 @@
+# Ambiente de DEMONSTRAÇÃO/TESTE, separado do docker-compose.yml do dia a dia:
+# banco novo só com dados fictícios (database/seed_dev.sql), em outra porta e
+# outro volume — não encosta no banco local que tem backup de produção.
+#
+#   docker compose -f docker-compose.demo.yml up -d --build
+#   docker compose -f docker-compose.demo.yml exec web php scripts/dev/simular-atividade.php http://localhost
+#   → http://localhost:8090   (logins em docs/dev/COMO-TESTAR.md)
+#
+# Recomeçar do zero:  docker compose -f docker-compose.demo.yml down -v
+
+name: argos-demo
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    ports:
+      - "8090:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/config.docker.php:/var/www/html/core/config.php:ro
+      - ./docker/htaccess-local:/var/www/html/.htaccess:ro
+      - ./docker/apache-local.conf:/etc/apache2/sites-enabled/000-default.conf:ro
+      - ./docker/php-local.ini:/usr/local/etc/php/conf.d/zz-local.ini:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: argos_root
+      MYSQL_DATABASE: argos
+      MYSQL_USER: argos
+      MYSQL_PASSWORD: argos
+      # Ignora backup_*.sql e seed_db.sql (dados reais): só init_db.sql + seed_dev.sql.
+      ARGOS_SO_SEED_DEV: "1"
+    volumes:
+      - argos_demo_db:/var/lib/mysql
+      - .:/argos-src:ro
+      - ./docker/mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # Consulta de verdade no banco já populado: durante a importação inicial
+      # o servidor temporário responde ping, mas o site ainda não tem tabelas.
+      test: ["CMD-SHELL", "mysql -uroot -p$$MYSQL_ROOT_PASSWORD -h127.0.0.1 -e 'SELECT 1 FROM alunos LIMIT 1' $$MYSQL_DATABASE"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+
+volumes:
+  argos_demo_db:

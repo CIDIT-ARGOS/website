@@ -43,6 +43,16 @@ const NOMES_GUERRA = [
 // Um aluno inativo, pra testar que o QR dele é recusado no login.
 const ALUNO_INATIVO = 'WERNECK';
 
+// Usuários do Painel de Comando pra testar as duas visões (CA inteiro e um
+// esquadrão só). Senha de desenvolvimento: ArgosDev@2026 — o hash é fixo
+// (bcrypt gera um diferente a cada vez, e o --checar compara os arquivos).
+const SENHA_DEV_HASH = '$2y$10$XLF3AC8KhkJvkF./nQ6oZu3eqRXymi8mXXQuRsgWy73cNJK5ijBgG';
+// [nome, usuário, cargo, esquadrão]
+const USUARIOS_PAINEL = [
+    ['Comandante do CA (dev)', 'dev.ca', 'CMD_CA', null],
+    ['Comandante do Esquadrão Prata (dev)', 'dev.prata', 'CMD_ESQUADRAO', 'Esquadrão Prata'],
+];
+
 function montarAlunos() {
     $alunos = [];
     $numero = 0;
@@ -109,7 +119,15 @@ function gerarSql(array $alunos) {
         . "  (posto_graduacao, especialidade, nome_guerra, sexo, identidade_militar, qrcode_hash, milhao, esquadrao, esquadrilha, curso, serie, turma_id, ativo)\n"
         . "VALUES\n"
         . implode(",\n", $linhas) . "\n"
-        . "ON DUPLICATE KEY UPDATE qrcode_hash = VALUES(qrcode_hash), ativo = VALUES(ativo);\n";
+        . "ON DUPLICATE KEY UPDATE qrcode_hash = VALUES(qrcode_hash), ativo = VALUES(ativo);\n\n"
+        . "-- Usuários do Painel de Comando (senha de desenvolvimento em docs/dev/SEED-QRCODES.md).\n"
+        . "INSERT INTO painel_usuarios (nome, usuario, senha_hash, cargo, esquadrao)\n"
+        . "VALUES\n"
+        . implode(",\n", array_map(
+            fn($u) => sprintf("  (%s, %s, %s, %s, %s)", $q($u[0]), $q($u[1]), $q(SENHA_DEV_HASH), $q($u[2]), $u[3] === null ? 'NULL' : $q($u[3])),
+            USUARIOS_PAINEL
+        )) . "\n"
+        . "ON DUPLICATE KEY UPDATE senha_hash = VALUES(senha_hash), cargo = VALUES(cargo), esquadrao = VALUES(esquadrao), ativo = 1;\n";
 }
 
 // ---------------------------------------------------------------------

@@ -26,6 +26,17 @@ docker compose exec -T db mysql -uroot -pargos_root argos < database/seed_dev.sq
 
 Depois abra `http://localhost:8080/web/app/`, toque em escanear e aponte pra um QR da folha (ou use "Copiar código" e cole no campo de login). O aluno `WERNECK` é inativo de propósito: o login dele tem que ser recusado.
 
+## Logins de desenvolvimento
+
+O seed também cria usuários do Painel, pra ver as duas visões:
+
+| Onde | Usuário | Senha | Vê |
+|---|---|---|---|
+| Painel (`/web/painel/`) | `dev.ca` | `ArgosDev@2026` | todo o Corpo de Alunos |
+| Painel (`/web/painel/`) | `dev.prata` | `ArgosDev@2026` | só o Esquadrão Prata |
+| Ikarus37 (`/web/ikarus37/`) | `admin` | a do `database/init_db.sql` | painel técnico |
+| Área Funcional (`/web/app/`) | — | QR code da folha | o esquadrão do aluno |
+
 ## Mudar o efetivo de teste
 
 Edite as listas no começo de `scripts/dev/gerar-seed-qrcodes.php` (esquadrões, esquadrilhas, nomes) e regenere:

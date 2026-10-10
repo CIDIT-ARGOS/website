@@ -38,3 +38,10 @@ VALUES
   ('GS', 'SAD', 'ZANETTI', 'M', 'DEV-0024', '50322240b745c46aca82885a4580a9f7414f9f542bf5f6e1ebc30dd4ebbc6db1', '26/8024', 'Esquadrão Verde', 'B', 'CFS', '3', (SELECT id FROM turmas WHERE nome = 'Invictus'), 1),
   ('GS', 'SIN', 'WERNECK', 'M', 'DEV-0025', '67818d2d445071c9642a708fb6cd3b6c48cc57aafe8293b22c8d15983dd0febd', '26/8025', 'Esquadrão Prata', 'A', 'EAGS', 'EAGS', (SELECT id FROM turmas WHERE nome = 'Ikarus'), 0)
 ON DUPLICATE KEY UPDATE qrcode_hash = VALUES(qrcode_hash), ativo = VALUES(ativo);
+
+-- Usuários do Painel de Comando (senha de desenvolvimento em docs/dev/SEED-QRCODES.md).
+INSERT INTO painel_usuarios (nome, usuario, senha_hash, cargo, esquadrao)
+VALUES
+  ('Comandante do CA (dev)', 'dev.ca', '$2y$10$XLF3AC8KhkJvkF./nQ6oZu3eqRXymi8mXXQuRsgWy73cNJK5ijBgG', 'CMD_CA', NULL),
+  ('Comandante do Esquadrão Prata (dev)', 'dev.prata', '$2y$10$XLF3AC8KhkJvkF./nQ6oZu3eqRXymi8mXXQuRsgWy73cNJK5ijBgG', 'CMD_ESQUADRAO', 'Esquadrão Prata')
+ON DUPLICATE KEY UPDATE senha_hash = VALUES(senha_hash), cargo = VALUES(cargo), esquadrao = VALUES(esquadrao), ativo = 1;
