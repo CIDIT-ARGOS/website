@@ -38,6 +38,7 @@ Toda mudança passa por `feat/<nome>` → `develop` → `release` → `main`, co
 Uma tag `vX.Y.Z` na `main` publica a versão em produção (backup do banco, migrations e smoke test incluídos).
 
 Detalhes — branches, testes, como lançar, rollback e migrations — em [docs/CI-CD.md](docs/CI-CD.md).
+Pra testar a Área Funcional num banco local, há alunos fictícios com QR code: [docs/dev/SEED-QRCODES.md](docs/dev/SEED-QRCODES.md).
 
 ## Equipe do projeto
 

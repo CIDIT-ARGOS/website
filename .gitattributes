@@ -3,6 +3,10 @@
 *.sh text eol=lf
 deploy/htaccess-manutencao text eol=lf
 
+# Arquivos gerados por scripts/dev/gerar-seed-qrcodes.php (o lint confere se estão em dia).
+database/seed_dev.sql text eol=lf
+docs/dev/qrcodes-seed.html text eol=lf
+
 # Fora do pacote de produção (git archive — scripts/release/gerar-pacote.sh):
 # só serve pra desenvolvimento, CI e deploy.
 /.forgejo export-ignore
