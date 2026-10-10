@@ -2,9 +2,7 @@
 
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../../core/retiradas_core.php';
-require_once __DIR__ . '/../../core/dispensas_core.php';
-require_once __DIR__ . '/../../core/alunos_core.php';
+require_once __DIR__ . '/../../core/livro_core.php';
 
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao();
@@ -12,57 +10,16 @@ $escopo = escopoEsquadrao();
 $data = $_GET['data'] ?? date('Y-m-d');
 $esquadraoEscolhido = $escopo ?? ($_GET['esquadrao'] ?? 'todos');
 
-// Formato "19 AGO 2026" do documento de referência — sem depender de locale
-// instalado no servidor (evita quebrar se o pt_BR.utf8 não existir no PHP).
-function dataEstiloLivro($dataIso) {
-    // MAIO não é abreviado pra MAI — vai por extenso mesmo (regra do padrão militar).
-    $meses = ['01' => 'JAN', '02' => 'FEV', '03' => 'MAR', '04' => 'ABR', '05' => 'MAIO', '06' => 'JUN',
-              '07' => 'JUL', '08' => 'AGO', '09' => 'SET', '10' => 'OUT', '11' => 'NOV', '12' => 'DEZ'];
-    [$ano, $mes, $dia] = explode('-', $dataIso);
-    return "$dia {$meses[$mes]} $ano";
-}
-
-$tiposRetirada = [
-    'pernoite' => 'PERNOITE',
-    '1_jornada' => '1ª JORNADA',
-    '2_jornada' => '2ª JORNADA',
-    'educacao_fisica' => 'EDUCAÇÃO FÍSICA',
-];
+$tiposRetirada = LIVRO_TIPOS_RETIRADA;
 
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [$escopo];
 $esquadroesParaMontar = ($escopo === null && $esquadraoEscolhido === 'todos')
     ? $esquadroesDisponiveis
     : [$escopo ?? $esquadraoEscolhido];
 
-/**
- * Monta os dados de um esquadrão pro Livro do Dia: uma entrada por tipo de
- * retirada enviada naquele dia (com as faltas de todas as retiradas daquele
- * tipo, ex: todas as esquadrilhas do 1ª Jornada) + as dispensas ativas.
- */
-function montarLivroEsquadrao($conexao, $esquadrao, $data, $tiposRetirada) {
-    $retiradas = listarRetiradasDoDia($conexao, $esquadrao, $data);
-
-    $porTipo = [];
-    foreach (array_keys($tiposRetirada) as $tipo) {
-        $porTipo[$tipo] = [];
-    }
-    foreach ($retiradas as $r) {
-        $itens = listarItensRetirada($conexao, $r['id']);
-        foreach ($itens as $item) {
-            if ((int) $item['presente'] === 0) {
-                $porTipo[$r['tipo']][] = $item;
-            }
-        }
-    }
-
-    $dispensas = listarDispensas($conexao, ['esquadrao' => $esquadrao, 'ativas_em' => $data]);
-
-    return ['esquadrao' => $esquadrao, 'por_tipo' => $porTipo, 'dispensas' => $dispensas];
-}
-
 $livros = [];
 foreach ($esquadroesParaMontar as $esq) {
-    $livros[] = montarLivroEsquadrao($conexao, $esq, $data, $tiposRetirada);
+    $livros[] = montarLivroEsquadrao($conexao, $esq, $data);
 }
 
 ?>
@@ -101,6 +58,7 @@ foreach ($esquadroesParaMontar as $esq) {
     .livro h2.esquadrao { text-align: center; font-size: 14px; margin: 16px 0; }
     .livro h3.secao { font-size: 13px; text-transform: uppercase; border-bottom: 1px solid var(--border); padding-bottom: 4px; margin: 20px 0 8px; }
     .livro p { font-size: 13px; margin: 4px 0; }
+    .livro p.sem-chamada { color: var(--text-muted); font-style: italic; }
     .livro ul { margin: 4px 0; padding-left: 20px; font-size: 13px; }
     .dispensa-bloco { font-size: 13px; margin-bottom: 12px; }
     .dispensa-bloco strong { display: block; }
@@ -114,11 +72,12 @@ foreach ($esquadroesParaMontar as $esq) {
     }
 </style>
 <link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div>
         <button onclick="window.print()"><span class="i" style="--icon-url:url('../images/icons/printer.svg')"></span>Baixar PDF</button>
         <a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
@@ -147,20 +106,21 @@ foreach ($esquadroesParaMontar as $esq) {
             <h1>COMANDO DA AERONÁUTICA</h1>
             <p class="subtitulo">ESCOLA DE ESPECIALISTAS DE AERONÁUTICA</p>
             <p class="subtitulo">CORPO DE ALUNOS</p>
-            <h2 class="esquadrao">Esquadrão <?= htmlspecialchars($livro['esquadrao']) ?></h2>
+            <h2 class="esquadrao"><?= htmlspecialchars(rotuloEsquadrao($livro['esquadrao'])) ?></h2>
             <p style="text-align:center;">Resumo do dia <?= htmlspecialchars(dataEstiloLivro($data)) ?> — gerado pelo Argos</p>
 
             <?php foreach ($tiposRetirada as $tipoChave => $tipoRotulo): ?>
                 <h3 class="secao"><?= htmlspecialchars($tipoRotulo) ?></h3>
                 <?php $faltas = $livro['por_tipo'][$tipoChave]; ?>
-                <?php if (empty($faltas)): ?>
+                <?php if ($livro['chamadas_enviadas'][$tipoChave] === 0): ?>
+                    <p class="sem-chamada">Chamada não enviada.</p>
+                <?php elseif (empty($faltas)): ?>
                     <p>Não há.</p>
                 <?php else: ?>
                     <ul>
                         <?php foreach ($faltas as $f): ?>
                             <li>
-                                <?= htmlspecialchars(identificacaoAluno($f)) ?>
-                                (<?= htmlspecialchars($f['motivo_codigo'] ?? $f['motivo_nome'] ?? 'sem motivo') ?><?= $f['observacao'] ? ' — ' . htmlspecialchars($f['observacao']) : '' ?>)
+                                <?= htmlspecialchars(identificacaoAluno($f)) ?> — <?= htmlspecialchars(descricaoSituacaoLivro($f)) ?>
                             </li>
                         <?php endforeach; ?>
                     </ul>

@@ -2,8 +2,9 @@
 
 // Testes da API do Argos, endpoint por endpoint: o que tests/integracao_test.php
 // não cobre (ele segue o fluxo da PWA) — CRUD administrativo de alunos, grupos,
-// usuários do Painel, relatórios, situação, os casos de erro de retiradas e o
-// que é comum a todos (CORS, log, sessão expirada, rate limit).
+// usuários do Painel, relatórios, situação, dispensas médicas, Livro do Dia, os
+// casos de erro de retiradas e o que é comum a todos (CORS, log, sessão
+// expirada, rate limit).
 //
 // Uso:
 //   php tests/api_test.php http://127.0.0.1:8000
@@ -33,6 +34,8 @@ function limparDadosDoTeste() {
     sql("DELETE FROM retiradas WHERE id IN ($retiradas)");
     sql("DELETE FROM api_sessoes WHERE aluno_id IN ($alunos)");
     sql("DELETE FROM grupo_membros WHERE aluno_id IN ($alunos)");
+    sql("DELETE FROM dispensa_dispensa_tipos WHERE dispensa_id IN (SELECT id FROM dispensas WHERE aluno_id IN ($alunos))");
+    sql("DELETE FROM dispensas WHERE aluno_id IN ($alunos)");
     sql("DELETE FROM alunos WHERE identidade_militar LIKE 'API-%'");
     sql("DELETE FROM grupo_membros WHERE grupo_id IN (SELECT id FROM grupos WHERE nome = '$grupo')");
     sql("DELETE FROM grupos WHERE nome = '$grupo'");
@@ -406,6 +409,114 @@ teste('relatorios.php: filtro ?tipo=', function () use ($filtroEsquadrao) {
 teste('situacao.php e relatorios.php só aceitam GET (405)', function () {
     garantirStatus(api('POST', 'situacao.php', null, []), 405);
     garantirStatus(api('POST', 'relatorios.php', null, []), 405);
+});
+
+// =====================================================================
+secao('Dispensas médicas pelo app (GET/POST /api/dispensas.php)');
+
+$hoje = date('Y-m-d');
+$dispensa = fn(array $extra = []) => $extra + [
+    'aluno_id' => $alunos['API FOXTROT'], 'data_inicio' => $hoje, 'data_termino' => $hoje,
+    'numero' => '45/26', 'motivo' => 'Entorse de tornozelo (teste)',
+];
+
+teste('exige sessão de aluno (401)', function () use ($dispensa) {
+    garantirStatus(api('GET', 'dispensas.php'), 401);
+    garantirStatus(api('POST', 'dispensas.php', null, $dispensa()), 401);
+});
+
+$tiposDispensa = [];
+teste('?tipos=1 devolve o catálogo de "dispensado de"', function () use ($tokenEcho, &$tiposDispensa) {
+    $r = api('GET', 'dispensas.php?tipos=1', $tokenEcho);
+    garantirStatus($r, 200);
+    $tiposDispensa = $r['json'];
+    garantir(count($tiposDispensa) > 0 && isset($tiposDispensa[0]['id'], $tiposDispensa[0]['nome']), 'catálogo vazio ou sem id/nome');
+});
+
+teste('esquadrão sem dispensa lançada devolve lista vazia', function () use ($tokenEcho) {
+    $r = api('GET', 'dispensas.php', $tokenEcho);
+    garantirStatus($r, 200);
+    garantir($r['json'] === [], 'deveria vir vazio: ' . $r['corpo']);
+});
+
+teste('não lança dispensa pra aluno de outro esquadrão (404)', function () use ($tokenEcho, $dispensa) {
+    $deOutroEsquadrao = (int) sqlLinha("SELECT id FROM alunos WHERE identidade_militar = 'CI-0001'")['id'];
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['aluno_id' => $deOutroEsquadrao])), 404);
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['aluno_id' => 999999])), 404);
+});
+
+teste('sem motivo, com término antes do início ou com campo fora do formato é recusada (400)', function () use ($tokenEcho, $dispensa, $hoje) {
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['motivo' => ''])), 400);
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['data_termino' => date('Y-m-d', strtotime("$hoje -1 day"))])), 400);
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['data_inicio' => '2000-01-01', 'data_termino' => '2000-01-02'])), 400);
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa(['motivo' => ['não', 'é', 'texto']])), 400);
+});
+
+teste('dispensa válida é lançada (201) e aparece na lista com o "dispensado de"', function () use ($tokenEcho, $dispensa, &$tiposDispensa) {
+    $r = api('POST', 'dispensas.php', $tokenEcho, $dispensa(['dispensa_tipo_ids' => [(int) $tiposDispensa[0]['id']], 'dispensado_de' => 'corrida']));
+    garantirStatus($r, 201);
+    garantir((int) ($r['json']['id'] ?? 0) > 0, 'id da dispensa ausente');
+
+    $lista = api('GET', 'dispensas.php', $tokenEcho)['json'];
+    garantir(count($lista) === 1 && $lista[0]['nome_guerra'] === 'API FOXTROT', 'lista inesperada: ' . json_encode($lista));
+    garantir($lista[0]['tags_nomes'] === $tiposDispensa[0]['nome'] && $lista[0]['dispensado_de'] === 'corrida', '"dispensado de" não foi gravado');
+    garantir($lista[0]['numero'] === '45/26', 'número da dispensa não foi gravado');
+});
+
+teste('dispensa idêntica não é lançada duas vezes (400)', function () use ($tokenEcho, $dispensa) {
+    garantirStatus(api('POST', 'dispensas.php', $tokenEcho, $dispensa()), 400);
+});
+
+teste('outro esquadrão não vê a dispensa', function () use ($tokenPrata) {
+    garantir(porChave(api('GET', 'dispensas.php?todas=1', $tokenPrata)['json'], 'nome_guerra', 'API FOXTROT') === null, 'dispensa vazou pra outro esquadrão');
+});
+
+teste('método não suportado responde 405', function () use ($tokenEcho) {
+    garantirStatus(api('DELETE', 'dispensas.php', $tokenEcho), 405);
+});
+
+// =====================================================================
+secao('Livro do Dia (GET /api/livro.php)');
+
+teste('exige sessão de aluno (401) e só aceita GET (405)', function () use ($tokenEcho) {
+    garantirStatus(api('GET', 'livro.php'), 401);
+    garantirStatus(api('POST', 'livro.php', $tokenEcho, []), 405);
+});
+
+teste('data fora do formato é recusada (400)', function () use ($tokenEcho) {
+    garantirStatus(api('GET', 'livro.php?data=10/10/2026', $tokenEcho), 400);
+    garantirStatus(api('GET', 'livro.php?data=2026-02-31', $tokenEcho), 400);
+});
+
+teste('livro de hoje traz a chamada enviada, a situação por extenso e a dispensa', function () use ($tokenEcho, $hoje) {
+    $r = api('GET', 'livro.php', $tokenEcho);
+    garantirStatus($r, 200);
+    $livro = $r['json'];
+    garantir($livro['data'] === $hoje && $livro['esquadrao'] === ESQUADRAO_TESTE, 'data/esquadrão errados');
+
+    $jornada = porChave($livro['secoes'], 'tipo', '1_jornada');
+    garantir($jornada['chamadas_enviadas'] === 1, 'a 1ª Jornada deveria ter 1 chamada enviada');
+    garantir(count($jornada['ausencias']) === 1, 'a 1ª Jornada deveria ter 1 ausência: ' . json_encode($jornada['ausencias']));
+    garantir(strpos($jornada['ausencias'][0]['identificacao'], 'API FOXTROT') !== false, 'a ausência deveria ser do FOXTROT');
+    garantir(strpos($jornada['ausencias'][0]['situacao'], 'Falta') === 0, "a situação deveria vir por extenso (\"Falta\"), veio: {$jornada['ausencias'][0]['situacao']}");
+
+    garantir(porChave($livro['secoes'], 'tipo', 'pernoite')['chamadas_enviadas'] === 0, 'pernoite não teve chamada');
+    garantir(count($livro['dispensas']) === 1 && strpos($livro['dispensas'][0]['identificacao'], 'API FOXTROT') !== false, 'a dispensa do FOXTROT deveria estar no livro');
+});
+
+teste('o texto pronto segue o padrão e distingue "não há" de "chamada não enviada"', function () use ($tokenEcho) {
+    $texto = api('GET', 'livro.php', $tokenEcho)['json']['texto'];
+    foreach (['CORPO DE ALUNOS', 'RESUMO DO DIA', "PERNOITE\nChamada não enviada.", 'API FOXTROT — Falta', 'OCORRÊNCIAS MÉDICAS', 'MOTIVO: Entorse de tornozelo (teste)'] as $trecho) {
+        garantir(strpos($texto, $trecho) !== false, "o texto do livro não tem \"$trecho\":\n$texto");
+    }
+    garantir(strpos($texto, 'FALT)') === false && strpos($texto, '(FALT') === false, 'o texto ainda usa a sigla do motivo');
+});
+
+teste('dia sem chamada vem com todas as seções marcadas como não enviadas', function () use ($tokenEcho) {
+    $livro = api('GET', 'livro.php?data=2000-01-01', $tokenEcho)['json'];
+    garantir(array_sum(array_column($livro['secoes'], 'chamadas_enviadas')) === 0, 'não deveria haver chamada em 2000-01-01');
+    garantir($livro['dispensas'] === [], 'não deveria haver dispensa em 2000-01-01');
+    garantir($livro['data_extenso'] === '01 JAN 2000', "data por extenso errada: {$livro['data_extenso']}");
 });
 
 // =====================================================================

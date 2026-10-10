@@ -13,6 +13,8 @@ echo json_encode([
         'GET (sessão) /api/motivos.php',
         'GET/POST (sessão)/PUT (sessão) /api/retiradas.php',
         'GET (sessão)/PUT (sessão) /api/retirada_itens.php',
+        'GET (sessão)/POST (sessão) /api/dispensas.php — dispensas médicas do esquadrão',
+        'GET (sessão) /api/livro.php — Livro do Dia do esquadrão',
         'GET/POST/DELETE /api/grupos.php',
         'GET/POST/PUT/DELETE /api/painel_usuarios.php',
         'GET /api/relatorios.php',

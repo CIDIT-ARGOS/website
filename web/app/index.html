@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#17468c">
+<meta name="theme-color" content="#0a2e5c">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,11 +22,8 @@
 <header class="topbar" id="topbar">
   <div class="topbar-linha">
     <div class="marca">
-      <span class="i" style="--icon-url:url('../../images/argos-olho.svg')" aria-hidden="true"></span>
-      <div>
-        <strong>ARGOS</strong>
-        <small>Área Funcional</small>
-      </div>
+      <strong class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</strong>
+      <small>Área Funcional · Corpo de Alunos</small>
     </div>
     <div class="sessao-info" id="sessaoInfo" style="display:none;"></div>
   </div>
@@ -40,7 +37,7 @@
 <section class="view ativa" id="view-login">
   <div class="login-box">
     <img class="login-brasao" src="../images/logo-eear.png" alt="Escola de Especialistas de Aeronáutica" width="94" height="104">
-    <h1>ARGOS</h1>
+    <h1 class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</h1>
     <p class="sub">Área Funcional · Aluno de Serviço</p>
     <p class="instrucao">Aponte a câmera para o QR Code da sua identidade militar para entrar.</p>
 
@@ -65,10 +62,11 @@
       <button type="submit" class="secundario">Entrar com o código</button>
     </form>
   </div>
-  <footer class="login-rodape">
+  <footer class="creditos">
     <img src="../images/especialista.svg" alt="" width="26" height="26">
-    Escola de Especialistas de Aeronáutica<br>
-    Desenvolvido pelo <strong>CIDIT</strong> · Clube de Inovação Digital e Tecnologia
+    Escola de Especialistas de Aeronáutica · Corpo de Alunos<br>
+    Desenvolvido pelos membros do <strong>CIDIT</strong> — Esquadrão Prata · Turma Ikarus 37<br>
+    <span class="versao-app"></span>
   </footer>
 </section>
 
@@ -143,6 +141,86 @@
   </div>
 </section>
 
+<!-- ================= LIVRO DO DIA ================= -->
+<section class="view" id="view-livro">
+  <div class="rotulo-secao"><h1>Livro do Dia</h1><span id="livroEsquadrao"></span></div>
+  <p class="explicacao">Montado sozinho a partir das chamadas enviadas e das dispensas lançadas. Confira e envie ao Aluno de Dia ao CA.</p>
+  <div>
+    <label for="livroData">Data</label>
+    <input type="date" id="livroData">
+  </div>
+  <div id="livroMensagem"></div>
+  <div class="livro-secoes" id="livroConteudo">
+    <p class="vazio">Carregando…</p>
+  </div>
+  <div class="rodape-acao" id="rodapeLivro" style="display:none;">
+    <div class="acoes-duplas">
+      <button type="button" class="secundario" id="btnCopiarLivro">Copiar texto</button>
+      <button type="button" class="primario" id="btnEnviarLivro">
+        <span class="i" style="--icon-url:url('../../images/icons/send.svg')"></span>
+        Enviar
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= DISPENSAS MÉDICAS ================= -->
+<section class="view" id="view-dispensas">
+  <div class="rotulo-secao"><h1>Dispensas médicas</h1><span id="dispensasTotal"></span></div>
+  <p class="explicacao">Dispensas ativas hoje no seu esquadrão. O aluno com dispensa já entra na chamada marcado como dispensa médica.</p>
+  <div id="dispensasMensagem"></div>
+  <div class="lista-alunos" id="listaDispensas">
+    <p class="vazio">Carregando…</p>
+  </div>
+  <div class="rodape-acao">
+    <button type="button" class="primario" id="btnNovaDispensa">
+      <span class="i" style="--icon-url:url('../../images/icons/plus.svg')"></span>
+      Lançar dispensa
+    </button>
+  </div>
+</section>
+
+<!-- ================= NOVA DISPENSA ================= -->
+<section class="view" id="view-nova-dispensa">
+  <div class="view-header">
+    <button type="button" class="btn-voltar" data-voltar="view-dispensas" aria-label="Voltar">
+      <span class="i" style="--icon-url:url('../../images/icons/arrow-left.svg')"></span>
+    </button>
+    <h1>Lançar dispensa médica</h1>
+  </div>
+  <div id="novaDispensaErro"></div>
+  <form class="form-grid" id="formNovaDispensa">
+    <div>
+      <label for="dispAluno">Aluno</label>
+      <select id="dispAluno" required></select>
+    </div>
+    <div class="grade-2">
+      <div>
+        <label for="dispInicio">Início</label>
+        <input type="date" id="dispInicio" required>
+      </div>
+      <div>
+        <label for="dispTermino">Término</label>
+        <input type="date" id="dispTermino" required>
+      </div>
+    </div>
+    <div>
+      <label for="dispNumero">Nº da dispensa (se houver)</label>
+      <input type="text" id="dispNumero" maxlength="20" autocomplete="off">
+    </div>
+    <div>
+      <label for="dispMotivo">Motivo</label>
+      <input type="text" id="dispMotivo" maxlength="255" required autocomplete="off" placeholder="Ex: entorse no tornozelo direito">
+    </div>
+    <fieldset class="tags-check">
+      <legend>Dispensado de</legend>
+      <div id="dispTipos"></div>
+      <input type="text" id="dispOutros" maxlength="255" autocomplete="off" placeholder="Outros (opcional)" aria-label="Dispensado de — outros">
+    </fieldset>
+    <button type="submit" class="primario">Lançar dispensa</button>
+  </form>
+</section>
+
 <!-- ================= EFETIVO ================= -->
 <section class="view" id="view-efetivo">
   <div class="rotulo-secao"><h1>Efetivo do esquadrão</h1><span id="efetivoTotal"></span></div>
@@ -152,12 +230,24 @@
   <div class="lista-alunos" id="listaEfetivo">
     <p class="vazio">Carregando…</p>
   </div>
+  <footer class="creditos">
+    Desenvolvido pelos membros do <strong>CIDIT</strong> — Esquadrão Prata · Turma Ikarus 37<br>
+    <span class="versao-app"></span>
+  </footer>
 </section>
 
 <nav class="nav-inferior oculta" id="navInferior">
   <button type="button" class="nav-item" data-ir="view-retiradas">
-    <span class="i" style="--icon-url:url('../../images/icons/home.svg')"></span>
+    <span class="i" style="--icon-url:url('../../images/icons/clipboard-check.svg')"></span>
     Retiradas
+  </button>
+  <button type="button" class="nav-item" data-ir="view-livro">
+    <span class="i" style="--icon-url:url('../../images/icons/book.svg')"></span>
+    Livro
+  </button>
+  <button type="button" class="nav-item" data-ir="view-dispensas">
+    <span class="i" style="--icon-url:url('../../images/icons/medical-cross.svg')"></span>
+    Dispensas
   </button>
   <button type="button" class="nav-item" data-ir="view-efetivo">
     <span class="i" style="--icon-url:url('../../images/icons/users-group.svg')"></span>
@@ -171,6 +261,7 @@
 
 <script src="env.php"></script>
 <script src="js/qr-scanner.js"></script>
+<script src="js/livro.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

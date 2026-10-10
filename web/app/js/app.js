@@ -101,6 +101,10 @@ function mostrarView(id) {
 
     if (id === 'view-retiradas') carregarRetiradas();
     if (id === 'view-efetivo') carregarEfetivo();
+    // Estas três vivem em js/livro.js.
+    if (id === 'view-livro') carregarLivro();
+    if (id === 'view-dispensas') carregarDispensas();
+    if (id === 'view-nova-dispensa') prepararFormDispensa();
 }
 
 function exibirErro(elId, mensagem) {
@@ -141,11 +145,16 @@ async function tentarLogin(qrcodeHash, botao) {
     }
 }
 
+// "Esquadrão Prata" tanto se o cadastro guarda "Prata" quanto "Esquadrão Prata".
+function rotuloEsquadrao(esquadrao) {
+    return /^esquadr[ãa]o(\s|$)/i.test(esquadrao) ? esquadrao : `Esquadrão ${esquadrao}`;
+}
+
 function atualizarInfoSessao() {
     if (!sessaoAtual) return;
     const { aluno } = sessaoAtual;
     document.getElementById('sessaoInfo').innerHTML =
-        `<strong>${escapeHtml(aluno.nome_guerra)}</strong>${escapeHtml(aluno.milhao)} · Esq. ${escapeHtml(aluno.esquadrao)}`;
+        `<strong>${escapeHtml(aluno.nome_guerra)}</strong>${escapeHtml(aluno.milhao)} · ${escapeHtml(rotuloEsquadrao(aluno.esquadrao))}`;
 }
 
 document.getElementById('btnEscanear').addEventListener('click', async () => {
@@ -462,6 +471,10 @@ document.getElementById('efetivoBusca').addEventListener('input', (evento) => {
 });
 
 // ---------- Inicialização ----------
+document.querySelectorAll('.versao-app').forEach((el) => {
+    el.textContent = window.ARGOS_VERSAO ? `Argos ${window.ARGOS_VERSAO}` : '';
+});
+
 if (sessaoAtual && sessaoAtual.token) {
     atualizarInfoSessao();
     mostrarView('view-retiradas');

@@ -10,9 +10,9 @@
     --border: #e1e7f0;
     --text: #16202e;
     --text-muted: #5b6b82;
-    --accent: #17468c;
-    --azul-eear: #17468c;
-    --azul-escuro: #0f3472;
+    --accent: #123c7a;
+    --azul-eear: #0a2e5c;
+    --azul-escuro: #061c3a;
     --azul-claro: #e9f0fb;
     --danger: #b3261e;
     --danger-bg: #fbe9e7;
@@ -20,10 +20,11 @@
     --ok-bg: #e4f5ec;
     --alerta: #a8500c;
     --alerta-bg: #fdecd8;
-    --anel: rgba(23, 70, 140, .32);
-    --sombra: 0 1px 2px rgba(15, 52, 114, .06), 0 6px 20px rgba(15, 52, 114, .06);
+    --anel: rgba(18, 60, 122, .32);
+    --sombra: 0 1px 2px rgba(10, 46, 92, .08);
     --fonte-display: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
     --fonte-corpo: 'IBM Plex Sans', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --dourado: #c9a227;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --nav-altura: 64px;
 }
@@ -45,6 +46,9 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
+    /* height:auto — com 100% herdado, o padding de baixo ficava dentro da
+       altura da tela e o fim das telas longas sumia atrás da barra inferior. */
+    height: auto;
     min-height: 100vh;
     min-height: 100dvh;
     padding-bottom: calc(var(--nav-altura) + var(--safe-bottom));
@@ -79,13 +83,13 @@ button, input, select { font-family: inherit; }
     z-index: 10;
     padding: calc(14px + env(safe-area-inset-top, 0px)) 16px 14px;
     background: var(--azul-eear);
+    border-bottom: 3px solid var(--dourado);
     color: #fff;
 }
 body.tela-login .topbar { display: none; }
 
 .topbar-linha { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.topbar .marca { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.topbar .marca .i { width: 28px; height: 28px; margin: 0; }
+.topbar .marca { min-width: 0; }
 .topbar .marca strong {
     display: block;
     font-family: var(--fonte-display); font-weight: 700; font-size: 22px; line-height: 1;
@@ -129,7 +133,7 @@ body.tela-retiradas .resumo { display: grid; }
 .login-box h1 {
     margin: 0 -.3em 8px 0;
     font-family: var(--fonte-display); font-weight: 700; font-size: 44px; line-height: 1;
-    letter-spacing: .3em; color: var(--accent);
+    letter-spacing: .3em; color: var(--azul-eear);
 }
 .login-box p.sub {
     margin: 0 0 22px; padding-bottom: 22px; border-bottom: 1px solid var(--border);
@@ -161,17 +165,14 @@ body.tela-retiradas .resumo { display: grid; }
 
 .campo-colar { display: flex; flex-direction: column; gap: 8px; text-align: left; }
 
-.login-rodape { margin-top: 28px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
-.login-rodape img { display: block; width: 26px; height: 26px; margin: 0 auto 8px; }
-.login-rodape strong { color: var(--accent); }
 
 /* ---------- Botões e campos ---------- */
 button.primario, .btn-primario {
     display: flex; align-items: center; justify-content: center;
     width: 100%; min-height: 52px; padding: 12px 16px;
-    background: var(--accent); color: #fff; border: none; border-radius: 12px;
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
     font-family: var(--fonte-display); font-size: 17px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
-    box-shadow: 0 8px 20px rgba(23, 70, 140, .26);
+    box-shadow: 0 2px 6px rgba(10, 46, 92, .25);
     cursor: pointer;
 }
 button.primario:active { background: var(--azul-escuro); }
@@ -203,9 +204,10 @@ input::placeholder { color: var(--text-muted); opacity: .75; }
 
 /* ---------- Cartões / lista de retiradas ---------- */
 .card {
-    background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
     padding: 14px 16px; box-shadow: var(--sombra);
 }
+.retirada-item { border-radius: 10px; }
 
 .lista-retiradas { display: flex; flex-direction: column; gap: 10px; }
 .retirada-item {
@@ -284,12 +286,60 @@ input::placeholder { color: var(--text-muted); opacity: .75; }
 .nav-inferior.oculta { display: none; }
 .nav-item {
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    flex: 1; min-height: 52px; padding: 4px 10px;
+    flex: 1; min-width: 0; min-height: 52px; padding: 4px 2px;
     background: none; border: none; border-radius: 12px;
-    color: var(--text-muted); font-size: 11px; font-weight: 600; letter-spacing: .04em; cursor: pointer;
+    color: var(--text-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .02em; cursor: pointer;
 }
 .nav-item .i { width: 22px; height: 22px; margin-right: 0; }
 .nav-item.ativo { color: var(--accent); }
+
+/* ---------- Marca: A R G (olho) S — o olho no lugar do O ---------- */
+.marca-argos { white-space: nowrap; }
+.marca-argos .olho {
+    display: inline-block; width: .98em; height: .7em; margin-right: .3em; vertical-align: 0;
+    background-color: currentColor;
+    -webkit-mask: url('../../images/argos-olho.svg') center / 100% auto no-repeat;
+    mask: url('../../images/argos-olho.svg') center / 100% auto no-repeat;
+}
+
+/* ---------- Textos de apoio e créditos ---------- */
+.explicacao { margin: -4px 0 0; font-size: 13px; color: var(--text-muted); }
+.creditos { margin-top: auto; padding-top: 24px; font-size: 11.5px; line-height: 1.6; color: var(--text-muted); text-align: center; }
+.creditos img { display: block; width: 26px; height: 26px; margin: 0 auto 8px; }
+.creditos strong { color: var(--accent); }
+.creditos .versao-app { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+
+/* ---------- Livro do Dia ---------- */
+.livro-secoes { display: flex; flex-direction: column; gap: 10px; }
+.livro-cabecalho { margin: 0; font-size: 13px; color: var(--text-muted); }
+.livro-cabecalho strong { color: var(--text); }
+.livro-secao { background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px; padding: 12px 14px; }
+.livro-secao h2 { margin: 0 0 8px; font-family: var(--fonte-display); font-weight: 700; font-size: 14px; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.livro-secao p { margin: 0; font-size: 14px; }
+.livro-secao .nao-ha { color: var(--text-muted); }
+.livro-secao .sem-chamada { color: var(--alerta); font-weight: 600; }
+.livro-secao ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.livro-secao li { padding-top: 8px; border-top: 1px solid var(--border); }
+.livro-secao li:first-child { padding-top: 0; border-top: none; }
+.livro-secao li strong { display: block; font-size: 14px; font-weight: 600; }
+.livro-secao li span { display: block; font-size: 13px; color: var(--text-muted); }
+
+.acoes-duplas { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
+.acoes-duplas .secundario { min-height: 52px; }
+
+/* ---------- Dispensas ---------- */
+.ficha { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; }
+.ficha dt { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); padding-top: 2px; }
+.ficha dd { margin: 0; }
+.grade-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+.grade-2 input { min-width: 0; padding-left: 10px; padding-right: 8px; }
+.tags-check { margin: 0; padding: 12px 14px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); }
+.tags-check legend { padding: 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); }
+.tags-check #dispTipos { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+.tag-check { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; margin: 0; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--text); cursor: pointer; }
+.tag-check input { width: 18px; height: 18px; min-height: 0; padding: 0; accent-color: var(--accent); }
+.tag-check:has(input:checked) { border-color: var(--accent); background: var(--azul-claro); }
+
 
 @media (min-width: 560px) {
     html { background: #e8edf5; }
