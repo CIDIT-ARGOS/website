@@ -45,11 +45,13 @@ Pra abrir no celular de verdade, use o IP da máquina na rede (`http://192.168.x
 4. **Livro do Dia** → "Baixar PDF" (a impressão não mudou com o redesign); a situação de cada aluno vem por extenso.
 5. **Controle do Domínio de Negócio**: a aba selecionada fica em azul cheio com texto branco.
 6. **Dispensas médicas**: o cadastro pede o Oficial Médico responsável, que aparece na lista e no Livro do Dia.
+6. **QR Codes**: cobertura por esquadrão e a lista de quem tem e quem não tem QR. "Ler um QR" (Conferir) mostra de quem é um QR e quantos caracteres ele tem; "Cadastrar QR" / "Trocar QR" numa linha abre o leitor — câmera, leitor de mesa ou colar. Cadastre um QR qualquer pra um aluno (pode ser o de uma embalagem) e entre no app com ele.
 7. Saia e entre como `dev.prata`: só o Esquadrão Prata aparece, e some o que é só do CA (Grupos, por exemplo).
 
 **Ikarus37**
 1. Entre como `admin`. **API** mostra as chaves com o escopo de cada uma (`app` ou `admin`) e o log das requisições que a PWA acabou de fazer. Gerar uma chave nova deixa escolher o escopo.
-2. **Banco de Dados** lista as tabelas com a contagem; **Usuários** lista as contas do Painel criadas pelo seed.
+2. **QR Codes**: a mesma tela do Painel, com todos os esquadrões e o cadastro em lote.
+3. **Banco de Dados** lista as tabelas com a contagem; **Usuários** lista as contas do Painel criadas pelo seed.
 
 Recomeçar do zero (apaga o banco de demonstração):
 
@@ -57,6 +59,14 @@ Recomeçar do zero (apaga o banco de demonstração):
 docker compose -f docker-compose.demo.yml down -v
 ```
 
+### Entrar no app em produção com o seu próprio QR
+
+1. Entre no Painel ou no Ikarus37 de produção e abra **QR Codes**.
+2. "Ler um QR" → aponte pro QR da sua identidade. A tela diz quantos caracteres ele tem e que ainda não é de ninguém.
+3. Ache o seu nome na lista (filtre por esquadrão ou busque pelo milhão) → "Cadastrar QR" → aponte de novo.
+4. Abra a Área Funcional no celular, "Escanear QR Code", aponte pra identidade.
+
+A câmera do navegador só abre em HTTPS (produção) ou em `localhost`. No computador sem câmera, um leitor de mesa funciona: ele "digita" o conteúdo no campo do leitor.
 ### Conferir a segurança da API na mão
 
 A chave do app é a que aparece em http://localhost:8090/web/app/env.php. Com ela, um endpoint administrativo tem que responder `403`, e uma rota do app sem sessão, `401`:
@@ -83,9 +93,9 @@ Precisa de PHP com `mysqli` e de um MySQL 8 acessível. **Atenção:** o script 
 
 | Arquivo | Testes | Cobre |
 |---|---|---|
-| `tests/integracao_test.php` | 37 | fluxo da PWA de ponta a ponta |
+| `tests/integracao_test.php` | 38 | fluxo da PWA de ponta a ponta |
 | `tests/api_test.php` | 94 | cada endpoint e método da API: escopo das chaves, dispensas, Livro do Dia, posto de serviço |
-| `tests/paginas_test.php` | 40 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
+| `tests/paginas_test.php` | 44 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
 | `tests/smoke_producao.php` | 13 | o que roda em produção depois de cada deploy |
 
 Na prática, o jeito mais simples é dar push na `develop` e olhar **Actions** no Forgejo: roda tudo nos dois runners.

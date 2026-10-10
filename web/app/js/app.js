@@ -156,7 +156,8 @@ async function tentarLogin(qrcodeHash, botao) {
     try {
         const resultado = await api('sessao.php', {
             method: 'POST',
-            body: { qrcode_hash: qrcodeHash },
+            // O conteúdo do QR vai como foi lido; quem calcula a impressão digital é o servidor.
+            body: { qrcode: qrcodeHash },
             exigirSessao: false,
         });
         salvarSessao(resultado.token, resultado.aluno);

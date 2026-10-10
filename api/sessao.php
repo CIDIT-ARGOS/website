@@ -1,22 +1,33 @@
 <?php
 
 // Login do app do aluno via QR code — issue #26. Exige uma X-API-Key
-// válida (já checado em bootstrap.php) + o qrcode_hash do aluno; devolve
+// válida (já checado em bootstrap.php) + o QR code do aluno; devolve
 // um token de sessão (16h) que passa a ser exigido, junto com a chave, em
 // toda rota do fluxo do app (ver exigirSessaoAluno em bootstrap.php).
 
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../core/api_sessoes_core.php';
+require_once __DIR__ . '/../core/qrcodes_core.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    erro('Método não suportado. Use POST com { "qrcode_hash": "..." }.', 405);
+    erro('Método não suportado. Use POST com { "qrcode": "conteúdo lido do QR" }.', 405);
 }
 
 $dados = corpoJson();
-$qrcodeHash = trim($dados['qrcode_hash'] ?? '');
 
-if (!preg_match('/^[a-f0-9]{64}$/i', $qrcodeHash)) {
-    erro('qrcode_hash inválido: deve ser um hash sha256 (64 caracteres hexadecimais).');
+// "qrcode": o conteúdo do QR como foi lido, em qualquer formato — o servidor
+// calcula a impressão digital e compara com a do cadastro (core/qrcodes_core.php).
+// "qrcode_hash": o jeito antigo, pra quem já manda a impressão pronta.
+if (array_key_exists('qrcode', $dados)) {
+    $qrcodeHash = impressaoDoQr($dados['qrcode']);
+    if ($qrcodeHash === null) {
+        erro('qrcode inválido: envie o conteúdo lido do QR (texto, até ' . QR_CONTEUDO_MAX . ' caracteres).');
+    }
+} else {
+    $qrcodeHash = is_string($dados['qrcode_hash'] ?? null) ? trim($dados['qrcode_hash']) : '';
+    if (!preg_match('/^[a-f0-9]{64}$/i', $qrcodeHash)) {
+        erro('qrcode_hash inválido: deve ser um hash sha256 (64 caracteres hexadecimais).');
+    }
 }
 
 $stmt = mysqli_prepare($conexao, "

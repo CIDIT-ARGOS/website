@@ -56,5 +56,5 @@ Toda requisição fica em `api_logs` (chave, endpoint, método, status, IP), vis
 ## Limites conhecidos
 
 - **O posto de serviço é escolhido pelo próprio aluno.** Qualquer aluno com QR válido pode se dizer de serviço em qualquer esquadrão e ver as chamadas e dispensas dele. É assim de propósito enquanto não há integração com a escala de serviço; a escolha fica registrada na sessão (`api_sessoes.esquadrao_servico`).
-- **O QR code é a única credencial do aluno.** Quem copiar o QR entra como ele. O hash não muda sozinho; trocar exige reemitir o QR.
+- **O QR code é a única credencial do aluno.** Quem copiar o QR entra como ele. O banco guarda só a impressão digital (sha256) do conteúdo, nunca o conteúdo; cadastrar ou trocar o QR de alguém é restrito a quem pode editar o efetivo (Painel) ou ao administrador técnico (Ikarus37), e trocar derruba as sessões abertas com o QR antigo. Um QR comprometido só se resolve cadastrando outro.
 - **O token fica no `localStorage` do navegador** — some ao sair, mas um script malicioso na página conseguiria lê-lo. A PWA não carrega script de terceiros além do leitor de QR.

@@ -278,6 +278,13 @@ $logado = !empty($_SESSION['painel_id']);
                 <h3>Efetivo</h3>
                 <p>Consulta e gestão dos alunos<?= escopoEsquadrao() ? ' do seu esquadrão' : '' ?>.</p>
             </a>
+            <?php if (podeEditarEfetivo()): ?>
+            <a href="qrcodes.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/qrcode.svg')"></span>
+                <h3>QR Codes</h3>
+                <p>Quem já tem o QR cadastrado pra entrar na Área Funcional, e cadastro de quem falta.</p>
+            </a>
+            <?php endif; ?>
             <a href="situacao.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/map-pin.svg')"></span>
                 <h3>Situação do efetivo</h3>

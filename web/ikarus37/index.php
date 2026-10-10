@@ -267,6 +267,13 @@ $podeTecnicoAvancado = $logado && temPermissao(conectarBanco(), 'ikarus37', $_SE
                 <p>Console SQL, exportar/importar e editor de registro cru — ferramenta de emergência.</p>
             </a>
             <?php endif; ?>
+            <?php if ($podeTecnicoAvancado): ?>
+            <a href="qrcodes.php" class="card">
+                <span class="card-icon" style="--icon-url: url('../images/icons/qrcode.svg')"></span>
+                <h3>QR Codes</h3>
+                <p>Cobertura de QR dos alunos, cadastro individual e em lote, e conferência de um QR.</p>
+            </a>
+            <?php endif; ?>
             <a href="usuarios.php" class="card">
                 <span class="card-icon" style="--icon-url: url('../images/icons/shield-lock.svg')"></span>
                 <h3>Usuários administradores</h3>

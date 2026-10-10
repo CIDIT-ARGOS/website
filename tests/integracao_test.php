@@ -57,6 +57,18 @@ teste('qrcode_hash fora do formato sha256 é rejeitado (400)', function () {
     garantirStatus(api('POST', 'sessao.php', null, ['qrcode_hash' => 'nao-e-hash']), 400);
 });
 
+teste('login aceita o conteúdo do QR em "qrcode" (o servidor calcula a impressão)', function () {
+    // O QR da fixture já é um código de 64 caracteres: vale como está.
+    $r = api('POST', 'sessao.php', null, ['qrcode' => QR_PRATA_1]);
+    garantirStatus($r, 201);
+    garantir(($r['json']['aluno']['nome_guerra'] ?? null) === 'TESTE ALFA', 'entrou como outro aluno');
+
+    garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => '']), 400);
+    garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => ['não', 'é', 'texto']]), 400);
+    garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => str_repeat('x', 5000)]), 400);
+    garantirStatus(api('POST', 'sessao.php', null, []), 400);
+});
+
 teste('QR desconhecido é rejeitado (401)', function () {
     garantirStatus(api('POST', 'sessao.php', null, ['qrcode_hash' => str_repeat('9', 64)]), 401);
 });
