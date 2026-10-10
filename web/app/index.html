@@ -70,6 +70,25 @@
   </footer>
 </section>
 
+<!-- ================= POSTO DE SERVIÇO ================= -->
+<section class="view" id="view-servico">
+  <div class="rotulo-secao"><h1>Onde você está de serviço?</h1></div>
+  <p class="explicacao">As chamadas, o efetivo, as dispensas e o livro que você vai ver e lançar são os do esquadrão escolhido aqui — não os do seu esquadrão de origem.</p>
+  <div id="servicoErro"></div>
+  <form class="form-grid" id="formServico">
+    <div>
+      <label for="servicoEsquadrao">Esquadrão</label>
+      <select id="servicoEsquadrao" required></select>
+    </div>
+    <div>
+      <label for="servicoEsquadrilha">Esquadrilha</label>
+      <select id="servicoEsquadrilha" required></select>
+    </div>
+    <button type="submit" class="primario">Confirmar posto de serviço</button>
+  </form>
+  <p class="explicacao" id="servicoOrigem"></p>
+</section>
+
 <!-- ================= RETIRADAS ================= -->
 <section class="view" id="view-retiradas">
   <div class="rotulo-secao"><h1>Retiradas do esquadrão</h1><span id="retiradasData"></span></div>
@@ -98,10 +117,10 @@
     <div>
       <label for="novaTipo">Tipo de retirada</label>
       <select id="novaTipo" required>
-        <option value="1_jornada">1ª Jornada</option>
+        <option value="almoco">Almoço</option>
         <option value="2_jornada">2ª Jornada</option>
-        <option value="educacao_fisica">Educação Física</option>
         <option value="pernoite">Pernoite</option>
+        <option value="1_jornada">1ª Jornada (do dia seguinte)</option>
       </select>
     </div>
     <div>
@@ -167,7 +186,7 @@
 <!-- ================= DISPENSAS MÉDICAS ================= -->
 <section class="view" id="view-dispensas">
   <div class="rotulo-secao"><h1>Dispensas médicas</h1><span id="dispensasTotal"></span></div>
-  <p class="explicacao">Dispensas ativas hoje no seu esquadrão. O aluno com dispensa já entra na chamada marcado como dispensa médica.</p>
+  <p class="explicacao">Dispensas ativas hoje no esquadrão em que você está de serviço. O aluno com dispensa já entra na chamada marcado como dispensa médica.</p>
   <div id="dispensasMensagem"></div>
   <div class="lista-alunos" id="listaDispensas">
     <p class="vazio">Carregando…</p>
@@ -211,6 +230,10 @@
     <div>
       <label for="dispMotivo">Motivo</label>
       <input type="text" id="dispMotivo" maxlength="255" required autocomplete="off" placeholder="Ex: entorse no tornozelo direito">
+    </div>
+    <div>
+      <label for="dispMedico">Oficial Médico responsável</label>
+      <input type="text" id="dispMedico" maxlength="100" required autocomplete="off" placeholder="Posto e nome de quem concedeu">
     </div>
     <fieldset class="tags-check">
       <legend>Dispensado de</legend>

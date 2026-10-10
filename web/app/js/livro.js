@@ -30,7 +30,7 @@ async function carregarLivro() {
     conteudo.innerHTML = '<p class="vazio">Carregando…</p>';
     document.getElementById('rodapeLivro').style.display = 'none';
     exibirErro('livroMensagem', '');
-    document.getElementById('livroEsquadrao').textContent = rotuloEsquadrao(sessaoAtual.aluno.esquadrao);
+    document.getElementById('livroEsquadrao').textContent = rotuloEsquadrao(esquadraoDeServico());
 
     try {
         livroAtual = await api(`livro.php?data=${encodeURIComponent(campoData.value)}`);
@@ -61,6 +61,7 @@ async function carregarLivro() {
                 <strong>${escapeHtml(d.identificacao)}</strong>
                 <span>${dataBr(d.data_inicio)} a ${dataBr(d.data_termino)}${d.numero ? ' · nº ' + escapeHtml(d.numero) : ''}</span>
                 <span>${escapeHtml(d.motivo)}${d.dispensado_de ? ' — dispensado de: ' + escapeHtml(d.dispensado_de) : ''}</span>
+                ${d.medico_responsavel ? `<span>Oficial Médico: ${escapeHtml(d.medico_responsavel)}</span>` : ''}
             </li>`).join('') + '</ul>';
     secoes.push(`<section class="livro-secao"><h2>Ocorrências médicas — dispensa médica</h2>${dispensas}</section>`);
 
@@ -132,6 +133,7 @@ async function carregarDispensas() {
                     <dl class="ficha">
                         <dt>Período</dt><dd>${dataBr(d.data_inicio)} a ${dataBr(d.data_termino)}${d.numero ? ' · nº ' + escapeHtml(d.numero) : ''}</dd>
                         <dt>Motivo</dt><dd>${escapeHtml(d.motivo)}</dd>
+                        ${d.medico_responsavel ? `<dt>Oficial Médico</dt><dd>${escapeHtml(d.medico_responsavel)}</dd>` : ''}
                         ${dispensadoDe ? `<dt>Dispensado de</dt><dd>${escapeHtml(dispensadoDe)}</dd>` : ''}
                     </dl>
                 </div>`;
@@ -186,6 +188,7 @@ document.getElementById('formNovaDispensa').addEventListener('submit', async (ev
                 data_termino: document.getElementById('dispTermino').value,
                 numero: document.getElementById('dispNumero').value.trim(),
                 motivo: document.getElementById('dispMotivo').value.trim(),
+                medico_responsavel: document.getElementById('dispMedico').value.trim(),
                 dispensado_de: document.getElementById('dispOutros').value.trim(),
                 dispensa_tipo_ids: [...document.querySelectorAll('#dispTipos input:checked')].map((c) => Number(c.value)),
             },
