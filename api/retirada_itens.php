@@ -2,6 +2,7 @@
 
 require_once __DIR__ . '/bootstrap.php';
 require_once __DIR__ . '/../core/retiradas_core.php';
+require_once __DIR__ . '/../core/servicos_core.php';
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
@@ -20,8 +21,8 @@ switch ($metodo) {
         if (!$retiradaAlvo) {
             erro("Retirada não encontrada.", 404);
         }
-        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao']) {
-            erro("Você só pode ver retiradas do seu próprio esquadrão.", 403);
+        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao_servico']) {
+            erro("Você só pode ver retiradas do esquadrão em que está de serviço.", 403);
         }
 
         responder(listarItensRetirada($conexao, $retiradaId));
@@ -42,8 +43,8 @@ switch ($metodo) {
         if (!$retiradaAlvo) {
             erro("Retirada não encontrada.", 404);
         }
-        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao']) {
-            erro("Você só pode marcar retiradas do seu próprio esquadrão.", 403);
+        if ($retiradaAlvo['esquadrao'] !== null && $retiradaAlvo['esquadrao'] !== $alunoSessao['esquadrao_servico']) {
+            erro("Você só pode marcar retiradas do esquadrão em que está de serviço.", 403);
         }
 
         $dados = corpoJson();
@@ -59,7 +60,13 @@ switch ($metodo) {
             erro("Para marcar falta, informe motivo_falta_id.");
         }
 
-        $ok = marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, $observacao);
+        // Posto de serviço (opcional): pra quando o motivo da ausência é serviço.
+        $servicoId = !empty($dados['servico_id']) ? (int) $dados['servico_id'] : null;
+        if ($servicoId && !buscarServicoPorId($conexao, $servicoId)) {
+            erro("Posto de serviço não encontrado.");
+        }
+
+        $ok = marcarItem($conexao, $retiradaId, $alunoId, $presente, $motivoFaltaId, $observacao, $servicoId);
         if (!$ok) {
             erro("Erro ao marcar item: " . mysqli_error($conexao), 500);
         }

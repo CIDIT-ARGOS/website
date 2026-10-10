@@ -1,8 +1,8 @@
 <?php
 
 // Dispensas médicas pelo app do aluno de serviço. Exige sessão de aluno e é
-// sempre restrito ao esquadrão da sessão: lista as dispensas do esquadrão e
-// lança dispensa só pra aluno ativo do próprio esquadrão. Editar e excluir
+// sempre restrito ao esquadrão em que ele está de serviço: lista as dispensas
+// desse esquadrão e lança dispensa só pra aluno ativo dele. Editar e excluir
 // continuam só no Painel de Comando.
 
 require_once __DIR__ . '/bootstrap.php';
@@ -21,7 +21,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
             responder(listarDispensaTipos($conexao));
         }
 
-        $filtros = ['esquadrao' => $alunoSessao['esquadrao']];
+        $filtros = ['esquadrao' => $alunoSessao['esquadrao_servico']];
         if (!isset($_GET['todas'])) {
             $filtros['ativas_em'] = date('Y-m-d');
         }
@@ -33,8 +33,8 @@ switch ($_SERVER['REQUEST_METHOD']) {
         $dados = corpoJson();
 
         $aluno = buscarAlunoPorId($conexao, (int) ($dados['aluno_id'] ?? 0));
-        if (!$aluno || (int) $aluno['ativo'] !== 1 || $aluno['esquadrao'] !== $alunoSessao['esquadrao']) {
-            erro("Aluno não encontrado no seu esquadrão.", 404);
+        if (!$aluno || (int) $aluno['ativo'] !== 1 || $aluno['esquadrao'] !== $alunoSessao['esquadrao_servico']) {
+            erro("Aluno não encontrado no esquadrão em que você está de serviço.", 404);
         }
 
         // Campo de texto que vier como lista/objeto no JSON vira vazio (e cai
@@ -47,6 +47,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
             'data_termino' => $texto('data_termino'),
             'numero' => $texto('numero'),
             'motivo' => $texto('motivo'),
+            'medico_responsavel' => $texto('medico_responsavel'),
             'dispensado_de' => $texto('dispensado_de'),
             'dispensa_tipo_ids' => is_array($dados['dispensa_tipo_ids'] ?? null) ? $dados['dispensa_tipo_ids'] : [],
         ]);
