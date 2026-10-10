@@ -7,6 +7,12 @@ function listarServicos($conexao) {
     $resultado = mysqli_query($conexao, "
         SELECT id, nome, ativo FROM postos_servico
     ");
+    // A tabela postos_servico ainda não é criada por nenhum schema/migration:
+    // sem ela a consulta falha e a tela de chamada inteira caía com erro
+    // fatal. Sem a tabela, a lista de serviços só fica vazia.
+    if (!$resultado) {
+        return [];
+    }
     return mysqli_fetch_all($resultado, MYSQLI_ASSOC);
 }
 
