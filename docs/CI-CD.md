@@ -31,7 +31,8 @@ Os jobs fazem checkout com `git` puro (sem `actions/checkout`), pra não depende
 1. **Migrations, instalação nova** — `init_db.sql` + migrations pendentes; rodar de novo não aplica nada.
 2. **Migrations, banco de produção legado** — banco sem `schema_migrations` e sem a 013: a baseline tem que ser detectada como 012, a 013 aplicada, e o esquema final tem que ser idêntico ao da instalação nova.
 3. **API + PWA de ponta a ponta** (`tests/integracao_test.php`, 37 testes) — autenticação por chave, login por QR, isolamento entre esquadrões, abrir/marcar/enviar retirada, regra da dispensa médica, arquivos da PWA (manifest, service worker, `env.php`), páginas de login sem erro de PHP.
-4. **Smoke test** (`tests/smoke_producao.php`) — o mesmo que roda em produção.
+4. **API endpoint por endpoint** (`tests/api_test.php`, 67 testes) — CRUD administrativo de alunos, grupos e usuários do Painel, relatórios, situação, casos de erro das retiradas e o que é comum a todos (CORS, `api_logs`, sessão expirada, rate limit por IP). Além do HTTP, mexe direto no banco de teste pra montar cenários que a API não deixa (expirar sessão, simular IP bloqueado).
+5. **Smoke test** (`tests/smoke_producao.php`) — o mesmo que roda em produção.
 
 Rodar localmente (precisa de um MySQL 8 acessível):
 
