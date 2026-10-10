@@ -93,11 +93,12 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
     }
 </style>
 <link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div>
         <button onclick="window.print()"><span class="i" style="--icon-url:url('../images/icons/printer.svg')"></span>Baixar PDF</button>
         <a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
@@ -107,7 +108,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 <div class="container">
     <h2>Painel Argos <?= $escopo ? '— Esquadrão ' . htmlspecialchars($escopo) : '' ?></h2>
     <p style="color: var(--text-muted); font-size: 13px; margin-top: -8px;">
-        Visão geral do Corpo de Alunos — quantidades, tendências e distribuição, com dados reais do período selecionado.
+        Visão geral do Corpo de Alunos — quantidades, tendências e distribuição no período selecionado. Os números do período contam registros de chamada (o mesmo aluno ausente em duas chamadas aparece duas vezes); quem está em pane agora está na página inicial e em Situação do efetivo.
     </p>
 
     <div class="card filtros-card">
@@ -130,8 +131,8 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
         <div class="kpis">
             <div class="kpi"><div class="valor"><?= $totalAtivos ?></div><div class="rotulo">Efetivo total</div></div>
             <div class="kpi"><div class="valor" style="color:var(--ok)"><?= $situacaoAgora['presentes'] ?></div><div class="rotulo">Presentes agora</div></div>
-            <div class="kpi"><div class="valor" style="color:var(--danger)"><?= $faltasReais ?></div><div class="rotulo">Faltas reais no período</div></div>
-            <div class="kpi"><div class="valor" style="color:var(--alerta)"><?= $ausenciasJustificadas ?></div><div class="rotulo">Ausências justificadas no período</div></div>
+            <div class="kpi"><div class="valor" style="color:var(--danger)"><?= $faltasReais ?></div><div class="rotulo">Registros de falta no período</div></div>
+            <div class="kpi"><div class="valor" style="color:var(--alerta)"><?= $ausenciasJustificadas ?></div><div class="rotulo">Registros de ausência justificada no período</div></div>
             <div class="kpi"><div class="valor"><?= $dispensasAtivas ?></div><div class="rotulo">Dispensas médicas ativas agora</div></div>
             <div class="kpi"><div class="valor"><?= $resumoPeriodo['percentual_presenca'] !== null ? $resumoPeriodo['percentual_presenca'] . '%' : '—' ?></div><div class="rotulo">Taxa de presença no período</div></div>
         </div>

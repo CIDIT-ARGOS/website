@@ -26,6 +26,7 @@ $filtros = [
     'esquadrao' => $escopo ?? ($_GET['esquadrao'] ?? null),
     'esquadrilha' => $_GET['esquadrilha'] ?? null,
     'especialidade' => $_GET['especialidade'] ?? null,
+    'sexo' => in_array($_GET['sexo'] ?? '', ['M', 'F'], true) ? $_GET['sexo'] : null,
     'busca' => $_GET['busca'] ?? null,
     'turma_id' => $_GET['turma_id'] ?? null,
     'com_posto_exibicao' => true,
@@ -35,6 +36,29 @@ $alunos = listarAlunos($conexao, $filtros);
 $totalAtivos = contarAlunosAtivos($conexao, $escopo);
 $quantitativoEsquadrao = quantitativoPorEsquadraoEsquadrilha($conexao, $escopo);
 $quantitativoEspecialidade = quantitativoPorEspecialidade($conexao, $escopo);
+
+// Link que aplica um filtro na listagem — é o que deixa cada número dos
+// quadros de quantitativo clicável. Dentro de um esquadrão o filtro de
+// esquadrão não entra (a tela já é só dele).
+function linkFiltroEfetivo(array $filtros) {
+    global $escopo;
+    if ($escopo !== null) {
+        unset($filtros['esquadrao']);
+    }
+    return 'efetivo.php?' . http_build_query($filtros) . '#lista';
+}
+
+// Filtros em vigor, pra mostrar acima da listagem.
+$rotulosFiltro = ['esquadrao' => 'Esquadrão', 'esquadrilha' => 'Esquadrilha', 'especialidade' => 'Especialidade', 'sexo' => 'Sexo', 'busca' => 'Busca'];
+$filtrosAtivos = [];
+foreach ($rotulosFiltro as $chave => $rotulo) {
+    if ($chave === 'esquadrao' && $escopo !== null) {
+        continue;
+    }
+    if (!empty($filtros[$chave])) {
+        $filtrosAtivos[$rotulo] = $filtros[$chave];
+    }
+}
 
 // listas para os filtros (dentro do escopo)
 $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) : [];
@@ -89,11 +113,12 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 </head>
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
@@ -102,12 +127,13 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
 
     <div class="card">
         <div class="kpis">
-            <div class="kpi"><div class="valor"><?= $totalAtivos ?></div><div class="rotulo">Total de alunos na ativa<?= $escopo ? '' : ' (todos os esquadrões)' ?></div></div>
+            <a class="kpi kpi-link" href="efetivo.php#lista" title="Ver todos"><div class="valor"><?= $totalAtivos ?></div><div class="rotulo">Total de alunos na ativa<?= $escopo ? '' : ' (todos os esquadrões)' ?></div></a>
         </div>
     </div>
 
     <div class="card">
         <h3 class="subtitulo">Quantitativo por esquadrão / esquadrilha</h3>
+        <p class="dica">Clique em qualquer número pra filtrar a listagem.</p>
         <div class="scroll-x">
         <table>
             <tr>
@@ -129,10 +155,13 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
                     $totalGeralF += $linha['f'];
                 ?>
                 <tr>
-                    <td><span class="badge-esq <?= $classeCor ?>"><?= htmlspecialchars($esq) ?></span></td>
-                    <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><td class="num"><?= $linha['esquadrilhas'][$letra] ?></td><?php endforeach; ?>
-                    <td class="num"><strong><?= $linha['total'] ?></strong></td>
-                    <td><span class="badge-mf m">M <?= $linha['m'] ?></span><span class="badge-mf f">F <?= $linha['f'] ?></span></td>
+                    <td><a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['esquadrao' => $esq])) ?>"><span class="badge-esq <?= $classeCor ?>"><?= htmlspecialchars($esq) ?></span></a></td>
+                    <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><td class="num"><a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['esquadrao' => $esq, 'esquadrilha' => $letra])) ?>"><?= $linha['esquadrilhas'][$letra] ?></a></td><?php endforeach; ?>
+                    <td class="num"><a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['esquadrao' => $esq])) ?>"><strong><?= $linha['total'] ?></strong></a></td>
+                    <td>
+                        <a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['esquadrao' => $esq, 'sexo' => 'M'])) ?>"><span class="badge-mf m">M <?= $linha['m'] ?></span></a>
+                        <a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['esquadrao' => $esq, 'sexo' => 'F'])) ?>"><span class="badge-mf f">F <?= $linha['f'] ?></span></a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             <?php if (empty($quantitativoEsquadrao)): ?>
@@ -140,9 +169,12 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
             <?php else: ?>
                 <tr class="linha-total">
                     <td>Total</td>
-                    <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><td class="num"><?= $totalGeralEsquadrilhas[$letra] ?></td><?php endforeach; ?>
-                    <td class="num"><?= $totalAtivos ?></td>
-                    <td><span class="badge-mf m">M <?= $totalGeralM ?></span><span class="badge-mf f">F <?= $totalGeralF ?></span></td>
+                    <?php foreach (ESQUADRILHAS_PADRAO as $letra): ?><td class="num"><a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['esquadrilha' => $letra])) ?>"><?= $totalGeralEsquadrilhas[$letra] ?></a></td><?php endforeach; ?>
+                    <td class="num"><a class="filtro-link" href="efetivo.php#lista"><?= $totalAtivos ?></a></td>
+                    <td>
+                        <a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['sexo' => 'M'])) ?>"><span class="badge-mf m">M <?= $totalGeralM ?></span></a>
+                        <a class="filtro-link" href="<?= htmlspecialchars(linkFiltroEfetivo(['sexo' => 'F'])) ?>"><span class="badge-mf f">F <?= $totalGeralF ?></span></a>
+                    </td>
                 </tr>
             <?php endif; ?>
         </table>
@@ -153,7 +185,11 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
         <table>
             <tr><th>Especialidade</th><th class="num">Total</th></tr>
             <?php foreach ($quantitativoEspecialidade as $e): ?>
-                <tr><td><?= htmlspecialchars($e['especialidade']) ?></td><td class="num"><?= $e['total'] ?></td></tr>
+                <?php $linkEspecialidade = $e['especialidade'] === 'Sem especialidade' ? null : linkFiltroEfetivo(['especialidade' => $e['especialidade']]); ?>
+                <tr>
+                    <td><?php if ($linkEspecialidade): ?><a class="filtro-link" href="<?= htmlspecialchars($linkEspecialidade) ?>"><?= htmlspecialchars($e['especialidade']) ?></a><?php else: ?><?= htmlspecialchars($e['especialidade']) ?><?php endif; ?></td>
+                    <td class="num"><?php if ($linkEspecialidade): ?><a class="filtro-link" href="<?= htmlspecialchars($linkEspecialidade) ?>"><?= $e['total'] ?></a><?php else: ?><?= $e['total'] ?><?php endif; ?></td>
+                </tr>
             <?php endforeach; ?>
             <?php if (empty($quantitativoEspecialidade)): ?>
                 <tr><td colspan="2" style="color: var(--text-muted);">Nenhum aluno ativo.</td></tr>
@@ -174,6 +210,11 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
             <?php endif; ?>
             <input type="text" name="esquadrilha" placeholder="Esquadrilha (A/B/C/D)" value="<?= htmlspecialchars($_GET['esquadrilha'] ?? '') ?>">
             <input type="text" name="especialidade" placeholder="Especialidade (SIN, BET...)" value="<?= htmlspecialchars($_GET['especialidade'] ?? '') ?>">
+            <select name="sexo" aria-label="Sexo">
+                <option value="">M e F</option>
+                <option value="M" <?= $filtros['sexo'] === 'M' ? 'selected' : '' ?>>Masculino</option>
+                <option value="F" <?= $filtros['sexo'] === 'F' ? 'selected' : '' ?>>Feminino</option>
+            </select>
             <input type="text" name="busca" placeholder="Nome ou milhão" value="<?= htmlspecialchars($_GET['busca'] ?? '') ?>">
             <?php if (podeEditarEfetivo()): ?>
                 <select name="turma_id">
@@ -192,8 +233,14 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
     <?php if ($erro): ?><p class="erro"><?= htmlspecialchars($erro) ?></p><?php endif; ?>
     <?php if ($mensagem): ?><p class="ok"><?= htmlspecialchars($mensagem) ?></p><?php endif; ?>
 
-    <div class="card">
-        <p style="color: var(--text-muted); font-size: 13px;"><?= count($alunos) ?> aluno(s) encontrado(s).</p>
+    <div class="card" id="lista">
+        <p style="color: var(--text-muted); font-size: 13px;">
+            <?= count($alunos) ?> aluno(s) encontrado(s).
+            <?php foreach ($filtrosAtivos as $rotulo => $valor): ?>
+                <span class="filtro-ativo"><?= htmlspecialchars($rotulo) ?>: <strong><?= htmlspecialchars($valor) ?></strong></span>
+            <?php endforeach; ?>
+            <?php if ($filtrosAtivos): ?><a href="efetivo.php#lista">limpar filtros</a><?php endif; ?>
+        </p>
         <form method="post" id="form_atribuir_turma">
         <input type="hidden" name="acao" value="atribuir_turma">
         <?php if (podeEditarEfetivo() && !empty($alunos)): ?>
@@ -209,7 +256,7 @@ $turmasDisponiveis = podeEditarEfetivo() ? listarTurmas($conexao) : [];
             </div>
         <?php endif; ?>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Posto|Nome de Guerra|Milhão|Esquadrão|Esquadrilha">
             <tr>
                 <?php if (podeEditarEfetivo() && !empty($alunos)): ?><th><input type="checkbox" onclick="document.querySelectorAll('.chk-aluno').forEach(c => c.checked = this.checked)"></th><?php endif; ?>
                 <th>Posto</th><th>Nome de Guerra</th><th>Sexo</th><th>Milhão</th>

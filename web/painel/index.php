@@ -162,6 +162,7 @@ $logado = !empty($_SESSION['painel_id']);
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 </head>
 <body>
 
@@ -169,7 +170,7 @@ $logado = !empty($_SESSION['painel_id']);
 
     <div class="login-wrap">
         <div class="login-box">
-            <h1>Argos</h1>
+            <h1><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></h1>
             <p class="sub">Painel de comando — Corpo de Alunos</p>
             <?php if ($erroLogin): ?><p class="erro"><?= htmlspecialchars($erroLogin) ?></p><?php endif; ?>
             <form method="post">
@@ -197,7 +198,7 @@ $logado = !empty($_SESSION['painel_id']);
 <?php else: ?>
 
     <div class="topbar">
-        <div class="brand">ARGOS <span><?= htmlspecialchars($_SESSION['painel_nome']) ?> · <?= htmlspecialchars(nomeCargo($_SESSION['painel_cargo'])) ?><?= $_SESSION['painel_esquadrao'] ? ' · Esquadrão ' . htmlspecialchars($_SESSION['painel_esquadrao']) : '' ?><?= ($_SESSION['painel_origem'] ?? '') === 'ikarus37' ? ' · via Ikarus37' : '' ?></span></div>
+        <div class="brand"><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span> <span><?= htmlspecialchars($_SESSION['painel_nome']) ?> · <?= htmlspecialchars(nomeCargo($_SESSION['painel_cargo'])) ?><?= $_SESSION['painel_esquadrao'] ? ' · Esquadrão ' . htmlspecialchars($_SESSION['painel_esquadrao']) : '' ?><?= ($_SESSION['painel_origem'] ?? '') === 'ikarus37' ? ' · via Ikarus37' : '' ?></span></div>
         <a href="?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a>
     </div>
 
@@ -207,7 +208,57 @@ $logado = !empty($_SESSION['painel_id']);
             <?= escopoEsquadrao() ? 'Visão restrita ao Esquadrão ' . htmlspecialchars(escopoEsquadrao()) : 'Visão de todo o Corpo de Alunos' ?>
         </p>
 
-        <?php $conexao = conectarBanco(); ?>
+        <?php
+            $conexao = conectarBanco();
+
+            // O que o Painel mostra primeiro: a situação AGORA. Cada aluno aparece
+            // uma vez, com o que foi registrado na chamada enviada mais recente em
+            // que ele estava — não é soma de faltas, é o retrato do momento.
+            require_once __DIR__ . '/../../core/situacao_core.php';
+            require_once __DIR__ . '/../../core/alunos_core.php';
+            $filtroSituacao = ['esquadrao' => escopoEsquadrao()];
+            $resumoAgora = situacaoResumo($conexao, $filtroSituacao);
+            $emPane = situacaoAtualAlunos($conexao, $filtroSituacao + ['somente_ausentes' => true]);
+            $tiposChamada = ['1_jornada' => '1ª Jornada', '2_jornada' => '2ª Jornada', 'educacao_fisica' => 'Educação Física', 'pernoite' => 'Pernoite'];
+        ?>
+        <section class="card situacao-agora">
+            <div class="situacao-cabecalho">
+                <div>
+                    <h3>Situação do efetivo agora</h3>
+                    <p>Cada aluno aparece uma vez, com o que foi registrado na última chamada enviada em que ele estava.</p>
+                </div>
+                <a href="situacao.php" class="btn">Ver situação completa</a>
+            </div>
+            <div class="kpis">
+                <div class="kpi"><div class="valor"><?= $resumoAgora['total_efetivo'] ?></div><div class="rotulo">Efetivo</div></div>
+                <div class="kpi"><div class="valor" style="color:var(--ok)"><?= $resumoAgora['presentes'] ?></div><div class="rotulo">Prontos</div></div>
+                <div class="kpi kpi-pane"><div class="valor"><?= $resumoAgora['ausentes'] ?></div><div class="rotulo">Em pane</div></div>
+                <div class="kpi"><div class="valor" style="color:var(--text-muted)"><?= $resumoAgora['sem_registro'] ?></div><div class="rotulo">Sem chamada ainda</div></div>
+            </div>
+
+            <h4>Alunos em pane (<?= count($emPane) ?>)</h4>
+            <?php if (empty($emPane)): ?>
+                <p class="vazio">Nenhum aluno em pane no momento.</p>
+            <?php else: ?>
+                <div class="scroll-x">
+                <table>
+                    <tr><th>Aluno</th><th>Esquadrão / Esquadrilha</th><th>Situação</th><th>Registrado em</th></tr>
+                    <?php foreach ($emPane as $p): ?>
+                        <tr>
+                            <td><strong><?= htmlspecialchars(identificacaoAluno($p)) ?></strong></td>
+                            <td><?= htmlspecialchars($p['esquadrao']) ?> / <?= htmlspecialchars($p['esquadrilha']) ?></td>
+                            <td>
+                                <span class="badge <?= $p['motivo_classificacao'] === 'falta' ? 'pane-falta' : 'pane-justificada' ?>"><?= htmlspecialchars($p['motivo_nome'] ?? 'Sem motivo informado') ?></span>
+                                <?php if (!empty($p['observacao'])): ?><small class="pane-obs"><?= htmlspecialchars($p['observacao']) ?></small><?php endif; ?>
+                            </td>
+                            <td><?= htmlspecialchars($tiposChamada[$p['retirada_tipo']] ?? $p['retirada_tipo']) ?> · <?= htmlspecialchars(date('d/m H:i', strtotime($p['retirada_data_hora']))) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+                </div>
+            <?php endif; ?>
+        </section>
+
         <div class="grid">
             <?php if (temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())): ?>
             <a href="retiradas.php" class="card">
