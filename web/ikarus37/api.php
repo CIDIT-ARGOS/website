@@ -110,6 +110,7 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
 <link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 <link rel="stylesheet" href="../css/argos-ikarus.css">
 </head>
 <body>
@@ -157,7 +158,7 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
     <div class="card">
         <h4>Chaves existentes (apps conectados)</h4>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Nome|Preview|Status|Último uso">
             <tr>
                 <th>Nome</th><th>Preview</th><th>Status</th><th>Criada por</th><th>Criada em</th><th>Último uso</th>
                 <?php if ($podeGerenciar): ?><th>Ações</th><?php endif; ?>

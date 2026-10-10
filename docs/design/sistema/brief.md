@@ -96,8 +96,18 @@ Em vez de reescrever o `<style>` de 28 páginas, o Painel e o Ikarus37 passam a 
 
 ## Resultado
 
-Prints em `docs/design/sistema/prints/` (dados fictícios do seed de desenvolvimento): login e chamada da PWA, home e Situação do Painel (com o "antes" da Situação), login e API do Ikarus37.
+Prints em `docs/design/sistema/prints/` (dados fictícios do seed de desenvolvimento), já com os ajustes da segunda rodada descrita no fim deste documento.
 
 Diferenças em relação a este brief:
 - Os cartões-link da home ficaram só com o ícone em azul, sem o quadrado de fundo: o ícone é pintado por `mask-image`, que recorta qualquer fundo do próprio elemento.
 - O botão "Abrir nova retirada" da PWA fica colado acima da barra inferior (como o "Enviar chamada"), em vez de fixo flutuando.
+
+## Segunda rodada (10/10/2026) — mais institucional
+
+Pedidos do encarregado depois de ver a primeira versão:
+
+- **Marca escrita:** é `A R G (olho) S` — o olho entra no lugar do O. Vale em todo lugar onde o nome aparece (barras, logins, PWA, landing). No código é `<span class="marca-argos">ARG<i class="olho"></i>S</span>`, e o olho é o mesmo `web/images/argos-olho.svg`.
+- **Tom institucional:** azul EEAR `#0a2e5c` na barra e nos títulos, botões em `#123c7a`, filete dourado `#c9a227` embaixo da barra e na lateral do painel, cantos de 6px (eram 10–14px), sombra quase nula, badges retangulares, título de página com filete azul, sem gradiente no login.
+- **Tabelas enxutas:** só as colunas essenciais na tabela; "Ver / editar" abre um painel lateral com todos os campos e as ações. É `web/js/argos-admin.js` + o atributo `data-enxuta` na `<table>` — o PHP das páginas não mudou, os campos da linha é que vão pro painel.
+- **Rodapé:** em todas as páginas, a instituição, a versão publicada e o crédito — *Desenvolvido pelos membros do CIDIT — Esquadrão Prata · Turma Ikarus 37*.
+- **Aba selecionada** (Controle do Domínio de Negócio): fundo cheio com texto claro, vindos de tokens diferentes, pra nunca coincidirem (era o defeito da primeira versão: texto azul sobre fundo azul).

@@ -28,16 +28,19 @@
         --ok-bg: rgba(79, 208, 143, .12);
         --danger-bg: rgba(255, 107, 97, .12);
         --alerta-bg: rgba(240, 178, 90, .14);
+        --dourado: #8f7a2b;
+        --texto-sobre-accent: #0a0f1a;
         --anel: rgba(91, 147, 245, .4);
         --sombra: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .22);
     }
 
-    .topbar { border-bottom: 1px solid var(--border); box-shadow: none; }
+    .painel-cabecalho { border-bottom: 1px solid var(--border); }
+    .kpi-pane { background: var(--danger-bg); }
     .topbar strong, .topbar .brand { font-family: var(--fonte-mono); font-weight: 500; font-size: 16px; letter-spacing: .16em; }
     /* A marca do painel técnico é a insígnia de especialista, não o olho. */
     .topbar > :first-child::before {
+        content: ''; flex: none; width: 24px; height: 24px; margin-right: -6px;
         background: url('../images/especialista.svg') center / contain no-repeat;
-        -webkit-mask: none; mask: none;
     }
 
     button:where(:not(.link-btn, .toggle-senha)), a.btn { color: #0a0f1a; }
@@ -48,12 +51,7 @@
     code, pre, input[type=text][name=sql], textarea { font-family: var(--fonte-mono); }
     pre { background: var(--campo-bg); border: 1px solid var(--border); border-radius: 10px; }
 
-    .login-wrap {
-        background:
-            radial-gradient(900px 420px at 50% -120px, rgba(91, 147, 245, .14), transparent 70%),
-            var(--bg);
-    }
     .login-box::before { height: 76px; background-image: url('../images/especialista.svg'); }
     .login-box h1 { font-family: var(--fonte-mono); font-weight: 500; font-size: 26px; letter-spacing: .22em; margin-right: -.22em; color: var(--text); }
-    .login-box button[type=submit] { box-shadow: 0 8px 20px rgba(91, 147, 245, .22); }
+    .login-box { border-top-color: var(--accent); }
 }

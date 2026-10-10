@@ -32,14 +32,18 @@ Pra abrir no celular de verdade, use o IP da máquina na rede (`http://192.168.x
 2. Abra a retirada pendente de Educação Física, marque uma falta (escolha o motivo), volte um aluno pra presente — o placar acima do botão acompanha.
 3. Envie a chamada: aparece o protocolo e ela vira "Enviada" na lista.
 4. "Abrir nova retirada" → escolha tipo e esquadrilha → a chamada abre com todo mundo presente.
-5. Aba Efetivo: busque por nome ou milhão.
-6. Tente entrar com o código do `WERNECK` (inativo): tem que ser recusado.
+5. Aba **Dispensas** → "Lançar dispensa": escolha o aluno, o período, o motivo e do que ele está dispensado. Ela aparece na lista e, na próxima chamada, o aluno já entra marcado como dispensa médica.
+6. Aba **Livro**: o Livro do Dia do esquadrão montado sozinho — faltas por tipo de chamada (com a situação por extenso), "Chamada não enviada" onde ainda falta lançar, e as dispensas. "Copiar texto" ou "Enviar" entrega o texto padronizado pra mandar ao Aluno de Dia ao CA.
+7. Aba Efetivo: busque por nome ou milhão.
+8. Tente entrar com o código do `WERNECK` (inativo): tem que ser recusado.
 
 **Painel de Comando**
-1. Entre como `dev.ca`. Em **Situação do efetivo** a falta que você marcou na PWA já aparece.
-2. **Retiradas** → "continuar" numa pendente → marque e salve. **Painel Argos** e **Relatório** refletem os números.
-3. **Livro do Dia** → "Baixar PDF" (a impressão não mudou com o redesign).
-4. Saia e entre como `dev.prata`: só o Esquadrão Prata aparece, e some o que é só do CA (Grupos, por exemplo).
+1. Entre como `dev.ca`. A primeira coisa na tela é **Situação do efetivo agora**: quantos estão prontos, quantos em pane e a lista de quem está em pane, com a situação por extenso. A falta que você marcou na PWA já aparece ali.
+2. **Retiradas**: a tabela mostra só o essencial; "Ver / editar" abre o painel lateral com o resto e as ações (continuar a chamada, excluir). O mesmo vale pra Usuários, Turmas, Efetivo e Controle do Domínio.
+3. **Efetivo**: clique em qualquer número dos quadros (esquadrilha, total, M/F, especialidade) — a listagem embaixo já vem filtrada.
+4. **Livro do Dia** → "Baixar PDF" (a impressão não mudou com o redesign); a situação de cada aluno vem por extenso.
+5. **Controle do Domínio de Negócio**: a aba selecionada fica em azul cheio com texto branco.
+6. Saia e entre como `dev.prata`: só o Esquadrão Prata aparece, e some o que é só do CA (Grupos, por exemplo).
 
 **Ikarus37**
 1. Entre como `admin`. **API** mostra as chaves e o log das requisições que a PWA acabou de fazer.
@@ -64,8 +68,8 @@ Precisa de PHP com `mysqli` e de um MySQL 8 acessível. **Atenção:** o script 
 | Arquivo | Testes | Cobre |
 |---|---|---|
 | `tests/integracao_test.php` | 37 | fluxo da PWA de ponta a ponta |
-| `tests/api_test.php` | 67 | cada endpoint e método da API |
-| `tests/paginas_test.php` | 37 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
+| `tests/api_test.php` | 81 | cada endpoint e método da API, incluindo dispensas e Livro do Dia |
+| `tests/paginas_test.php` | 38 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
 | `tests/smoke_producao.php` | 13 | o que roda em produção depois de cada deploy |
 
 Na prática, o jeito mais simples é dar push na `develop` e olhar **Actions** no Forgejo: roda tudo nos dois runners.

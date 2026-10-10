@@ -107,6 +107,7 @@ $usuarios = listarUsuariosPainel($conexao);
     .campo-senha .toggle-senha:hover { color: var(--text); }
 </style>
 <link rel="stylesheet" href="../css/argos-admin.css">
+<script src="../js/argos-admin.js" defer></script>
 <script>
     const CARGOS_ESQUADRAO = <?= json_encode(array_values($cargosEsquadrao)) ?>;
 
@@ -151,7 +152,7 @@ $usuarios = listarUsuariosPainel($conexao);
 <body>
 
 <div class="topbar">
-    <div><strong>ARGOS</strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
+    <div><strong><span class="marca-argos" role="img" aria-label="Argos">ARG<i class="olho"></i>S</span></strong> <a href="index.php"><span class="i" style="--icon-url:url('../images/icons/arrow-left.svg')"></span>painel</a></div>
     <div><a href="index.php?logout=1"><span class="i" style="--icon-url:url('../images/icons/logout.svg')"></span>sair</a></div>
 </div>
 
@@ -186,7 +187,7 @@ $usuarios = listarUsuariosPainel($conexao);
     <div class="card">
         <h4>Contas existentes</h4>
         <div class="scroll-x">
-        <table>
+        <table data-enxuta="Nome|Cargo|Esquadrão|Status">
             <tr>
                 <th>Nome</th><th>Usuário</th><th>Cargo</th><th>Esquadrão</th><th>Status</th><th>Último login</th><th>Ações</th>
             </tr>

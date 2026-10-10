@@ -69,6 +69,7 @@ function conferirPagina($caminho, array &$cookies, $folhaDeEstilo) {
     semErroPhp($r);
     garantir(strpos($r['corpo'], 'Acesso negado') === false, 'a página respondeu "Acesso negado"');
     garantir(strpos($r['corpo'], $folhaDeEstilo) !== false, "a página não carrega $folhaDeEstilo");
+    garantir(strpos($r['corpo'], 'class="argos-rodape"') !== false, 'a página não tem o rodapé com a versão e o crédito');
 }
 
 function apagarUsuarioDoTeste() {
@@ -90,6 +91,7 @@ secao('Identidade visual — arquivos compartilhados');
 foreach ([
     '/web/css/argos-admin.css' => 'folha comum do Painel e do Ikarus37',
     '/web/css/argos-ikarus.css' => 'tema do Ikarus37',
+    '/web/js/argos-admin.js' => 'tabelas enxutas com painel lateral',
     '/web/images/argos-olho.svg' => 'marca do Argos',
     '/web/images/especialista.svg' => 'insígnia de especialista',
 ] as $caminho => $descricao) {
