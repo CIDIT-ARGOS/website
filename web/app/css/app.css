@@ -378,6 +378,23 @@ body.folha-aberta { overflow: hidden; }
     mask: url('../../images/argos-olho.svg') center / 100% auto no-repeat;
 }
 
+/* ---------- Easter egg: o raio do olho do Argos (js/raio.js) ---------- */
+.raio-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 60; pointer-events: none; display: none; }
+.raio-canvas.ativo { display: block; }
+.marca-argos .olho { transition: background-color .2s, filter .2s; }
+.marca-argos .olho.olho-aceso { background-color: #ff1f2d; filter: drop-shadow(0 0 6px #ff1f2d); }
+/* O tremor vai na barra de baixo (onde o raio estoura) e no cabeçalho — no body ele tiraria do lugar tudo que é fixo. */
+body.raio-impacto .nav-inferior, body.raio-impacto .topbar { animation: raio-tremor .42s ease-out; }
+@keyframes raio-tremor {
+    0% { transform: translate(0, 0); }
+    15% { transform: translate(-5px, 4px); }
+    30% { transform: translate(5px, -3px); }
+    45% { transform: translate(-4px, 2px); }
+    60% { transform: translate(3px, -2px); }
+    80% { transform: translate(-1px, 1px); }
+    100% { transform: translate(0, 0); }
+}
+
 /* ---------- Posto de serviço no cabeçalho ---------- */
 .topbar .sessao-info { cursor: pointer; }
 .topbar .sessao-info u { margin-left: 4px; color: #fff; text-underline-offset: 2px; }
