@@ -165,6 +165,19 @@ teste('os arquivos do app levam o marcador de versão, que o deploy troca pela t
     garantir(strpos($leitor, 'ESTE_SCRIPT.search') !== false, 'o leitor não repassa a versão pro jsQR');
 });
 
+// O endpoint temporário de deploy sobe ANTES do código novo. Se ele incluir
+// um arquivo do core que só existe na versão nova, o deploy morre na primeira
+// chamada (aconteceu na v1.2.2, com o core/fuso.php).
+teste('o endpoint de deploy só depende do core/config.php', function () use ($raizProjeto) {
+    foreach (['endpoint.php', 'migracoes.php', 'backup.php'] as $arquivo) {
+        $codigo = file_get_contents("$raizProjeto/deploy/$arquivo");
+        preg_match_all("{/core/([\w.]+)'}", $codigo, $usados);
+        $proibidos = array_diff($usados[1], ['config.php', 'versao.php']);
+        garantir($proibidos === [], "deploy/$arquivo usa core/" . implode(', core/', $proibidos));
+        garantir(strpos($codigo, 'conectarBancoArgos') === false, "deploy/$arquivo chama conectarBancoArgos(), que só existe no código novo");
+    }
+});
+
 teste('o app tem o botão de instalar', function () use ($raizProjeto) {
     garantir(strpos(file_get_contents("$raizProjeto/web/app/index.html"), 'id="btnInstalar"') !== false, 'index.html sem o botão de instalar');
     garantir(strpos(file_get_contents("$raizProjeto/web/app/js/app.js"), 'beforeinstallprompt') !== false, 'app.js não trata o pedido de instalação');
