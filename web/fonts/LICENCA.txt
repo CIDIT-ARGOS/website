@@ -1,0 +1,8 @@
+Fontes usadas pelo Argos, servidas localmente (sem Google Fonts em tempo de execução):
+
+- Barlow Semi Condensed — Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow)
+- IBM Plex Sans e IBM Plex Mono — Copyright © 2017 IBM Corp. (https://github.com/IBM/plex)
+
+Todas sob a SIL Open Font License, Version 1.1 — https://openfontlicense.org
+A licença permite usar, copiar e redistribuir as fontes, inclusive embutidas em software,
+desde que não sejam vendidas sozinhas e que este aviso acompanhe as cópias.

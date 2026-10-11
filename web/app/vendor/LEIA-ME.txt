@@ -1,0 +1,4 @@
+Bibliotecas de terceiros servidas pelo proprio Argos (nada e carregado da internet).
+
+jsQR.js            jsqr 1.4.0 (npm), arquivo dist/jsQR.js sem alteracao. Licenca Apache-2.0: jsQR.LICENSE.txt
+                   https://github.com/cozmo/jsQR

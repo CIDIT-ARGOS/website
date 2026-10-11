@@ -99,6 +99,10 @@ foreach ([
     '/web/css/argos-admin.css' => 'folha comum do Painel e do Ikarus37',
     '/web/css/argos-ikarus.css' => 'tema do Ikarus37',
     '/web/js/argos-admin.js' => 'tabelas enxutas com painel lateral',
+    '/web/css/fontes.css' => 'fontes servidas pelo próprio sistema',
+    '/web/fonts/ibm-plex-sans-400-latin.woff2' => 'arquivo de fonte',
+    '/web/vendor/chart.umd.js' => 'Chart.js local (gráficos do Painel)',
+    '/web/app/vendor/jsQR.js' => 'jsQR local (leitor de QR)',
     '/web/images/argos-olho.svg' => 'marca do Argos',
     '/web/images/especialista.svg' => 'insígnia de especialista',
 ] as $caminho => $descricao) {
@@ -107,8 +111,55 @@ foreach ([
     });
 }
 
+// O Argos roda em intranet: nenhuma página pode buscar script, estilo, fonte
+// ou imagem na internet. (Link que o usuário clica, tipo o do GitHub na
+// landing, não é carregamento — por isso <a href> não entra.)
+teste('nenhuma página carrega recurso da internet', function () use ($raizProjeto) {
+    $padroes = [
+        '{<(?:script|img|iframe|source|video|audio)\b[^>]*\bsrc=["\']https?://}i',
+        '{<link\b[^>]*\bhref=["\']https?://}i',
+        '{@import\s+(?:url\()?["\']?https?://}i',
+        '{url\(\s*["\']?https?://}i',
+        '{\.src\s*=\s*["\']https?://}',
+        '{(?:fetch|importScripts)\(\s*["\']https?://}',
+    ];
+    $achados = [];
+    $arquivos = new RecursiveIteratorIterator(new RecursiveDirectoryIterator("$raizProjeto/web", FilesystemIterator::SKIP_DOTS));
+    foreach ($arquivos as $arquivo) {
+        $caminho = str_replace('\\', '/', substr($arquivo->getPathname(), strlen($raizProjeto) + 1));
+        // Bibliotecas de terceiros trazem URL em comentário de licença — não são carregamento.
+        if (!preg_match('/\.(php|html|css|js)$/', $caminho) || strpos($caminho, '/vendor/') !== false) {
+            continue;
+        }
+        foreach (file($arquivo->getPathname()) as $n => $linha) {
+            foreach ($padroes as $padrao) {
+                if (preg_match($padrao, $linha)) {
+                    $achados[] = "$caminho:" . ($n + 1) . ' ' . trim(substr($linha, 0, 120));
+                }
+            }
+        }
+    }
+    garantir($achados === [], "recurso externo em:\n          " . implode("\n          ", $achados));
+});
+
+teste('o leitor de QR usa o decodificador local', function () use ($raizProjeto) {
+    $leitor = file_get_contents("$raizProjeto/web/app/js/qr-scanner.js");
+    garantir(strpos($leitor, '../vendor/jsQR.js') !== false, 'qr-scanner.js não aponta pro vendor/jsQR.js local');
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/vendor/jsQR.js"), 'jsQR') !== false, 'vendor/jsQR.js não parece ser o jsQR');
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/sw.js"), "'vendor/jsQR.js'") !== false, 'o service worker não guarda o jsQR pra uso offline');
+});
+
+// O motivo da falta é escolhido num painel de botões, não mais numa lista suspensa.
+teste('o app escolhe o motivo da falta num painel de botões', function () use ($raizProjeto) {
+    $pagina = file_get_contents("$raizProjeto/web/app/index.html");
+    $app = file_get_contents("$raizProjeto/web/app/js/app.js");
+    garantir(strpos($pagina, 'id="folhaOpcoes"') !== false, 'index.html não tem o painel de opções');
+    garantir(strpos($app, 'abrirFolhaDeOpcoes') !== false, 'app.js não abre o painel de opções');
+    garantir(strpos($app, 'select-motivo') === false, 'app.js ainda monta a lista suspensa de motivos');
+});
+
 teste('as folhas de estilo só usam caminho relativo', function () use ($raizProjeto) {
-    foreach (['web/css/argos-admin.css', 'web/css/argos-ikarus.css', 'web/app/css/app.css'] as $arquivo) {
+    foreach (['web/css/argos-admin.css', 'web/css/argos-ikarus.css', 'web/css/fontes.css', 'web/app/css/app.css'] as $arquivo) {
         // Caminho absoluto quebra em produção, onde o site fica num subdiretório.
         garantir(!preg_match('{url\(\s*[\'"]?/(?!/)}', file_get_contents("$raizProjeto/$arquivo")), "$arquivo tem url() com caminho absoluto");
     }
@@ -154,7 +205,7 @@ teste('login com usuário e senha', function () use (&$cookiesPainel) {
 if ($cookiesPainel && $retiradaId) {
     foreach ([
         'index.php', 'retiradas.php', 'retirada_nova.php', "retirada_marcar.php?id=$retiradaId",
-        'postos_servico.php', 'efetivo.php', "efetivo_editar.php?id=$alunoId", 'situacao.php', 'dashboard.php', 'relatorios.php',
+        'postos_servico.php', 'qrcodes.php', 'qrcodes.php?situacao=sem&busca=TESTE', 'efetivo.php', "efetivo_editar.php?id=$alunoId", 'situacao.php', 'dashboard.php', 'relatorios.php',
         'livro_do_dia.php', 'dispensas.php', 'grupos.php', 'usuarios.php', 'dominio.php',
         'grupo_acesso_detalhe.php?id=1', 'permissoes_cargo.php', 'turmas.php',
     ] as $pagina) {
@@ -162,6 +213,14 @@ if ($cookiesPainel && $retiradaId) {
             conferirPagina("/web/painel/$pagina", $cookiesPainel, 'css/argos-admin.css');
         });
     }
+
+    teste('a chamada do Painel escolhe o motivo num painel de botões', function () use (&$cookiesPainel, $retiradaId) {
+        $corpo = navegar('GET', "/web/painel/retirada_marcar.php?id=$retiradaId", $cookiesPainel)['corpo'];
+        garantir(strpos($corpo, 'id="painelOpcoes"') !== false, 'a página não tem o painel de opções');
+        garantir(strpos($corpo, 'class="motivo-botao"') !== false, 'as linhas não têm o botão do motivo');
+        garantir(preg_match('/const MOTIVOS = \[\{.*"codigo":"FALT"/', $corpo) === 1, 'a página não recebeu os motivos (ou falta o FALT)');
+        garantir(strpos($corpo, '<select id="motivo_') === false, 'a página ainda usa a lista suspensa de motivos');
+    });
 
     // Posto de serviço de ponta a ponta, pela tela: cria o posto, coloca um
     // aluno de serviço, rende por outro — e a chamada aberta em seguida já
@@ -216,6 +275,70 @@ if ($cookiesPainel && $retiradaId) {
         sql("DELETE FROM postos_servico WHERE id = $postoId");
     });
 
+    // QR code de ponta a ponta, pela tela: cadastra um QR de formato qualquer
+    // (longo, com símbolos) pra um aluno, e ele passa a entrar no app com ele.
+    teste('QR code: cadastrar um QR de qualquer formato, conferir, entrar no app, trocar e remover', function () use (&$cookiesPainel, $alunoId) {
+        $enviar = fn(array $campos) => navegar('POST', '/web/painel/qrcodes.php', $cookiesPainel, $campos);
+        $bravo = (int) sqlLinha("SELECT id FROM alunos WHERE identidade_militar = 'CI-0002'")['id'];
+        $alfa = (int) sqlLinha("SELECT id FROM alunos WHERE identidade_militar = 'CI-0001'")['id'];
+        // 256 caracteres, com espaço, acento e símbolos — nada a ver com o formato antigo.
+        $qr = 'FAB|EEAR|ALUNO: João D\'Ávila|' . str_repeat('A1b2/+=', 32);
+        $qr = substr($qr, 0, 256);
+        $outroQr = 'https://exemplo.test/identidade?id=' . str_repeat('9', 40);
+
+        try {
+            // Conferir antes de cadastrar: ninguém, e a tela diz o tamanho.
+            $r = $enviar(['acao' => 'conferir', 'conteudo' => $qr]);
+            semErroPhp($r);
+            garantir(strpos($r['corpo'], 'ainda não está cadastrado') !== false, 'a conferência deveria dizer que o QR não é de ninguém');
+            garantir(strpos($r['corpo'], mb_strlen($qr) . ' caracteres') !== false, 'a conferência deveria mostrar o tamanho do conteúdo');
+            garantir(strpos($r['corpo'], 'A1b2/+=') === false, 'a tela devolveu o conteúdo do QR');
+
+            // Cadastra pro BRAVO.
+            $r = $enviar(['acao' => 'definir', 'aluno_id' => $bravo, 'conteudo' => $qr]);
+            semErroPhp($r);
+            garantir(strpos($r['corpo'], 'QR trocado para') !== false, 'a tela não confirmou a troca do QR (o BRAVO já tinha um)');
+            $gravado = sqlLinha("SELECT qrcode_hash FROM alunos WHERE id = $bravo")['qrcode_hash'];
+            garantir($gravado === hash('sha256', $qr), 'o que ficou no banco não é a impressão digital (sha256) do conteúdo');
+
+            // O mesmo QR não serve pra outro aluno.
+            garantir(strpos($enviar(['acao' => 'definir', 'aluno_id' => $alfa, 'conteudo' => $qr])['corpo'], 'já está cadastrado para') !== false, 'aceitou o mesmo QR pra dois alunos');
+
+            // Ele entra no app com o conteúdo lido; o QR antigo dele parou de valer.
+            $sessao = api('POST', 'sessao.php', null, ['qrcode' => $qr]);
+            garantirStatus($sessao, 201);
+            garantir($sessao['json']['aluno']['nome_guerra'] === 'TESTE BRAVO', 'entrou como outro aluno');
+            garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => "  $qr\n"]), 201);
+            garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => QR_PRATA_2]), 401);
+            garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => $qr . 'x']), 401);
+
+            // Conferir agora diz de quem é.
+            garantir(strpos($enviar(['acao' => 'conferir', 'conteudo' => $qr])['corpo'], 'TESTE BRAVO') !== false, 'a conferência deveria dizer que o QR é do BRAVO');
+
+            // Trocar o QR derruba a sessão aberta com o antigo.
+            semErroPhp($enviar(['acao' => 'definir', 'aluno_id' => $bravo, 'conteudo' => $outroQr]));
+            garantirStatus(api('GET', 'motivos.php', $sessao['json']['token']), 401);
+            garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => $outroQr]), 201);
+
+            // Remover: não entra mais.
+            $r = $enviar(['acao' => 'remover', 'aluno_id' => $bravo]);
+            garantir(strpos($r['corpo'], 'QR removido de') !== false, 'a tela não confirmou a remoção');
+            garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => $outroQr]), 401);
+
+            // Lote: uma linha boa, uma de aluno que não existe.
+            $r = $enviar(['acao' => 'importar', 'lote' => "26/9002;$qr\n00/0000;qualquer coisa\nlinha sem separador"]);
+            semErroPhp($r);
+            garantir(strpos($r['corpo'], '1 QR(s) cadastrado(s) em lote') !== false, 'o lote deveria ter gravado 1 linha');
+            garantir(strpos($r['corpo'], 'Linha 2') !== false && strpos($r['corpo'], 'Linha 3') !== false, 'o lote deveria apontar as linhas com problema');
+            garantirStatus(api('POST', 'sessao.php', null, ['qrcode' => $qr]), 201);
+        } finally {
+            // Devolve o QR da fixture, que os outros testes usam.
+            sql("DELETE FROM api_sessoes WHERE aluno_id = $bravo");
+            sql("UPDATE alunos SET qrcode_hash = '" . QR_PRATA_2 . "' WHERE id = $bravo");
+            sql("DELETE FROM api_logs WHERE status_code = 401");
+        }
+    });
+
     teste('sair encerra a sessão', function () use (&$cookiesPainel) {
         navegar('GET', '/web/painel/index.php?logout=1', $cookiesPainel);
         garantir(navegar('GET', '/web/painel/situacao.php', $cookiesPainel)['status'] === 302, 'a sessão continuou valendo depois de sair');
@@ -233,7 +356,7 @@ teste('login com o admin do init_db.sql', function () use (&$cookiesIkarus) {
 
 if ($cookiesIkarus) {
     foreach ([
-        'index.php', 'api.php', 'usuarios.php', 'banco.php', 'backup.php', 'importar.php',
+        'index.php', 'api.php', 'qrcodes.php', 'usuarios.php', 'banco.php', 'backup.php', 'importar.php',
         'dominio.php', 'grupo_acesso_detalhe.php?id=1', 'permissoes_cargo.php',
     ] as $pagina) {
         teste($pagina, function () use ($pagina, &$cookiesIkarus) {

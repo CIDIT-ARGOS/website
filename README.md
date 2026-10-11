@@ -31,6 +31,8 @@ O nome vem da vigia constante do efetivo, como o gigante da mitologia grega que 
 
 PHP + MySQL, hospedado na Hostinger. Sem frameworks — simples de manter e de dar continuidade.
 
+O sistema não busca nada na internet pra funcionar — fontes, gráficos (Chart.js) e leitor de QR (jsQR) são servidos por ele mesmo, pra poder rodar na intranet da escola. As bibliotecas de terceiros ficam em `web/vendor/`, `web/app/vendor/` e `web/fonts/`, com as licenças ao lado.
+
 ## Desenvolvimento e publicação
 
 O repositório principal fica no [Forgejo](https://cosmos.simioni.dev.br/cidit/projeto-argos); o GitHub é espelho.

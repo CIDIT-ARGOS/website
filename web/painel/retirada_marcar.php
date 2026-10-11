@@ -124,41 +124,111 @@ $servicos = listarServicos($conexao);
 <link rel="stylesheet" href="../css/argos-admin.css">
 <script src="../js/argos-admin.js" defer></script>
 <script>
-    function alternarMotivo(alunoId, presenteCheckbox) {
-        const linha = document.getElementById('linha_' + alunoId);
-        const motivoSel = document.getElementById('motivo_' + alunoId);
+    // Motivos e postos de serviço, pro painel de opções (cada opção é um botão).
+    const MOTIVOS = <?= json_encode(array_map(fn($m) => ['id' => (int) $m['id'], 'nome' => $m['nome'], 'codigo' => $m['codigo'], 'falta' => $m['classificacao'] === 'falta'], $motivos), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    const POSTOS = <?= json_encode(array_map(fn($p) => ['id' => (int) $p['id'], 'nome' => $p['nome']], $servicos), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    const CODIGO_MOTIVO_SERVICO = 'SV';
 
-        const falta = !presenteCheckbox.checked;
-        motivoSel.style.display = falta ? 'inline-block' : 'none';
-        linha.classList.toggle('falta-row', falta);
-
-        // Valida o estado do select de serviço
-        verificarServico(alunoId);
+    function escaparHtml(texto) {
+        const div = document.createElement('div');
+        div.textContent = texto;
+        return div.innerHTML;
+    }
+    function semAcento(texto) {
+        return String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
     }
 
-    function verificarServico(alunoId) {
-        const motivoSel = document.getElementById('motivo_' + alunoId);
-        const postoServ = document.getElementById('servico_' + alunoId);
-        
-        // Pega o texto da opção atualmente selecionada no motivo
-        const textoSelecionado = motivoSel.options[motivoSel.selectedIndex] 
-            ? motivoSel.options[motivoSel.selectedIndex].text.trim() 
-            : '';
+    // O botão da linha mostra o motivo escolhido; clicar nele reabre o painel.
+    function pintarMotivo(alunoId) {
+        const botao = document.getElementById('motivo_botao_' + alunoId);
+        const motivo = MOTIVOS.find(m => m.id === Number(document.getElementById('motivo_' + alunoId).value));
+        const posto = POSTOS.find(p => p.id === Number(document.getElementById('servico_' + alunoId).value));
+        botao.classList.toggle('vazio', !motivo);
+        botao.innerHTML = motivo
+            ? (motivo.codigo ? '<b class="sigla">' + escaparHtml(motivo.codigo) + '</b>' : '')
+                + '<span>' + escaparHtml(motivo.nome) + (posto ? ' · ' + escaparHtml(posto.nome) : '') + '</span>'
+            : '<span>Escolher motivo…</span>';
+    }
 
-        // Exibe o select de serviços se o motivo for "Serviço" E o select de motivos estiver visível
-        if (textoSelecionado.toLowerCase() === 'serviço' && motivoSel.style.display !== 'none') {
-            postoServ.style.display = 'inline-block';
-        } else {
-            postoServ.style.display = 'none';
-            postoServ.value = ''; // Limpa a seleção ao esconder
+    function alternarMotivo(alunoId, presenteCheckbox) {
+        const falta = !presenteCheckbox.checked;
+        document.getElementById('linha_' + alunoId).classList.toggle('falta-row', falta);
+        document.getElementById('motivo_botao_' + alunoId).hidden = !falta;
+        if (falta && !document.getElementById('motivo_' + alunoId).value) {
+            abrirPainelMotivo(alunoId);
         }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[id^="motivo_"]').forEach(selectMotivo => {
-            const alunoId = selectMotivo.id.replace('motivo_', '');
-            verificarServico(alunoId);
+    // Painel de opções: primeiro o motivo; se for "Serviço" (e houver postos
+    // cadastrados), o posto em seguida. Fechar sem escolher não muda nada.
+    function mostrarOpcoes({ titulo, opcoes, selecionado, comBusca, aoEscolher }) {
+        const painel = document.getElementById('painelOpcoes');
+        const grade = document.getElementById('painelOpcoesGrade');
+        const busca = document.getElementById('painelOpcoesBusca');
+        document.getElementById('painelOpcoesTitulo').textContent = titulo;
+        busca.value = '';
+        busca.hidden = !comBusca;
+
+        function desenhar() {
+            const termo = semAcento(busca.value);
+            const botoes = opcoes.map((o, indice) => {
+                if (termo && !semAcento((o.sigla || '') + ' ' + o.nome).includes(termo)) return '';
+                const classes = 'opcao' + (o.destaque ? ' destaque' : '') + (o.discreta ? ' discreta' : '')
+                    + (selecionado !== null && o.valor === selecionado ? ' escolhida' : '');
+                return '<button type="button" class="' + classes + '" data-indice="' + indice + '">'
+                    + (o.sigla ? '<b class="sigla">' + escaparHtml(o.sigla) + '</b>' : '')
+                    + '<span>' + escaparHtml(o.nome) + '</span></button>';
+            }).join('');
+            grade.innerHTML = botoes || '<p class="painel-opcoes-vazio">Nenhuma opção com esse nome.</p>';
+        }
+        busca.oninput = desenhar;
+        grade.onclick = (evento) => {
+            const botao = evento.target.closest('.opcao');
+            if (botao) aoEscolher(opcoes[Number(botao.dataset.indice)].valor);
+        };
+        desenhar();
+        if (!painel.open) painel.showModal();
+        grade.scrollTop = 0;
+        if (comBusca) busca.focus();
+    }
+
+    function abrirPainelMotivo(alunoId) {
+        const campoMotivo = document.getElementById('motivo_' + alunoId);
+        const campoPosto = document.getElementById('servico_' + alunoId);
+        document.getElementById('painelOpcoesAluno').textContent = document.getElementById('motivo_botao_' + alunoId).dataset.aluno;
+
+        function gravar(motivoId, postoId) {
+            campoMotivo.value = motivoId;
+            campoPosto.value = postoId || '';
+            pintarMotivo(alunoId);
+            document.getElementById('painelOpcoes').close();
+        }
+
+        mostrarOpcoes({
+            titulo: 'Motivo da falta',
+            opcoes: MOTIVOS.map(m => ({ valor: m.id, sigla: m.codigo || '', nome: m.nome, destaque: m.falta }))
+                .sort((x, y) => Number(y.destaque) - Number(x.destaque)),
+            selecionado: campoMotivo.value ? Number(campoMotivo.value) : null,
+            comBusca: true,
+            aoEscolher: (motivoId) => {
+                const motivo = MOTIVOS.find(m => m.id === motivoId);
+                if (motivo.codigo !== CODIGO_MOTIVO_SERVICO || POSTOS.length === 0) {
+                    gravar(motivoId, null);
+                    return;
+                }
+                mostrarOpcoes({
+                    titulo: 'Qual posto de serviço?',
+                    opcoes: POSTOS.map(p => ({ valor: p.id, nome: p.nome })).concat([{ valor: null, nome: 'Não informar o posto', discreta: true }]),
+                    selecionado: campoPosto.value ? Number(campoPosto.value) : null,
+                    comBusca: POSTOS.length > 8,
+                    aoEscolher: (postoId) => gravar(motivoId, postoId),
+                });
+            },
         });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.motivo-botao').forEach(botao => pintarMotivo(botao.id.replace('motivo_botao_', '')));
     });
 
     function alternarDispensa(alunoId) {
@@ -242,24 +312,12 @@ $servicos = listarServicos($conexao);
                         </td>
                         <td><?= htmlspecialchars(identificacaoAluno($item)) ?></td>
                         <td>
-                            <select id="motivo_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][motivo_falta_id]"
-                                style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?> onchange="verificarServico(<?= $item['aluno_id'] ?>)">
-                                <option value="">—</option>
-                                <?php foreach ($motivos as $m): ?>
-                                    <option value="<?= $m['id'] ?>" <?= $item['motivo_falta_id'] == $m['id'] ? 'selected' : '' ?>><?= htmlspecialchars($m['nome']) ?></option>
-                                <?php endforeach; ?>
-                            </select>
-
-
-                            <select id="servico_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][servico_id]"
-                                style="<?= $item['presente'] ? 'display:none;' : '' ?>" <?= $somenteLeitura ? 'disabled' : '' ?>>
-                                <option value="">—</option>
-                                <?php foreach ($servicos as $s): ?>
-                                    <option value="<?= $s['id'] ?>" <?= isset($item['servico_id']) && $item['servico_id'] == $s['id'] ? 'selected' : '' ?>>
-                                    <?= htmlspecialchars($s['nome']) ?>
-                                </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <input type="hidden" id="motivo_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][motivo_falta_id]" value="<?= htmlspecialchars((string) ($item['motivo_falta_id'] ?? '')) ?>">
+                            <input type="hidden" id="servico_<?= $item['aluno_id'] ?>" name="itens[<?= $item['aluno_id'] ?>][servico_id]" value="<?= htmlspecialchars((string) ($item['servico_id'] ?? '')) ?>">
+                            <button type="button" class="motivo-botao" id="motivo_botao_<?= $item['aluno_id'] ?>"
+                                data-aluno="<?= htmlspecialchars(identificacaoAluno($item)) ?>"
+                                onclick="abrirPainelMotivo(<?= $item['aluno_id'] ?>)"
+                                <?= $item['presente'] ? 'hidden' : '' ?> <?= $somenteLeitura ? 'disabled' : '' ?>></button>
                         </td>
                         <td>
                             <input type="text" name="itens[<?= $item['aluno_id'] ?>][observacao]"
@@ -303,6 +361,18 @@ $servicos = listarServicos($conexao);
         </form>
     </div>
 </div>
+
+<dialog id="painelOpcoes" class="painel-opcoes">
+    <div class="painel-opcoes-topo">
+        <div>
+            <h3 id="painelOpcoesTitulo"></h3>
+            <p id="painelOpcoesAluno"></p>
+        </div>
+        <button type="button" class="ghost" onclick="document.getElementById('painelOpcoes').close()">Fechar</button>
+    </div>
+    <input type="search" id="painelOpcoesBusca" placeholder="Buscar pela sigla ou pelo nome…" aria-label="Buscar opção">
+    <div class="painel-opcoes-grade" id="painelOpcoesGrade"></div>
+</dialog>
 
 <?php include __DIR__ . '/../../core/rodape_versao.php'; ?>
 </body>
