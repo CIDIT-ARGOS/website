@@ -1,12 +1,14 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/dominio_core.php';
 require_once __DIR__ . '/../../core/unidades_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 if (!temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'gerenciar_dominio')) {
     exibirAcessoNegado("Sua conta não tem a permissão 'gerenciar_dominio'.");

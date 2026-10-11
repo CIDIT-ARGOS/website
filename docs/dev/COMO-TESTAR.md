@@ -96,7 +96,7 @@ Precisa de PHP com `mysqli` e de um MySQL 8 acessível. **Atenção:** o script 
 | Arquivo | Testes | Cobre |
 |---|---|---|
 | `tests/integracao_test.php` | 38 | fluxo da PWA de ponta a ponta |
-| `tests/api_test.php` | 103 | cada endpoint e método da API: escopo das chaves, dispensas, Livro do Dia e a tramitação dele, posto de serviço |
+| `tests/api_test.php` | 104 | cada endpoint e método da API: escopo das chaves, dispensas, Livro do Dia e a tramitação dele, posto de serviço |
 | `tests/paginas_test.php` | 54 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
 | `tests/smoke_producao.php` | 13 | o que roda em produção depois de cada deploy |
 

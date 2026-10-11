@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/cargos_core.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -10,7 +12,7 @@ if (session_status() === PHP_SESSION_NONE) {
 function _painelConexao() {
     static $conexao = null;
     if ($conexao === null) {
-        $conexao = conectarBanco();
+        $conexao = conectarBancoArgos();
     }
     return $conexao;
 }

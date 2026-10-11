@@ -1,13 +1,15 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/situacao_core.php';
 require_once __DIR__ . '/../../core/dispensas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao();
 
 $dataInicio = $_GET['data_inicio'] ?? date('Y-m-d', strtotime('-30 days'));

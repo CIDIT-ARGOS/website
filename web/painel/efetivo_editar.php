@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
@@ -10,7 +12,7 @@ if (!podeEditarEfetivo()) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'editar_efetivo'.");
 }
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao();
 
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);

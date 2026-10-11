@@ -20,6 +20,7 @@ const ARQUIVOS_VERSIONADOS = [
     'js/app.js',
     'js/livro.js',
     'js/qr-scanner.js',
+    'js/raio.js',
     'vendor/jsQR.js',
 ];
 const ARQUIVOS_FIXOS = [

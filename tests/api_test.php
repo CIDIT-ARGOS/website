@@ -548,6 +548,23 @@ teste('método não suportado responde 405', function () use ($tokenEcho) {
 });
 
 // =====================================================================
+secao('Fuso horário (core/fuso.php)');
+
+teste('PHP e banco estão no horário de Brasília, e de acordo um com o outro', function () use ($tokenEcho) {
+    $hora = api('GET', 'index.php')['json']['hora_servidor'] ?? '';
+    $agora = new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo'));
+    garantir(substr($hora, -6) === $agora->format('P'), "hora_servidor fora do fuso de Brasília: $hora");
+    garantir(abs(strtotime($hora) - time()) < 120, "hora_servidor longe da hora certa: $hora");
+
+    // O que o sistema grava com NOW() tem que bater com o relógio de Brasília:
+    // se a conexão dele ficasse em UTC, a diferença aqui seria de 3 horas.
+    garantirStatus(api('GET', 'servico.php', $tokenEcho), 200);
+    $ultimoUso = sqlLinha('SELECT MAX(ultimo_uso) AS quando FROM api_sessoes')['quando'];
+    $diferenca = abs((new DateTimeImmutable($ultimoUso, new DateTimeZone('America/Sao_Paulo')))->getTimestamp() - time());
+    garantir($diferenca < 120, "o banco gravou $ultimoUso, a {$diferenca}s da hora de Brasília");
+});
+
+// =====================================================================
 secao('Livro do Dia (GET /api/livro.php)');
 
 teste('exige sessão de aluno (401) e recusa método que não existe (405)', function () use ($tokenEcho) {

@@ -155,7 +155,7 @@ teste('o leitor de QR usa o decodificador local', function () use ($raizProjeto)
 // foi assim que o leitor de QR "não funcionava" em produção.
 teste('os arquivos do app levam o marcador de versão, que o deploy troca pela tag', function () use ($raizProjeto) {
     $pagina = file_get_contents("$raizProjeto/web/app/index.html");
-    foreach (['css/app.css', 'js/app.js', 'js/livro.js', 'js/qr-scanner.js'] as $arquivo) {
+    foreach (['css/app.css', 'js/app.js', 'js/livro.js', 'js/qr-scanner.js', 'js/raio.js'] as $arquivo) {
         garantir(strpos($pagina, "$arquivo?v=__VERSAO__") !== false, "index.html pede $arquivo sem a versão");
     }
     garantir(strpos(file_get_contents("$raizProjeto/web/app/sw.js"), "const VERSAO = '__VERSAO__'") !== false, 'sw.js sem o marcador de versão');

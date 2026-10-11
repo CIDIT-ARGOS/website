@@ -1,12 +1,14 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/situacao_core.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao();
 
 // "Só ausentes" começa marcado por padrão (visão mais útil no dia a dia) —
