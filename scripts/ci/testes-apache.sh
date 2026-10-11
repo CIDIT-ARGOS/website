@@ -78,6 +78,25 @@ checar "core/ bloqueado (pasta)"    "/core/"                   403
 checar "_backups/ bloqueado"        "/_backups/"               403
 checar "inexistente vira 404"       "/nao-existe.php"          404
 
+# A hospedagem guarda .js/.css por 7 dias: se o endereço não levar a versão,
+# depois do deploy o navegador continua com o arquivo da release anterior.
+conter() { # conter <descrição> <caminho> <trecho esperado>
+    if curl -s "$BASE$2" | grep -qF -- "$3"; then
+        echo "  ok    $1"
+    else
+        echo "  FALHA $1 ($2 não tem \"$3\")"
+        falhou=1
+    fi
+}
+
+etapa "Arquivos com a versão no endereço"
+conter "app pede o app.js da versão"            "/web/app/index.html"   'js/app.js?v=v0.0.0'
+conter "app pede o leitor de QR da versão"      "/web/app/index.html"   'js/qr-scanner.js?v=v0.0.0'
+conter "service worker com o cache da versão"   "/web/app/sw.js"        "const VERSAO = 'v0.0.0'"
+conter "Painel pede o CSS da versão"            "/web/painel/index.php" 'css/argos-admin.css?v=v0.0.0'
+conter "Ikarus37 pede o CSS da versão"          "/web/ikarus37/index.php" 'css/argos-ikarus.css?v=v0.0.0'
+checar "arquivo com ?v= é servido"              "/web/app/js/app.js?v=v0.0.0" 200
+
 etapa "Smoke test no Apache"
 php tests/smoke_producao.php "$BASE" v0.0.0 || falhou=1
 

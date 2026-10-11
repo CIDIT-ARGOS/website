@@ -9,7 +9,8 @@
 # excluído via `export-ignore` no .gitattributes.
 #
 # Gera core/versao.php com a versão, o commit e a data da release — é o que
-# aparece no rodapé do Painel e do Ikarus37.
+# aparece no rodapé do Painel e do Ikarus37 — e grava a versão no endereço dos
+# arquivos do app (marcador __VERSAO__), pra furar o cache da hospedagem.
 
 set -euo pipefail
 
@@ -37,6 +38,21 @@ return [
     'data' => '$DATA',
 ];
 PHP
+
+# A versão vai no endereço dos arquivos do app e da landing (?v=…) e no nome
+# do cache do service worker: a hospedagem guarda .js/.css por 7 dias, e é
+# isso que faz cada release ser buscada de novo. (Painel e Ikarus37 fazem o
+# mesmo em PHP, com core/arquivos.php.)
+COM_MARCADOR=(web/app/index.html web/app/sw.js web/index.html)
+for arquivo in "${COM_MARCADOR[@]}"; do
+    grep -q '__VERSAO__' "$SAIDA/$arquivo" || { echo "::error::$arquivo sem o marcador __VERSAO__."; exit 1; }
+    sed -i "s/__VERSAO__/$VERSAO/g" "$SAIDA/$arquivo"
+done
+if grep -rl '__VERSAO__' "$SAIDA" --include='*.html' --include='*.js' --include='*.php' --include='*.css' | grep -q .; then
+    echo "::error::Sobrou marcador __VERSAO__ no pacote:"
+    grep -rl '__VERSAO__' "$SAIDA" --include='*.html' --include='*.js' --include='*.php' --include='*.css'
+    exit 1
+fi
 
 for proibido in core/config.php database .forgejo tests docker deploy; do
     if [ -e "$SAIDA/$proibido" ]; then

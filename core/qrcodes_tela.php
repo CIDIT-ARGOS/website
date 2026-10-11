@@ -269,7 +269,8 @@ function renderizarControleQr($conexao, $escopo, array $estado, $caminhoLeitor) 
         </form>
     </dialog>
 
-    <script src="<?= $e($caminhoLeitor) ?>"></script>
+    <?php require_once __DIR__ . '/arquivos.php'; ?>
+    <script src="<?= $e(urlVersionada($caminhoLeitor)) ?>"></script>
     <script>
         // A câmera fica aberta até ler. Quando lê, a imagem congela, o status diz
         // que o QR foi identificado e a tela espera o "Confirmar" — nada é enviado sozinho.

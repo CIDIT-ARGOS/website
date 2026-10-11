@@ -55,7 +55,8 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Painel Argos</title>
-<script src="../vendor/chart.umd.js"></script>
+<?php require_once __DIR__ . '/../../core/arquivos.php'; ?>
+<script src="<?= urlVersionada('../vendor/chart.umd.js') ?>"></script>
 <style>
     :root {
         --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
@@ -92,8 +93,9 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
         .container { max-width: 100%; padding: 0; }
     }
 </style>
-<link rel="stylesheet" href="../css/argos-admin.css">
-<script src="../js/argos-admin.js" defer></script>
+<?php require_once __DIR__ . '/../../core/arquivos.php'; ?>
+<link rel="stylesheet" href="<?= urlVersionada('../css/argos-admin.css') ?>">
+<script src="<?= urlVersionada('../js/argos-admin.js') ?>" defer></script>
 </head>
 <body>
 
