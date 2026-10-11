@@ -1,0 +1,4 @@
+Bibliotecas de terceiros servidas pelo proprio Argos (nada e carregado da internet).
+
+chart.umd.js       chart.js 4.4.4 (npm), arquivo dist/chart.umd.js sem alteracao. Licenca MIT: chart.LICENSE.md
+                   https://www.chartjs.org

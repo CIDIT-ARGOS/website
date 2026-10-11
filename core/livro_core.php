@@ -67,8 +67,11 @@ function descricaoSituacaoLivro($item) {
  * pernoite) e quantas chamadas foram enviadas — pra distinguir "não há
  * alteração" de "a chamada ainda não foi enviada" — mais as dispensas médicas
  * ativas na data.
+ *
+ * Com $esquadrilha, o livro é só dela: as chamadas feitas por esquadrilha
+ * daquela esquadrilha e as dispensas dos alunos dela.
  */
-function montarLivroEsquadrao($conexao, $esquadrao, $data) {
+function montarLivroEsquadrao($conexao, $esquadrao, $data, $esquadrilha = null) {
     $secoes = [];
     foreach (LIVRO_SECOES + LIVRO_SECOES_LEGADAS as $tipo => $secao) {
         $dataSecao = date('Y-m-d', strtotime("$data +{$secao['dia']} day"));
@@ -90,6 +93,9 @@ function montarLivroEsquadrao($conexao, $esquadrao, $data) {
         if (!isset($secoes[$tipo]) || substr($r['data_hora'], 0, 10) !== $secoes[$tipo]['data']) {
             continue;
         }
+        if ($esquadrilha !== null && ($r['agrupamento_tipo'] !== 'esquadrilha' || $r['agrupamento_valor'] !== $esquadrilha)) {
+            continue;
+        }
         $secoes[$tipo]['chamadas_enviadas']++;
         foreach (listarItensRetirada($conexao, $r['id']) as $item) {
             if ((int) $item['presente'] === 0) {
@@ -104,10 +110,16 @@ function montarLivroEsquadrao($conexao, $esquadrao, $data) {
         }
     }
 
+    $dispensas = listarDispensas($conexao, ['esquadrao' => $esquadrao, 'ativas_em' => $data]);
+    if ($esquadrilha !== null) {
+        $dispensas = array_values(array_filter($dispensas, fn($d) => $d['esquadrilha'] === $esquadrilha));
+    }
+
     return [
         'esquadrao' => $esquadrao,
+        'esquadrilha' => $esquadrilha,
         'secoes' => $secoes,
-        'dispensas' => listarDispensas($conexao, ['esquadrao' => $esquadrao, 'ativas_em' => $data]),
+        'dispensas' => $dispensas,
     ];
 }
 
@@ -117,14 +129,17 @@ function _livroDispensadoDe($dispensa) {
 
 /**
  * O livro em texto puro, no formato padrão — pronto pra colar numa mensagem
- * ou num e-mail pro Aluno de Dia ao CA.
+ * ou num e-mail pro Aluno de Dia ao CA. $blocosExtras são linhas que entram
+ * depois das dispensas (livros recebidos, alterações e observações).
  */
-function livroComoTexto($livro, $data) {
+function livroComoTexto($livro, $data, array $blocosExtras = []) {
     $linhas = [
         'COMANDO DA AERONÁUTICA',
         'ESCOLA DE ESPECIALISTAS DE AERONÁUTICA',
         'CORPO DE ALUNOS',
-        mb_strtoupper(rotuloEsquadrao($livro['esquadrao'])) . ' — RESUMO DO DIA ' . dataEstiloLivro($data),
+        mb_strtoupper(rotuloEsquadrao($livro['esquadrao']))
+            . (($livro['esquadrilha'] ?? null) !== null ? ' — ESQUADRILHA ' . mb_strtoupper($livro['esquadrilha']) : '')
+            . ' — RESUMO DO DIA ' . dataEstiloLivro($data),
     ];
 
     foreach ($livro['secoes'] as $secao) {
@@ -160,6 +175,10 @@ function livroComoTexto($livro, $data) {
         if (_livroDispensadoDe($d) !== '') {
             $linhas[] = '  DISPENSADO DE: ' . _livroDispensadoDe($d);
         }
+    }
+
+    foreach ($blocosExtras as $linha) {
+        $linhas[] = $linha;
     }
 
     $linhas[] = '';

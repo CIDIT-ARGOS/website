@@ -160,6 +160,18 @@ body.tela-retiradas .resumo { display: grid; }
     pointer-events: none;
 }
 
+/* Depois de ler: a imagem congela e a faixa verde diz que o QR foi identificado. */
+.camera-lido {
+    position: absolute; left: 0; right: 0; bottom: 0; display: none; align-items: center; justify-content: center;
+    padding: 12px; background: rgba(23, 121, 74, .94); color: #fff; font-size: 15px; font-weight: 600;
+}
+.camera-frame.lido { outline: 4px solid var(--ok); outline-offset: -4px; }
+.camera-frame.lido .camera-lido { display: flex; }
+.camera-frame.lido .mira { border-color: #fff; }
+.camera-acoes { margin-bottom: 16px; }
+.camera-acoes[hidden] { display: none; }
+.camera-acoes p { margin: 0 0 10px; font-size: 14px; color: var(--text); }
+
 .divisor { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-size: 12px; margin: 18px 0; }
 .divisor::before, .divisor::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
@@ -266,6 +278,63 @@ input::placeholder { color: var(--text-muted); opacity: .75; }
 .bloco-motivo { margin-top: 12px; display: none; flex-direction: column; gap: 8px; }
 .bloco-motivo.ativo { display: flex; }
 
+/* O motivo escolhido, no cartão do aluno: tocar reabre o painel de motivos. */
+.motivo-escolhido {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 12px;
+    background: #fff; border: 1px solid #efc3bd; border-radius: 12px;
+    font-size: 14px; color: var(--text); text-align: left; cursor: pointer;
+}
+.motivo-escolhido:disabled { cursor: default; }
+.motivo-escolhido .texto { flex: 1; min-width: 0; }
+.motivo-escolhido .texto strong { display: block; font-weight: 600; line-height: 1.25; }
+.motivo-escolhido .texto small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-muted); }
+.motivo-escolhido .trocar { flex: none; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.sigla {
+    flex: none; min-width: 52px; padding: 6px 8px; border-radius: 8px; background: var(--azul-claro); color: var(--accent);
+    font-family: var(--fonte-display); font-weight: 700; font-size: 15px; letter-spacing: .04em; text-align: center;
+}
+
+/* ---------- Painel de opções (motivo da falta, posto de serviço) ---------- */
+.folha-fundo {
+    position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(6, 28, 58, .55);
+}
+.folha-fundo[hidden] { display: none; }
+body.folha-aberta { overflow: hidden; }
+.folha {
+    display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 560px; max-height: 88vh; max-height: 88dvh;
+    padding: 16px 16px calc(16px + var(--safe-bottom));
+    background: var(--bg); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(6, 28, 58, .3);
+}
+.folha-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.folha-topo h2 { margin: 0; font-family: var(--fonte-display); font-weight: 700; font-size: 20px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.folha-topo p { margin: 2px 0 0; font-size: 14px; color: var(--text-muted); }
+.folha-fechar {
+    flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); cursor: pointer;
+}
+.folha-fechar .i { margin: 0; }
+.folha [hidden] { display: none; }
+.folha-grade {
+    display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; gap: 8px; align-content: start;
+    overflow-y: auto; overscroll-behavior: contain; padding: 2px 2px 4px;
+}
+.folha-grade .vazio { grid-column: 1 / -1; }
+.opcao {
+    display: block; min-height: 68px; padding: 10px 12px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sombra);
+    font-size: 13.5px; font-weight: 500; line-height: 1.25; color: var(--text); text-align: left; cursor: pointer;
+}
+.opcao:active { background: var(--azul-claro); }
+.opcao .sigla { display: inline-block; min-width: 0; margin-bottom: 6px; padding: 3px 8px; font-size: 14px; }
+.opcao span { display: block; overflow-wrap: anywhere; }
+.opcao.destaque { grid-column: 1 / -1; border-color: #efc3bd; background: var(--danger-bg); font-size: 16px; font-weight: 600; }
+.opcao.destaque .sigla { margin: 0 10px 0 0; background: var(--danger); color: #fff; vertical-align: middle; }
+.opcao.destaque span { display: inline; vertical-align: middle; }
+.opcao.discreta { grid-column: 1 / -1; min-height: 48px; background: transparent; box-shadow: none; color: var(--text-muted); text-align: center; }
+.opcao.escolhida { border: 2px solid var(--accent); background: var(--azul-claro); }
+.opcao.escolhida.destaque { border-color: var(--danger); background: var(--danger-bg); }
+
 .rodape-acao {
     position: sticky; bottom: calc(var(--nav-altura) + var(--safe-bottom));
     margin-top: auto;
@@ -328,6 +397,44 @@ input::placeholder { color: var(--text-muted); opacity: .75; }
 .livro-secao li:first-child { padding-top: 0; border-top: none; }
 .livro-secao li strong { display: block; font-size: 14px; font-weight: 600; }
 .livro-secao li span { display: block; font-size: 13px; color: var(--text-muted); }
+
+/* Tramitação do livro: a situação do meu livro e os livros recebidos pra validar. */
+.status-pill.livro-rascunho { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.status-pill.livro-enviado { background: var(--alerta-bg); color: var(--alerta); }
+.status-pill.livro-validado { background: var(--ok-bg); color: var(--ok); }
+.status-pill.livro-devolvido { background: var(--danger-bg); color: var(--danger); }
+.livro-situacao {
+    display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
+    background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--text-muted); border-radius: 8px; font-size: 13px; color: var(--text-muted);
+}
+.livro-situacao.enviado { border-left-color: var(--alerta); }
+.livro-situacao.validado { border-left-color: var(--ok); }
+.livro-situacao.devolvido { border-left-color: var(--danger); }
+.livro-situacao .linha-topo, .livro-recebido .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.livro-situacao .linha-topo strong { font-size: 15px; color: var(--text); }
+.livro-situacao span strong { color: var(--danger); }
+.livro-situacao button { margin-top: 6px; }
+.livro-recebido { display: flex; flex-direction: column; gap: 10px; border-left-color: var(--text-muted); }
+.livro-recebido.enviado { border-left-color: var(--alerta); }
+.livro-recebido.validado { border-left-color: var(--ok); }
+.livro-recebido.devolvido { border-left-color: var(--danger); }
+.livro-recebido h2 { margin: 0; }
+.livro-recebido .tramitacao span { display: block; font-size: 13px; color: var(--text-muted); }
+.livro-recebido summary { font-size: 14px; font-weight: 600; color: var(--accent); cursor: pointer; min-height: 32px; }
+.livro-recebido pre {
+    margin: 8px 0 0; padding: 10px; max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 12.5px; line-height: 1.45;
+}
+.livro-recebido .acoes-duplas .primario, .livro-recebido .acoes-duplas .secundario { min-height: 46px; font-size: 15px; }
+.livro-recebido .devolucao { display: flex; flex-direction: column; gap: 8px; }
+.livro-recebido .devolucao[hidden] { display: none; }
+textarea {
+    width: 100%; padding: 10px 14px; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    font-family: inherit; font-size: 16px; line-height: 1.4; color: var(--text); resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--anel); }
+textarea:disabled { background: var(--bg); color: var(--text-muted); }
+#livroObservacoesBloco[hidden] { display: none; }
 
 .acoes-duplas { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
 .acoes-duplas .secundario { min-height: 52px; }

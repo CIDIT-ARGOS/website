@@ -51,4 +51,8 @@ O `qrcode_hash` de cada aluno é `sha256("argos-seed-dev:" + identidade_militar)
 
 ## Como o QR é lido
 
-O QR code carrega o próprio `qrcode_hash` (64 caracteres hexadecimais). A PWA lê e manda em `POST /api/sessao.php`; a API devolve o token de sessão do aluno.
+A PWA lê o QR e manda o conteúdo, como veio, em `POST /api/sessao.php` (campo `qrcode`). O servidor calcula a **impressão digital** (sha256) do conteúdo, compara com `alunos.qrcode_hash` e devolve o token de sessão. O conteúdo pode ter qualquer formato e tamanho (até 4096 caracteres) e nunca é gravado — só a impressão.
+
+Os QR deste seed são um caso particular: o conteúdo já é um código de 64 caracteres hexadecimais, que vale como a própria impressão. Por isso continuam funcionando como antes.
+
+Pra cadastrar o QR de verdade de um aluno (o da identidade), use **Painel → QR Codes** ou **Ikarus37 → QR Codes**: lê com a câmera, com leitor de mesa ou colando, e mostra a cobertura por esquadrão. "Conferir um QR" diz de quem é um QR e quantos caracteres ele tem.

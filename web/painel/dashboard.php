@@ -55,7 +55,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Painel Argos</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="../vendor/chart.umd.js"></script>
 <style>
     :root {
         --bg: #f4f7fc; --bg-card: #ffffff; --border: #dbe3ef;
@@ -193,7 +193,7 @@ $esquadroesDisponiveis = $escopo === null ? listarEsquadroesDistintos($conexao) 
 </div>
 
 <script>
-    Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+    Chart.defaults.font.family = "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif";
     Chart.defaults.font.size = 12;
 
     <?php if ($faltasReais + $ausenciasJustificadas > 0): ?>

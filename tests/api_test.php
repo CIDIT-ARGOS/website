@@ -39,6 +39,7 @@ function limparDadosDoTeste() {
 
     sql("DELETE FROM retirada_itens WHERE retirada_id IN ($retiradas) OR aluno_id IN ($alunos)");
     sql("DELETE FROM retiradas WHERE id IN ($retiradas)");
+    sql("DELETE FROM livros WHERE esquadrao = '$esquadrao' OR nivel = 'ca'");
     sql("DELETE FROM api_sessoes WHERE aluno_id IN ($alunos)");
     sql("DELETE FROM grupo_membros WHERE aluno_id IN ($alunos)");
     sql("DELETE FROM dispensa_dispensa_tipos WHERE dispensa_id IN (SELECT id FROM dispensas WHERE aluno_id IN ($alunos))");
@@ -549,9 +550,9 @@ teste('método não suportado responde 405', function () use ($tokenEcho) {
 // =====================================================================
 secao('Livro do Dia (GET /api/livro.php)');
 
-teste('exige sessão de aluno (401) e só aceita GET (405)', function () use ($tokenEcho) {
+teste('exige sessão de aluno (401) e recusa método que não existe (405)', function () use ($tokenEcho) {
     garantirStatus(api('GET', 'livro.php'), 401);
-    garantirStatus(api('POST', 'livro.php', $tokenEcho, []), 405);
+    garantirStatus(api('PATCH', 'livro.php', $tokenEcho, []), 405);
 });
 
 teste('data fora do formato é recusada (400)', function () use ($tokenEcho) {
@@ -600,6 +601,159 @@ teste('o texto pronto segue o padrão e distingue "não há" de "chamada não en
 });
 
 // =====================================================================
+secao('Tramitação do Livro do Dia (esquadrilha → esquadrão → Corpo de Alunos)');
+
+// Uma sessão por função, todas de serviço no esquadrão de teste, esquadrilha Z.
+// Data própria (3 dias atrás), pra não misturar com os livros dos outros testes.
+$dataFluxo = date('Y-m-d', strtotime("$hoje -3 day"));
+$sessaoNaFuncao = function ($funcao) {
+    $token = login(hash('sha256', 'api-teste-02'))['token'];
+    $r = api('PUT', 'servico.php', $token, ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z', 'funcao' => $funcao]);
+    garantirStatus($r, 200);
+    garantir($r['json']['servico']['funcao'] === $funcao, 'a função não voltou na resposta');
+    return $token;
+};
+$tokenEsquadrilha = $tokenEsquadrao = $tokenCa = null;
+$livroDe = fn($token) => api('GET', "livro.php?data=$dataFluxo", $token)['json'];
+$acaoNoLivro = fn($token, array $corpo) => api('POST', "livro.php?data=$dataFluxo", $token, $corpo);
+$recebido = function ($livro, $esquadrao, $esquadrilha = '') {
+    foreach ($livro['recebidos'] as $r) {
+        if ($r['esquadrao'] === $esquadrao && $r['esquadrilha'] === $esquadrilha) {
+            return $r;
+        }
+    }
+    return null;
+};
+
+teste('a função no serviço é escolhida com o posto e fica na sessão', function () use ($sessaoNaFuncao, &$tokenEsquadrilha, &$tokenEsquadrao, &$tokenCa, $tokenEcho) {
+    $tokenEsquadrilha = $sessaoNaFuncao('esquadrilha');
+    $tokenEsquadrao = $sessaoNaFuncao('esquadrao');
+    $tokenCa = $sessaoNaFuncao('ca');
+    garantir(api('GET', 'servico.php', $tokenCa)['json']['servico']['funcao'] === 'ca', 'a função não foi gravada');
+    garantir(api('GET', 'servico.php', $tokenEcho)['json']['servico']['funcao'] === 'esquadrilha', 'sessão que não escolheu deveria ser de esquadrilha');
+    garantirStatus(api('PUT', 'servico.php', $tokenCa, ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z', 'funcao' => 'comandante']), 400);
+
+    // Trocar o posto sem mandar a função mantém a que estava.
+    garantirStatus(api('PUT', 'servico.php', $tokenCa, ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z']), 200);
+    garantir(api('GET', 'servico.php', $tokenCa)['json']['servico']['funcao'] === 'ca', 'trocar o posto apagou a função');
+});
+
+if ($tokenEsquadrilha && $tokenEsquadrao && $tokenCa) {
+
+teste('cada função vê o seu livro: esquadrilha, esquadrão (com as esquadrilhas) e CA (com os esquadrões)', function () use ($livroDe, $recebido, &$tokenEsquadrilha, &$tokenEsquadrao, &$tokenCa) {
+    $daEsquadrilha = $livroDe($tokenEsquadrilha);
+    garantir($daEsquadrilha['funcao'] === 'esquadrilha' && $daEsquadrilha['esquadrilha'] === 'Z' && $daEsquadrilha['recebidos'] === [], 'livro da esquadrilha errado');
+    garantir($daEsquadrilha['livro']['status'] === 'rascunho' && $daEsquadrilha['livro']['pode_editar'] && $daEsquadrilha['livro']['pode_enviar'], 'livro novo deveria ser rascunho editável');
+    garantir($daEsquadrilha['livro']['destino'] === 'Aluno de Dia ao Esquadrão', 'destino do livro da esquadrilha errado');
+    garantir(strpos($daEsquadrilha['texto'], 'ESQUADRILHA Z — RESUMO DO DIA') !== false, "o texto não diz de qual esquadrilha é:\n{$daEsquadrilha['texto']}");
+
+    $doEsquadrao = $livroDe($tokenEsquadrao);
+    garantir($doEsquadrao['funcao'] === 'esquadrao' && $doEsquadrao['esquadrilha'] === '', 'livro do esquadrão errado');
+    garantir($recebido($doEsquadrao, ESQUADRAO_TESTE, 'Z') !== null, 'o esquadrão deveria receber o livro da esquadrilha Z');
+
+    $doCa = $livroDe($tokenCa);
+    garantir($doCa['funcao'] === 'ca' && $doCa['secoes'] === [] && $doCa['livro']['destino'] === null, 'livro do CA errado');
+    garantir($recebido($doCa, ESQUADRAO_TESTE) !== null && $recebido($doCa, 'Esquadrão Prata') !== null, 'o CA deveria receber o livro de cada esquadrão');
+    garantir(strpos($doCa['texto'], 'LIVRO DO DIA AO CORPO DE ALUNOS') !== false, 'o texto do CA não tem o título');
+});
+
+teste('o dono escreve as alterações, e elas entram no texto do livro', function () use ($livroDe, $dataFluxo, &$tokenEsquadrilha) {
+    garantirStatus(api('PUT', "livro.php?data=$dataFluxo", $tokenEsquadrilha, ['observacoes' => ['não', 'é', 'texto']]), 400);
+    $r = api('PUT', "livro.php?data=$dataFluxo", $tokenEsquadrilha, ['observacoes' => '  Aluno X chegou atrasado da enfermaria (teste).  ']);
+    garantirStatus($r, 200);
+    garantir($r['json']['livro']['observacoes'] === 'Aluno X chegou atrasado da enfermaria (teste).', 'as alterações não foram gravadas (ou não foram aparadas)');
+    garantir(strpos($r['json']['texto'], "ALTERAÇÕES E OBSERVAÇÕES\nAluno X chegou atrasado da enfermaria (teste).") !== false, "o texto não traz as alterações:\n{$r['json']['texto']}");
+    garantir(strpos($livroDe($tokenEsquadrilha)['texto'], 'Aluno X chegou atrasado') !== false, 'as alterações sumiram ao reler');
+});
+
+teste('quem não recebe o livro não valida; e só se valida livro enviado', function () use ($acaoNoLivro, &$tokenEsquadrilha, &$tokenEsquadrao, &$tokenCa) {
+    garantirStatus($acaoNoLivro($tokenEsquadrilha, ['acao' => 'validar', 'esquadrilha' => 'Z']), 403);
+    garantirStatus($acaoNoLivro($tokenEsquadrilha, ['acao' => 'reabrir']), 403);
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'reabrir']), 403);
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'validar', 'esquadrilha' => 'Z']), 409); // ainda é rascunho
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'validar', 'esquadrilha' => 'NAO-EXISTE']), 404);
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'validar']), 400);
+    garantirStatus($acaoNoLivro($tokenCa, ['acao' => 'validar', 'esquadrao' => 'Esquadrão Inexistente']), 404);
+    garantirStatus($acaoNoLivro($tokenCa, ['acao' => 'inventada']), 400);
+    garantirStatus(api('DELETE', 'livro.php', $tokenCa), 405);
+});
+
+teste('a esquadrilha envia; depois de enviado, o livro não muda mais', function () use ($acaoNoLivro, $livroDe, $recebido, $dataFluxo, &$tokenEsquadrilha, &$tokenEsquadrao) {
+    $r = $acaoNoLivro($tokenEsquadrilha, ['acao' => 'enviar']);
+    garantirStatus($r, 200);
+    garantir($r['json']['livro']['status'] === 'enviado' && !$r['json']['livro']['pode_editar'], 'o livro deveria estar enviado e travado');
+    garantir(strpos((string) $r['json']['livro']['enviado_por'], 'API ECHO') !== false, 'não registrou quem enviou');
+
+    garantirStatus(api('PUT', "livro.php?data=$dataFluxo", $tokenEsquadrilha, ['observacoes' => 'mudança depois de enviar']), 409);
+    garantirStatus($acaoNoLivro($tokenEsquadrilha, ['acao' => 'enviar']), 409);
+
+    $noEsquadrao = $recebido($livroDe($tokenEsquadrao), ESQUADRAO_TESTE, 'Z');
+    garantir($noEsquadrao['status'] === 'enviado' && $noEsquadrao['pode_validar'], 'o esquadrão deveria ver o livro da Z como enviado, pra validar');
+    garantir(strpos($noEsquadrao['texto'], 'Aluno X chegou atrasado') !== false, 'o livro recebido não traz as alterações da esquadrilha');
+});
+
+teste('o esquadrão devolve com o motivo; a esquadrilha corrige e envia de novo', function () use ($acaoNoLivro, $livroDe, $dataFluxo, &$tokenEsquadrilha, &$tokenEsquadrao) {
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'devolver', 'esquadrilha' => 'Z']), 400); // sem motivo
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'devolver', 'esquadrilha' => 'Z', 'motivo' => 'Faltou o horário (teste)']), 200);
+
+    $devolvido = $livroDe($tokenEsquadrilha)['livro'];
+    garantir($devolvido['status'] === 'devolvido' && $devolvido['devolucao_motivo'] === 'Faltou o horário (teste)' && $devolvido['pode_editar'], 'a esquadrilha deveria ver o livro devolvido, com o motivo, e poder editar');
+
+    garantirStatus(api('PUT', "livro.php?data=$dataFluxo", $tokenEsquadrilha, ['observacoes' => 'Aluno X chegou atrasado da enfermaria às 14h (teste).']), 200);
+    $reenviado = $acaoNoLivro($tokenEsquadrilha, ['acao' => 'enviar'])['json']['livro'];
+    garantir($reenviado['status'] === 'enviado' && $reenviado['devolucao_motivo'] === null, 'o reenvio deveria limpar a devolução');
+});
+
+teste('o esquadrão valida, reúne e envia; o livro dele registra a situação das esquadrilhas', function () use ($acaoNoLivro, $livroDe, $recebido, &$tokenEsquadrilha, &$tokenEsquadrao) {
+    $r = $acaoNoLivro($tokenEsquadrao, ['acao' => 'validar', 'esquadrilha' => 'Z']);
+    garantirStatus($r, 200);
+    $daZ = $recebido($r['json'], ESQUADRAO_TESTE, 'Z');
+    garantir($daZ['status'] === 'validado' && !$daZ['pode_validar'] && strpos((string) $daZ['validado_por'], 'API ECHO') !== false, 'o livro da Z deveria estar validado, com quem validou');
+    garantir($livroDe($tokenEsquadrilha)['livro']['status'] === 'validado', 'a esquadrilha deveria ver o próprio livro validado');
+    garantirStatus($acaoNoLivro($tokenEsquadrao, ['acao' => 'validar', 'esquadrilha' => 'Z']), 409); // já validado
+    garantirStatus($acaoNoLivro($tokenEsquadrilha, ['acao' => 'enviar']), 409); // validado é final
+
+    garantir(strpos($r['json']['texto'], 'LIVROS DAS ESQUADRILHAS') !== false && strpos($r['json']['texto'], 'Esquadrilha Z: Validado') !== false, "o livro do esquadrão não registra a esquadrilha validada:\n{$r['json']['texto']}");
+    garantir(strpos($r['json']['texto'], 'às 14h (teste)') !== false, 'o livro do esquadrão não traz as alterações da esquadrilha');
+
+    $enviado = $acaoNoLivro($tokenEsquadrao, ['acao' => 'enviar']);
+    garantirStatus($enviado, 200);
+    garantir($enviado['json']['livro']['status'] === 'enviado' && $enviado['json']['livro']['destino'] === 'Aluno de Dia ao Corpo de Alunos', 'o livro do esquadrão deveria estar enviado ao CA');
+});
+
+teste('o CA valida os esquadrões, envia o Livro do Dia e pode reabrir pra corrigir', function () use ($acaoNoLivro, $livroDe, $recebido, $dataFluxo, &$tokenEsquadrao, &$tokenCa) {
+    $doTeste = $recebido($livroDe($tokenCa), ESQUADRAO_TESTE);
+    garantir($doTeste['status'] === 'enviado' && $doTeste['pode_validar'], 'o CA deveria ver o livro do esquadrão de teste como enviado');
+    garantir($recebido($livroDe($tokenCa), 'Esquadrão Prata')['pode_validar'] === false, 'livro que não foi enviado não pode ser validado');
+
+    $r = $acaoNoLivro($tokenCa, ['acao' => 'validar', 'esquadrao' => ESQUADRAO_TESTE]);
+    garantirStatus($r, 200);
+    garantir($recebido($r['json'], ESQUADRAO_TESTE)['status'] === 'validado', 'o livro do esquadrão deveria estar validado');
+    garantir($livroDe($tokenEsquadrao)['livro']['status'] === 'validado', 'o esquadrão deveria ver o próprio livro validado');
+
+    $texto = $r['json']['texto'];
+    garantir(strpos($texto, ESQUADRAO_TESTE . ': Validado') !== false, "o livro do CA não registra o esquadrão validado:\n$texto");
+    garantir(strpos($texto, 'Esquadrão Prata: Não enviado') !== false && strpos($texto, 'livro não enviado — dados do sistema') !== false, 'o livro do CA deveria avisar do esquadrão que não enviou');
+    garantir(strpos($texto, 'às 14h (teste)') !== false, 'o livro do CA não traz o que veio da esquadrilha');
+
+    garantirStatus(api('PUT', "livro.php?data=$dataFluxo", $tokenCa, ['observacoes' => 'Serviço sem alterações no CA (teste).']), 200);
+    $enviado = $acaoNoLivro($tokenCa, ['acao' => 'enviar'])['json'];
+    garantir($enviado['livro']['status'] === 'enviado' && $enviado['livro']['pode_reabrir'] && !$enviado['livro']['pode_editar'], 'o livro do CA deveria estar enviado, travado e reabrível');
+    garantir(strpos($enviado['texto'], 'Serviço sem alterações no CA (teste).') !== false, 'o texto enviado do CA não traz as alterações dele');
+
+    $reaberto = $acaoNoLivro($tokenCa, ['acao' => 'reabrir'])['json']['livro'];
+    garantir($reaberto['status'] === 'rascunho' && $reaberto['pode_editar'], 'reabrir deveria devolver o livro do CA pra rascunho');
+    garantirStatus($acaoNoLivro($tokenCa, ['acao' => 'reabrir']), 409);
+});
+
+teste('o livro de um dia não se mistura com o de outro', function () use ($livroDe, &$tokenEsquadrilha, $hoje) {
+    $deHoje = api('GET', "livro.php?data=$hoje", $tokenEsquadrilha)['json']['livro'];
+    garantir($deHoje['status'] === 'rascunho' && $deHoje['observacoes'] === null, 'o livro de hoje deveria estar em branco');
+});
+
+}
+
+// =====================================================================
 secao('Posto de serviço da sessão (GET/PUT /api/servico.php)');
 
 // Sessão própria, pra trocar de posto sem mexer na que os outros testes usam.
@@ -607,11 +761,11 @@ $tokenServico = null;
 teste('ao entrar, o aluno está de serviço no próprio esquadrão', function () use (&$tokenServico) {
     $sessao = login(hash('sha256', 'api-teste-02'));
     $tokenServico = $sessao['token'];
-    garantir($sessao['servico'] === ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z'], 'servico da sessão nova errado: ' . json_encode($sessao['servico'] ?? null));
+    garantir($sessao['servico'] === ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z', 'funcao' => 'esquadrilha'], 'servico da sessão nova errado: ' . json_encode($sessao['servico'] ?? null));
 
     $r = api('GET', 'servico.php', $tokenServico);
     garantirStatus($r, 200);
-    garantir($r['json']['servico'] === ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z'], 'posto atual errado');
+    garantir($r['json']['servico'] === ['esquadrao' => ESQUADRAO_TESTE, 'esquadrilha' => 'Z', 'funcao' => 'esquadrilha'], 'posto atual errado');
     garantir($r['json']['origem']['esquadrao'] === ESQUADRAO_TESTE, 'origem errada');
     $prata = porChave($r['json']['opcoes'], 'esquadrao', 'Esquadrão Prata');
     garantir($prata && in_array('A', $prata['esquadrilhas']), 'as opções deveriam ter o Esquadrão Prata / A: ' . json_encode($r['json']['opcoes']));
@@ -627,7 +781,7 @@ teste('exige sessão (401) e recusa posto que não existe (400)', function () us
 
 teste('trocar o posto muda o que o app vê e pode lançar', function () use (&$tokenServico, $tokenEcho) {
     garantirStatus(api('PUT', 'servico.php', $tokenServico, ['esquadrao' => 'Esquadrão Prata', 'esquadrilha' => 'A']), 200);
-    garantir(api('GET', 'servico.php', $tokenServico)['json']['servico'] === ['esquadrao' => 'Esquadrão Prata', 'esquadrilha' => 'A'], 'o posto não foi gravado');
+    garantir(api('GET', 'servico.php', $tokenServico)['json']['servico'] === ['esquadrao' => 'Esquadrão Prata', 'esquadrilha' => 'A', 'funcao' => 'esquadrilha'], 'o posto não foi gravado');
 
     $efetivo = array_column(api('GET', 'alunos.php', $tokenServico)['json'], 'nome_guerra');
     garantir(in_array('TESTE ALFA', $efetivo) && !in_array('API ECHO', $efetivo), 'o efetivo deveria ser o do Esquadrão Prata: ' . implode(', ', $efetivo));
