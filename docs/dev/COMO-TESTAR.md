@@ -97,7 +97,7 @@ Precisa de PHP com `mysqli` e de um MySQL 8 acessível. **Atenção:** o script 
 |---|---|---|
 | `tests/integracao_test.php` | 38 | fluxo da PWA de ponta a ponta |
 | `tests/api_test.php` | 94 | cada endpoint e método da API: escopo das chaves, dispensas, Livro do Dia, posto de serviço |
-| `tests/paginas_test.php` | 50 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
+| `tests/paginas_test.php` | 52 | cada tela logada do Painel e do Ikarus37 abre sem erro e com o visual novo |
 | `tests/smoke_producao.php` | 13 | o que roda em produção depois de cada deploy |
 
 Na prática, o jeito mais simples é dar push na `develop` e olhar **Actions** no Forgejo: roda tudo nos dois runners.

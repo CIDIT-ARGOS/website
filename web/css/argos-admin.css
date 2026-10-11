@@ -255,6 +255,50 @@
     .qr-ficha dt { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); padding-top: 3px; }
     .qr-ficha dd { margin: 0; }
 
+    /* ---------- Painel de opções: motivo da falta e posto de serviço (painel/retirada_marcar.php) ---------- */
+    .sigla {
+        display: inline-block; padding: 2px 8px; border-radius: 4px; background: var(--azul-claro); color: var(--accent);
+        font-weight: 700; font-size: 12px; letter-spacing: .04em;
+    }
+    button.motivo-botao {
+        display: inline-flex; align-items: center; gap: 8px; max-width: 320px; margin: 0; padding: 6px 10px;
+        background: var(--bg-card); color: var(--text); border: 1px solid var(--border); border-radius: var(--raio);
+        font-size: 13px; font-weight: 500; text-align: left; text-transform: none; letter-spacing: 0;
+    }
+    button.motivo-botao[hidden] { display: none; }
+    button.motivo-botao.vazio { color: var(--accent); border-style: dashed; }
+    .painel-opcoes {
+        width: min(760px, calc(100% - 24px)); max-height: min(86vh, 720px); padding: 20px;
+        background: var(--bg); color: var(--text);
+        border: 1px solid var(--border); border-top: 4px solid var(--dourado); border-radius: var(--raio);
+    }
+    .painel-opcoes[open] { display: flex; flex-direction: column; gap: 12px; }
+    .painel-opcoes::backdrop { background: rgba(6, 28, 58, .55); }
+    .painel-opcoes-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .painel-opcoes-topo h3 { margin: 0; }
+    .painel-opcoes-topo p { margin: 2px 0 0; font-size: 13px; color: var(--text-muted); }
+    .painel-opcoes-topo button { margin: 0; }
+    .painel-opcoes input[type=search] { width: 100%; padding: 10px 12px; font-size: 14px; }
+    .painel-opcoes input[hidden] { display: none; }
+    .painel-opcoes-grade {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); grid-auto-rows: max-content; gap: 8px;
+        overflow-y: auto; padding: 2px;
+    }
+    .painel-opcoes-vazio { grid-column: 1 / -1; margin: 0; padding: 20px 0; text-align: center; color: var(--text-muted); }
+    .painel-opcoes-grade button.opcao {
+        display: block; min-height: 62px; margin: 0; padding: 10px 12px;
+        background: var(--bg-card); color: var(--text); border: 1px solid var(--border); border-radius: var(--raio);
+        font-size: 13px; font-weight: 500; line-height: 1.3; text-align: left; text-transform: none; letter-spacing: 0;
+    }
+    .painel-opcoes-grade button.opcao:hover { border-color: var(--accent); background: var(--azul-claro); filter: none; }
+    .painel-opcoes-grade .opcao .sigla { margin-bottom: 6px; }
+    .painel-opcoes-grade .opcao span { display: block; }
+    .painel-opcoes-grade button.opcao.destaque { grid-column: 1 / -1; min-height: 0; border-color: var(--danger); font-size: 14px; font-weight: 600; }
+    .painel-opcoes-grade .opcao.destaque .sigla { margin: 0 8px 0 0; background: var(--danger); color: #fff; }
+    .painel-opcoes-grade .opcao.destaque span { display: inline; }
+    .painel-opcoes-grade button.opcao.discreta { grid-column: 1 / -1; min-height: 0; background: transparent; color: var(--text-muted); text-align: center; }
+    .painel-opcoes-grade button.opcao.escolhida { border: 2px solid var(--accent); background: var(--azul-claro); }
+
     /* ---------- Badges e mensagens ---------- */
     .badge, .badge-mf, .badge-esq, .badge-inativo, .motivo-tag, .metodo-tag {
         display: inline-block; padding: 2px 8px; border-radius: 4px;

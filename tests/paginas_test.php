@@ -149,6 +149,15 @@ teste('o leitor de QR usa o decodificador local', function () use ($raizProjeto)
     garantir(strpos(file_get_contents("$raizProjeto/web/app/sw.js"), "'vendor/jsQR.js'") !== false, 'o service worker não guarda o jsQR pra uso offline');
 });
 
+// O motivo da falta é escolhido num painel de botões, não mais numa lista suspensa.
+teste('o app escolhe o motivo da falta num painel de botões', function () use ($raizProjeto) {
+    $pagina = file_get_contents("$raizProjeto/web/app/index.html");
+    $app = file_get_contents("$raizProjeto/web/app/js/app.js");
+    garantir(strpos($pagina, 'id="folhaOpcoes"') !== false, 'index.html não tem o painel de opções');
+    garantir(strpos($app, 'abrirFolhaDeOpcoes') !== false, 'app.js não abre o painel de opções');
+    garantir(strpos($app, 'select-motivo') === false, 'app.js ainda monta a lista suspensa de motivos');
+});
+
 teste('as folhas de estilo só usam caminho relativo', function () use ($raizProjeto) {
     foreach (['web/css/argos-admin.css', 'web/css/argos-ikarus.css', 'web/css/fontes.css', 'web/app/css/app.css'] as $arquivo) {
         // Caminho absoluto quebra em produção, onde o site fica num subdiretório.
@@ -204,6 +213,14 @@ if ($cookiesPainel && $retiradaId) {
             conferirPagina("/web/painel/$pagina", $cookiesPainel, 'css/argos-admin.css');
         });
     }
+
+    teste('a chamada do Painel escolhe o motivo num painel de botões', function () use (&$cookiesPainel, $retiradaId) {
+        $corpo = navegar('GET', "/web/painel/retirada_marcar.php?id=$retiradaId", $cookiesPainel)['corpo'];
+        garantir(strpos($corpo, 'id="painelOpcoes"') !== false, 'a página não tem o painel de opções');
+        garantir(strpos($corpo, 'class="motivo-botao"') !== false, 'as linhas não têm o botão do motivo');
+        garantir(preg_match('/const MOTIVOS = \[\{.*"codigo":"FALT"/', $corpo) === 1, 'a página não recebeu os motivos (ou falta o FALT)');
+        garantir(strpos($corpo, '<select id="motivo_') === false, 'a página ainda usa a lista suspensa de motivos');
+    });
 
     // Posto de serviço de ponta a ponta, pela tela: cria o posto, coloca um
     // aluno de serviço, rende por outro — e a chamada aberta em seguida já

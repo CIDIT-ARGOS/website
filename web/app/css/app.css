@@ -278,6 +278,63 @@ input::placeholder { color: var(--text-muted); opacity: .75; }
 .bloco-motivo { margin-top: 12px; display: none; flex-direction: column; gap: 8px; }
 .bloco-motivo.ativo { display: flex; }
 
+/* O motivo escolhido, no cartão do aluno: tocar reabre o painel de motivos. */
+.motivo-escolhido {
+    display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 12px;
+    background: #fff; border: 1px solid #efc3bd; border-radius: 12px;
+    font-size: 14px; color: var(--text); text-align: left; cursor: pointer;
+}
+.motivo-escolhido:disabled { cursor: default; }
+.motivo-escolhido .texto { flex: 1; min-width: 0; }
+.motivo-escolhido .texto strong { display: block; font-weight: 600; line-height: 1.25; }
+.motivo-escolhido .texto small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--text-muted); }
+.motivo-escolhido .trocar { flex: none; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.sigla {
+    flex: none; min-width: 52px; padding: 6px 8px; border-radius: 8px; background: var(--azul-claro); color: var(--accent);
+    font-family: var(--fonte-display); font-weight: 700; font-size: 15px; letter-spacing: .04em; text-align: center;
+}
+
+/* ---------- Painel de opções (motivo da falta, posto de serviço) ---------- */
+.folha-fundo {
+    position: fixed; inset: 0; z-index: 30; display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(6, 28, 58, .55);
+}
+.folha-fundo[hidden] { display: none; }
+body.folha-aberta { overflow: hidden; }
+.folha {
+    display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 560px; max-height: 88vh; max-height: 88dvh;
+    padding: 16px 16px calc(16px + var(--safe-bottom));
+    background: var(--bg); border-radius: 18px 18px 0 0; box-shadow: 0 -8px 30px rgba(6, 28, 58, .3);
+}
+.folha-topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.folha-topo h2 { margin: 0; font-family: var(--fonte-display); font-weight: 700; font-size: 20px; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }
+.folha-topo p { margin: 2px 0 0; font-size: 14px; color: var(--text-muted); }
+.folha-fechar {
+    flex: none; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; color: var(--text-muted); cursor: pointer;
+}
+.folha-fechar .i { margin: 0; }
+.folha [hidden] { display: none; }
+.folha-grade {
+    display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: max-content; gap: 8px; align-content: start;
+    overflow-y: auto; overscroll-behavior: contain; padding: 2px 2px 4px;
+}
+.folha-grade .vazio { grid-column: 1 / -1; }
+.opcao {
+    display: block; min-height: 68px; padding: 10px 12px;
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--sombra);
+    font-size: 13.5px; font-weight: 500; line-height: 1.25; color: var(--text); text-align: left; cursor: pointer;
+}
+.opcao:active { background: var(--azul-claro); }
+.opcao .sigla { display: inline-block; min-width: 0; margin-bottom: 6px; padding: 3px 8px; font-size: 14px; }
+.opcao span { display: block; overflow-wrap: anywhere; }
+.opcao.destaque { grid-column: 1 / -1; border-color: #efc3bd; background: var(--danger-bg); font-size: 16px; font-weight: 600; }
+.opcao.destaque .sigla { margin: 0 10px 0 0; background: var(--danger); color: #fff; vertical-align: middle; }
+.opcao.destaque span { display: inline; vertical-align: middle; }
+.opcao.discreta { grid-column: 1 / -1; min-height: 48px; background: transparent; box-shadow: none; color: var(--text-muted); text-align: center; }
+.opcao.escolhida { border: 2px solid var(--accent); background: var(--azul-claro); }
+.opcao.escolhida.destaque { border-color: var(--danger); background: var(--danger-bg); }
+
 .rodape-acao {
     position: sticky; bottom: calc(var(--nav-altura) + var(--safe-bottom));
     margin-top: auto;

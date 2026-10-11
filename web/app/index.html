@@ -289,6 +289,23 @@
   </button>
 </nav>
 
+<!-- Painel de opções (motivo da falta, posto de serviço): sobe do rodapé, cada opção é um botão. -->
+<div class="folha-fundo" id="folhaOpcoes" hidden>
+  <div class="folha" role="dialog" aria-modal="true" aria-labelledby="folhaOpcoesTitulo">
+    <div class="folha-topo">
+      <div>
+        <h2 id="folhaOpcoesTitulo"></h2>
+        <p id="folhaOpcoesSubtitulo"></p>
+      </div>
+      <button type="button" class="folha-fechar" id="folhaOpcoesFechar" aria-label="Fechar sem escolher">
+        <span class="i" style="--icon-url:url('../../images/icons/x.svg')"></span>
+      </button>
+    </div>
+    <input type="search" id="folhaOpcoesBusca" placeholder="Buscar pela sigla ou pelo nome…" aria-label="Buscar opção">
+    <div class="folha-grade" id="folhaOpcoesGrade"></div>
+  </div>
+</div>
+
 <script src="env.php"></script>
 <script src="js/qr-scanner.js"></script>
 <script src="js/livro.js"></script>

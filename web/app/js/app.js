@@ -404,6 +404,79 @@ document.getElementById('formNovaRetirada').addEventListener('submit', async (ev
     }
 });
 
+// ---------- Painel de opções ----------
+// Sobe do rodapé com as opções em botões (motivo da falta, posto de serviço).
+// Devolve o `valor` da opção tocada, ou undefined se fecharam sem escolher.
+//   opcoes: [{ valor, nome, sigla?, destaque?, discreta? }]
+function semAcento(texto) {
+    return String(texto).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+
+let fecharFolhaAberta = null;
+function abrirFolhaDeOpcoes({ titulo, subtitulo = '', opcoes, selecionado = null, comBusca = false }) {
+    if (fecharFolhaAberta) fecharFolhaAberta();
+
+    const fundo = document.getElementById('folhaOpcoes');
+    const grade = document.getElementById('folhaOpcoesGrade');
+    const busca = document.getElementById('folhaOpcoesBusca');
+    document.getElementById('folhaOpcoesTitulo').textContent = titulo;
+    document.getElementById('folhaOpcoesSubtitulo').textContent = subtitulo;
+    busca.value = '';
+    busca.hidden = !comBusca;
+
+    function desenhar() {
+        const termo = semAcento(busca.value);
+        const botoes = opcoes.map((o, indice) => {
+            if (termo && !semAcento(`${o.sigla || ''} ${o.nome}`).includes(termo)) return '';
+            const classes = ['opcao'];
+            if (o.destaque) classes.push('destaque');
+            if (o.discreta) classes.push('discreta');
+            if (selecionado !== null && o.valor === selecionado) classes.push('escolhida');
+            return `<button type="button" class="${classes.join(' ')}" data-indice="${indice}">
+                ${o.sigla ? `<b class="sigla">${escapeHtml(o.sigla)}</b>` : ''}<span>${escapeHtml(o.nome)}</span>
+            </button>`;
+        }).join('');
+        grade.innerHTML = botoes || '<p class="vazio">Nenhuma opção com esse nome.</p>';
+    }
+
+    return new Promise((resolve) => {
+        function fechar(valor) {
+            fecharFolhaAberta = null;
+            document.removeEventListener('keydown', aoTeclar);
+            fundo.hidden = true;
+            document.body.classList.remove('folha-aberta');
+            resolve(valor);
+        }
+        function aoTeclar(evento) {
+            if (evento.key === 'Escape') fechar(undefined);
+        }
+        fecharFolhaAberta = () => fechar(undefined);
+
+        busca.oninput = desenhar;
+        grade.onclick = (evento) => {
+            const botao = evento.target.closest('.opcao');
+            if (botao) fechar(opcoes[Number(botao.dataset.indice)].valor);
+        };
+        fundo.onclick = (evento) => { if (evento.target === fundo) fechar(undefined); };
+        document.getElementById('folhaOpcoesFechar').onclick = () => fechar(undefined);
+        document.addEventListener('keydown', aoTeclar);
+
+        desenhar();
+        fundo.hidden = false;
+        document.body.classList.add('folha-aberta');
+        grade.scrollTop = 0;
+        const escolhida = grade.querySelector('.escolhida');
+        if (escolhida) escolhida.scrollIntoView({ block: 'center' });
+    });
+}
+
+// Motivos como opções do painel: "Falta" (a falta de verdade) vem primeiro e em destaque.
+function opcoesDeMotivo(motivos) {
+    return motivos
+        .map((m) => ({ valor: Number(m.id), sigla: m.codigo || '', nome: m.nome, destaque: m.classificacao === 'falta' }))
+        .sort((a, b) => Number(b.destaque) - Number(a.destaque));
+}
+
 // ---------- Marcar ----------
 // Motivos de falta e postos de serviço, buscados juntos uma vez por sessão.
 async function carregarMotivos() {
@@ -463,13 +536,8 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
         el.className = 'aluno-item' + (presente ? '' : ' em-falta');
         el.dataset.alunoId = item.aluno_id;
 
-        const opcoesMotivo = motivos.map((m) =>
-            `<option value="${m.id}" ${Number(item.motivo_falta_id) === Number(m.id) ? 'selected' : ''}>${escapeHtml(m.nome)}</option>`
-        ).join('');
         const postos = postosServicoCache || [];
-        const opcoesPosto = '<option value="">Posto de serviço…</option>' + postos.map((p) =>
-            `<option value="${p.id}" ${Number(item.servico_id) === Number(p.id) ? 'selected' : ''}>${escapeHtml(p.nome)}</option>`
-        ).join('');
+        const identificacao = `${item.posto_exibicao || item.posto_graduacao || ''} ${item.nome_guerra}`.trim();
 
         el.innerHTML = `
             <div class="linha-topo">
@@ -483,8 +551,7 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
                 </div>
             </div>
             <div class="bloco-motivo ${!presente ? 'ativo' : ''}">
-                <select class="select-motivo" aria-label="Motivo" ${somenteLeitura ? 'disabled' : ''}>${opcoesMotivo}</select>
-                <select class="select-posto" aria-label="Posto de serviço" hidden ${somenteLeitura ? 'disabled' : ''}>${opcoesPosto}</select>
+                <button type="button" class="motivo-escolhido" ${somenteLeitura ? 'disabled' : ''}></button>
                 <input type="text" class="input-observacao" placeholder="Observação (opcional)" value="${escapeHtml(item.observacao || '')}" ${somenteLeitura ? 'disabled' : ''}>
             </div>
         `;
@@ -492,61 +559,83 @@ function renderizarMarcar(itens, motivos, filtro = '', somenteLeitura = somenteL
         const btnPresente = el.querySelector('.btn-presente');
         const btnFalta = el.querySelector('.btn-falta');
         const blocoMotivo = el.querySelector('.bloco-motivo');
-        const selectMotivo = el.querySelector('.select-motivo');
+        const btnMotivo = el.querySelector('.motivo-escolhido');
         const inputObs = el.querySelector('.input-observacao');
-        const selectPosto = el.querySelector('.select-posto');
 
-        // O posto só é perguntado quando o motivo é "Serviço" (e há postos cadastrados).
-        function motivoEhServico() {
-            const motivo = motivos.find((m) => Number(m.id) === Number(selectMotivo.value));
-            return !!motivo && motivo.codigo === CODIGO_MOTIVO_SERVICO && postos.length > 0;
-        }
-        function ajustarPosto() {
-            selectPosto.hidden = !motivoEhServico();
-            if (selectPosto.hidden) selectPosto.value = '';
-        }
-        function salvarFalta() {
-            const posto = motivoEhServico() && selectPosto.value ? Number(selectPosto.value) : null;
-            item.motivo_falta_id = Number(selectMotivo.value);
-            item.servico_id = posto;
-            enviarMarcacao(item.aluno_id, false, Number(selectMotivo.value), inputObs.value, posto);
-        }
-        selectPosto.hidden = !motivoEhServico();
+        // O botão do cartão mostra o motivo escolhido; tocar nele reabre o painel.
+        function pintar() {
+            const emFalta = Number(item.presente) !== 1;
+            btnPresente.classList.toggle('ativo', !emFalta);
+            btnPresente.classList.toggle('presente', !emFalta);
+            btnFalta.classList.toggle('ativo', emFalta);
+            btnFalta.classList.toggle('falta', emFalta);
+            blocoMotivo.classList.toggle('ativo', emFalta);
+            el.classList.toggle('em-falta', emFalta);
 
-        function marcar(presenteNovo) {
+            const motivo = motivos.find((m) => Number(m.id) === Number(item.motivo_falta_id));
+            const posto = postos.find((p) => Number(p.id) === Number(item.servico_id));
+            btnMotivo.innerHTML = motivo
+                ? `${motivo.codigo ? `<b class="sigla">${escapeHtml(motivo.codigo)}</b>` : ''}
+                   <span class="texto"><strong>${escapeHtml(motivo.nome)}</strong>${posto ? `<small>Posto: ${escapeHtml(posto.nome)}</small>` : ''}</span>
+                   ${somenteLeitura ? '' : '<span class="trocar">Trocar</span>'}`
+                : `<span class="texto"><strong>Sem motivo informado</strong></span>${somenteLeitura ? '' : '<span class="trocar">Escolher</span>'}`;
+        }
+
+        // Abre o painel de motivos; se o motivo for "Serviço" (e houver postos
+        // cadastrados), pergunta o posto em seguida. Só grava depois da escolha:
+        // fechar o painel deixa o aluno como estava.
+        async function escolherMotivo() {
             if (somenteLeitura) return;
-            btnPresente.classList.toggle('ativo', presenteNovo);
-            btnPresente.classList.toggle('presente', presenteNovo);
-            btnFalta.classList.toggle('ativo', !presenteNovo);
-            btnFalta.classList.toggle('falta', !presenteNovo);
-            blocoMotivo.classList.toggle('ativo', !presenteNovo);
-            el.classList.toggle('em-falta', !presenteNovo);
-            item.presente = presenteNovo ? 1 : 0;
-            atualizarPlacar();
-            if (presenteNovo) {
-                enviarMarcacao(item.aluno_id, true, null, inputObs.value, null);
-            } else {
-                ajustarPosto();
-                salvarFalta();
+            const motivoId = await abrirFolhaDeOpcoes({
+                titulo: 'Motivo da falta',
+                subtitulo: identificacao,
+                opcoes: opcoesDeMotivo(motivos),
+                selecionado: Number(item.presente) !== 1 ? Number(item.motivo_falta_id) : null,
+                comBusca: true,
+            });
+            if (motivoId === undefined) return;
+
+            let postoId = null;
+            const motivo = motivos.find((m) => Number(m.id) === motivoId);
+            if (motivo.codigo === CODIGO_MOTIVO_SERVICO && postos.length > 0) {
+                postoId = await abrirFolhaDeOpcoes({
+                    titulo: 'Qual posto de serviço?',
+                    subtitulo: identificacao,
+                    opcoes: [
+                        ...postos.map((p) => ({ valor: Number(p.id), nome: p.nome })),
+                        { valor: null, nome: 'Não informar o posto', discreta: true },
+                    ],
+                    selecionado: item.servico_id ? Number(item.servico_id) : null,
+                    comBusca: postos.length > 8,
+                });
+                if (postoId === undefined) return;
             }
+
+            item.presente = 0;
+            item.motivo_falta_id = motivoId;
+            item.servico_id = postoId;
+            pintar();
+            atualizarPlacar();
+            enviarMarcacao(item.aluno_id, false, motivoId, inputObs.value, postoId);
         }
 
-        btnPresente.addEventListener('click', () => marcar(true));
-        btnFalta.addEventListener('click', () => marcar(false));
-        selectMotivo.addEventListener('change', () => {
-            ajustarPosto();
-            if (!btnPresente.classList.contains('ativo')) {
-                salvarFalta();
-            }
-        });
-        selectPosto.addEventListener('change', () => {
-            if (!btnPresente.classList.contains('ativo')) {
-                salvarFalta();
-            }
-        });
+        function marcarPresente() {
+            if (somenteLeitura || Number(item.presente) === 1) return;
+            item.presente = 1;
+            item.motivo_falta_id = null;
+            item.servico_id = null;
+            pintar();
+            atualizarPlacar();
+            enviarMarcacao(item.aluno_id, true, null, inputObs.value, null);
+        }
+
+        pintar();
+        btnPresente.addEventListener('click', marcarPresente);
+        btnFalta.addEventListener('click', escolherMotivo);
+        btnMotivo.addEventListener('click', escolherMotivo);
         inputObs.addEventListener('blur', () => {
-            if (!btnPresente.classList.contains('ativo')) {
-                salvarFalta();
+            if (Number(item.presente) !== 1) {
+                enviarMarcacao(item.aluno_id, false, item.motivo_falta_id ? Number(item.motivo_falta_id) : null, inputObs.value, item.servico_id ? Number(item.servico_id) : null);
             }
         });
 
