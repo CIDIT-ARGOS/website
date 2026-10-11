@@ -22,7 +22,7 @@ A chave do app é pública por natureza: qualquer pessoa que abre a PWA consegue
 | Endpoint | Chave `app` + sessão | Chave `admin` |
 |---|---|---|
 | `POST sessao.php` (login) | chave basta — é o que cria a sessão | sim |
-| `GET/PUT servico.php`, `GET motivos.php`, `GET postos_servico.php`, `GET/POST dispensas.php`, `GET livro.php` | sim | só com sessão |
+| `GET/PUT servico.php`, `GET motivos.php`, `GET postos_servico.php`, `GET/POST dispensas.php`, `GET/PUT/POST livro.php` | sim | só com sessão |
 | `GET alunos.php` | sim, só o esquadrão de serviço | só com sessão |
 | `POST/PUT/DELETE alunos.php` | **403** | sim |
 | `GET retiradas.php` | sim, só o esquadrão de serviço | sim, tudo |
@@ -31,6 +31,25 @@ A chave do app é pública por natureza: qualquer pessoa que abre a PWA consegue
 | `grupos.php`, `painel_usuarios.php`, `relatorios.php`, `situacao.php` | **403** | sim |
 
 "Só o esquadrão de serviço": a sessão guarda em qual esquadrão/esquadrilha o aluno está de serviço (`PUT /api/servico.php`), e é esse esquadrão que limita o que ele lê e lança — vale pra listar, pra buscar por `id` e pra gravar. Pedir o `id` de um registro de outro esquadrão dá `403`/`404`, não o registro.
+
+### Livro do Dia: função e validação
+
+Junto com o posto, a sessão guarda a **função** do aluno no serviço (`funcao` em `PUT /api/servico.php`): `esquadrilha`, `esquadrao` ou `ca`. É ela que decide qual livro `livro.php` entrega e o que ele pode fazer:
+
+| Função | Livro dele | Recebe e valida |
+|---|---|---|
+| Aluno de Dia à Esquadrilha | o da esquadrilha de serviço | — |
+| Aluno de Dia ao Esquadrão | o do esquadrão de serviço | os das esquadrilhas desse esquadrão |
+| Aluno de Dia ao Corpo de Alunos | o do Corpo de Alunos | os dos esquadrões |
+
+- Situações: `rascunho` → `enviado` → `validado`, ou `enviado` → `devolvido` (com motivo) → `enviado`.
+- Só o dono altera o livro (as alterações e observações), e só em `rascunho` ou `devolvido`; depois de enviado dá `409`.
+- Validar ou devolver livro que ele não recebe dá `403`/`404`; livro que não está `enviado` dá `409`.
+- Ao enviar, o texto do livro é guardado como está — é esse texto que é validado, mesmo que uma chamada mude depois.
+- O livro do CA não tem quem valide: enviado é final, e só o Aluno de Dia ao CA pode reabrir.
+- Fica registrado quem enviou, quem validou ou devolveu, e quando.
+
+Como o posto, a função é declarada pelo próprio aluno ao entrar — provisório, até existir integração com a escala de serviço. Regras em `core/livro_fluxo_core.php`.
 
 ## Padrões seguidos
 

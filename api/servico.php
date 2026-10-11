@@ -7,13 +7,14 @@
 // escolhe ao entrar (e a escolha fica registrada na sessão).
 //
 //   GET  → onde ele está agora, de onde ele é, e as opções
-//   PUT  { "esquadrao": "...", "esquadrilha": "..." } → troca
+//   PUT  { "esquadrao": "...", "esquadrilha": "...", "funcao": "esquadrilha|esquadrao|ca" } → troca
+//        (funcao é opcional: sem ela, fica a que já estava)
 
 require_once __DIR__ . '/bootstrap.php';
 
 $alunoSessao = exigirSessaoAluno($conexao);
 
-$atual = fn($aluno) => ['esquadrao' => $aluno['esquadrao_servico'], 'esquadrilha' => $aluno['esquadrilha_servico']];
+$atual = fn($aluno) => ['esquadrao' => $aluno['esquadrao_servico'], 'esquadrilha' => $aluno['esquadrilha_servico'], 'funcao' => $aluno['funcao_servico']];
 
 switch ($_SERVER['REQUEST_METHOD']) {
 
@@ -33,11 +34,16 @@ switch ($_SERVER['REQUEST_METHOD']) {
             erro("Informe esquadrao e esquadrilha.");
         }
 
-        $resultado = definirPostoDeServicoSessao($conexao, (int) $alunoSessao['sessao_id'], $esquadrao, $esquadrilha);
+        $funcao = $dados['funcao'] ?? null;
+        if ($funcao !== null && !is_string($funcao)) {
+            erro("Função inválida. Use esquadrilha, esquadrao ou ca.");
+        }
+
+        $resultado = definirPostoDeServicoSessao($conexao, (int) $alunoSessao['sessao_id'], $esquadrao, $esquadrilha, $funcao);
         if (!$resultado['ok']) {
             erro($resultado['erro']);
         }
-        responder(['servico' => ['esquadrao' => $esquadrao, 'esquadrilha' => $esquadrilha]]);
+        responder(['servico' => ['esquadrao' => $esquadrao, 'esquadrilha' => $esquadrilha, 'funcao' => $funcao ?? $alunoSessao['funcao_servico']]]);
         break;
 
     default:

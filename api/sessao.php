@@ -52,7 +52,7 @@ responder([
     'aluno' => $aluno,
     // Onde ele está de serviço: começa no próprio esquadrão; o app pergunta e
     // troca em PUT /api/servico.php.
-    'servico' => ['esquadrao' => $aluno['esquadrao'], 'esquadrilha' => $aluno['esquadrilha']],
+    'servico' => ['esquadrao' => $aluno['esquadrao'], 'esquadrilha' => $aluno['esquadrilha'], 'funcao' => 'esquadrilha'],
 ], 201);
 
 mysqli_close($conexao);

@@ -91,6 +91,15 @@
       <label for="servicoEsquadrilha">Esquadrilha</label>
       <select id="servicoEsquadrilha" required></select>
     </div>
+    <div>
+      <label for="servicoFuncao">Sua função no serviço</label>
+      <select id="servicoFuncao" required>
+        <option value="esquadrilha">Aluno de Dia à Esquadrilha</option>
+        <option value="esquadrao">Aluno de Dia ao Esquadrão</option>
+        <option value="ca">Aluno de Dia ao Corpo de Alunos</option>
+      </select>
+      <p class="explicacao" style="margin-top:6px;">É a função que diz qual Livro do Dia é o seu e de quem você valida os livros.</p>
+    </div>
     <button type="submit" class="primario">Confirmar posto de serviço</button>
   </form>
   <p class="explicacao" id="servicoOrigem"></p>
@@ -170,21 +179,28 @@
 <!-- ================= LIVRO DO DIA ================= -->
 <section class="view" id="view-livro">
   <div class="rotulo-secao"><h1>Livro do Dia</h1><span id="livroEsquadrao"></span></div>
-  <p class="explicacao">Montado sozinho a partir das chamadas enviadas e das dispensas lançadas. Confira e envie ao Aluno de Dia ao CA.</p>
+  <p class="explicacao" id="livroExplicacao"></p>
   <div>
     <label for="livroData">Data</label>
     <input type="date" id="livroData">
   </div>
   <div id="livroMensagem"></div>
+  <div id="livroSituacao"></div>
+  <div class="livro-secoes" id="livroRecebidos"></div>
   <div class="livro-secoes" id="livroConteudo">
     <p class="vazio">Carregando…</p>
+  </div>
+  <div id="livroObservacoesBloco" hidden>
+    <label for="livroObservacoes">Alterações e observações</label>
+    <textarea id="livroObservacoes" rows="5" maxlength="4000" placeholder="O que aconteceu no serviço e não está nas chamadas. Deixe em branco se não houver."></textarea>
+    <p class="explicacao" id="livroObservacoesAviso" style="margin-top:6px;"></p>
   </div>
   <div class="rodape-acao" id="rodapeLivro" style="display:none;">
     <div class="acoes-duplas">
       <button type="button" class="secundario" id="btnCopiarLivro">Copiar texto</button>
       <button type="button" class="primario" id="btnEnviarLivro">
         <span class="i" style="--icon-url:url('../../images/icons/send.svg')"></span>
-        Enviar
+        <span id="btnEnviarLivroTexto">Enviar</span>
       </button>
     </div>
   </div>

@@ -2,7 +2,7 @@
 
 require_once __DIR__ . '/../../core/config.php';
 require_once __DIR__ . '/auth.php';
-require_once __DIR__ . '/../../core/livro_core.php';
+require_once __DIR__ . '/../../core/livro_fluxo_core.php';
 
 $conexao = conectarBanco();
 $escopo = escopoEsquadrao();
@@ -20,6 +20,36 @@ $livros = [];
 foreach ($esquadroesParaMontar as $esq) {
     $livros[] = montarLivroEsquadrao($conexao, $esq, $data);
 }
+
+// Tramitação do livro no app: o do Corpo de Alunos (só pra quem vê todos os
+// esquadrões), o de cada esquadrão e os das esquadrilhas dele.
+$dataDaTramitacao = DateTimeImmutable::createFromFormat('!Y-m-d', $data) ? $data : date('Y-m-d');
+$livroDoCa = $escopo === null ? buscarLivro($conexao, $dataDaTramitacao, 'ca') : null;
+$tramitacao = [];
+foreach ($esquadroesParaMontar as $esq) {
+    $tramitacao[] = [
+        'esquadrao' => buscarLivro($conexao, $dataDaTramitacao, 'esquadrao', $esq),
+        'esquadrilhas' => livrosRecebidos($conexao, $dataDaTramitacao, 'esquadrao', $esq),
+    ];
+}
+$linhaDaTramitacao = function ($livro, $recuo = false) {
+    $quando = fn($dataHora) => $dataHora ? date('d/m H:i', strtotime($dataHora)) : '';
+    ?>
+    <tr>
+        <td<?= $recuo ? ' style="padding-left:28px;"' : '' ?>><?= $recuo ? '' : '<strong>' ?><?= htmlspecialchars($livro['rotulo']) ?><?= $recuo ? '' : '</strong>' ?></td>
+        <td><span class="badge livro-<?= $livro['status'] ?>"><?= htmlspecialchars(LIVRO_STATUS[$livro['status']]) ?></span></td>
+        <td><?= $livro['status'] !== 'rascunho' && $livro['enviado_por'] ? htmlspecialchars($livro['enviado_por']) . ' <small>' . $quando($livro['enviado_em']) . '</small>' : '—' ?></td>
+        <td>
+            <?php if ($livro['status'] === 'validado'): ?>
+                <?= htmlspecialchars($livro['validado_por'] ?? '—') ?> <small><?= $quando($livro['validado_em']) ?></small>
+            <?php elseif ($livro['status'] === 'devolvido'): ?>
+                Devolvido por <?= htmlspecialchars($livro['validado_por'] ?? '—') ?>: <?= htmlspecialchars($livro['devolucao_motivo'] ?? '') ?>
+            <?php else: ?>—<?php endif; ?>
+        </td>
+        <td><?= trim((string) $livro['observacoes']) !== '' && $livro['status'] !== 'rascunho' ? nl2br(htmlspecialchars($livro['observacoes'])) : '—' ?></td>
+    </tr>
+    <?php
+};
 
 ?>
 <!DOCTYPE html>
@@ -61,6 +91,11 @@ foreach ($esquadroesParaMontar as $esq) {
     .livro ul { margin: 4px 0; padding-left: 20px; font-size: 13px; }
     .dispensa-bloco { font-size: 13px; margin-bottom: 12px; }
     .dispensa-bloco strong { display: block; }
+    .badge.livro-rascunho { background: #eef1f6; color: var(--text-muted); }
+    .badge.livro-enviado { background: #fff3cd; color: #8a6100; }
+    .badge.livro-validado { background: #d9f2e3; color: var(--ok); }
+    .badge.livro-devolvido { background: #fdeaea; color: var(--danger); }
+    .livro-enviado-texto { margin: 12px 0 0; padding: 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; font-family: inherit; font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 
     @media print {
@@ -98,6 +133,29 @@ foreach ($esquadroesParaMontar as $esq) {
             <?php endif; ?>
             <button type="submit"><span class="i" style="--icon-url:url('../images/icons/refresh.svg')"></span>Gerar</button>
         </form>
+    </div>
+
+    <div class="card filtros-card">
+        <h3 style="margin-top:0;">Tramitação do livro</h3>
+        <p style="margin:0 0 8px; font-size:13px; color:var(--text-muted);">
+            O Aluno de Dia à Esquadrilha envia o livro ao Aluno de Dia ao Esquadrão, que valida, reúne e envia ao Aluno de Dia ao Corpo de Alunos, que valida e fecha o Livro do Dia. Tudo pela Área Funcional.
+        </p>
+        <div class="scroll-x">
+        <table>
+            <tr><th>Livro</th><th>Situação</th><th>Enviado por</th><th>Validado por</th><th>Alterações e observações</th></tr>
+            <?php if ($livroDoCa): $linhaDaTramitacao($livroDoCa); endif; ?>
+            <?php foreach ($tramitacao as $t): ?>
+                <?php $linhaDaTramitacao($t['esquadrao']); ?>
+                <?php foreach ($t['esquadrilhas'] as $daEsquadrilha): $linhaDaTramitacao($daEsquadrilha, true); endforeach; ?>
+            <?php endforeach; ?>
+        </table>
+        </div>
+        <?php if ($livroDoCa && $livroDoCa['status'] === 'enviado' && $livroDoCa['conteudo'] !== null): ?>
+            <details style="margin-top:12px;">
+                <summary style="cursor:pointer; font-weight:600;">Livro do Dia ao Corpo de Alunos, como foi enviado</summary>
+                <pre class="livro-enviado-texto"><?= htmlspecialchars($livroDoCa['conteudo']) ?></pre>
+            </details>
+        <?php endif; ?>
     </div>
 
     <?php foreach ($livros as $livro): ?>

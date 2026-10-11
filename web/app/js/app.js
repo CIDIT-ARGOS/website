@@ -49,6 +49,17 @@ function carregarSessao() {
 
 // `servico` é onde o aluno está de serviço nesta sessão ({ esquadrao,
 // esquadrilha }) — fica null até ele confirmar na tela de posto de serviço.
+// Função no serviço (vem em servico.funcao): diz qual Livro do Dia é o do aluno.
+const FUNCOES_DE_SERVICO = {
+    esquadrilha: 'Aluno de Dia à Esquadrilha',
+    esquadrao: 'Aluno de Dia ao Esquadrão',
+    ca: 'Aluno de Dia ao Corpo de Alunos',
+};
+
+function funcaoDeServico() {
+    return (sessaoAtual.servico && sessaoAtual.servico.funcao) || 'esquadrilha';
+}
+
 function salvarSessao(token, aluno, servico = null) {
     sessaoAtual = { token, aluno, servico };
     localStorage.setItem(CHAVE_SESSAO, JSON.stringify(sessaoAtual));
@@ -215,6 +226,7 @@ async function prepararPostoDeServico() {
         ).join('');
         campoEsquadrao.value = atual.esquadrao;
         preencherEsquadrilhasDeServico(atual.esquadrilha);
+        document.getElementById('servicoFuncao').value = atual.funcao || dados.servico.funcao || 'esquadrilha';
 
         document.getElementById('servicoOrigem').textContent =
             `Você é do ${rotuloEsquadrao(dados.origem.esquadrao)}, esquadrilha ${dados.origem.esquadrilha}.`;
@@ -234,6 +246,7 @@ document.getElementById('formServico').addEventListener('submit', async (evento)
             body: {
                 esquadrao: document.getElementById('servicoEsquadrao').value,
                 esquadrilha: document.getElementById('servicoEsquadrilha').value,
+                funcao: document.getElementById('servicoFuncao').value,
             },
         });
         salvarSessao(sessaoAtual.token, sessaoAtual.aluno, resultado.servico);
@@ -258,7 +271,7 @@ function atualizarInfoSessao() {
     if (!sessaoAtual) return;
     const { aluno, servico } = sessaoAtual;
     const posto = servico
-        ? `De serviço: ${escapeHtml(rotuloEsquadrao(servico.esquadrao))} · ${escapeHtml(servico.esquadrilha)} <u>trocar</u>`
+        ? `${escapeHtml(FUNCOES_DE_SERVICO[servico.funcao] || 'De serviço')}: ${escapeHtml(rotuloEsquadrao(servico.esquadrao))} · ${escapeHtml(servico.esquadrilha)} <u>trocar</u>`
         : escapeHtml(aluno.milhao);
     document.getElementById('sessaoInfo').innerHTML = `<strong>${escapeHtml(aluno.nome_guerra)}</strong>${posto}`;
 }

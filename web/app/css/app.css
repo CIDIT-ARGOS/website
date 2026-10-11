@@ -398,6 +398,44 @@ body.folha-aberta { overflow: hidden; }
 .livro-secao li strong { display: block; font-size: 14px; font-weight: 600; }
 .livro-secao li span { display: block; font-size: 13px; color: var(--text-muted); }
 
+/* Tramitação do livro: a situação do meu livro e os livros recebidos pra validar. */
+.status-pill.livro-rascunho { background: var(--bg); color: var(--text-muted); border: 1px solid var(--border); }
+.status-pill.livro-enviado { background: var(--alerta-bg); color: var(--alerta); }
+.status-pill.livro-validado { background: var(--ok-bg); color: var(--ok); }
+.status-pill.livro-devolvido { background: var(--danger-bg); color: var(--danger); }
+.livro-situacao {
+    display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
+    background: var(--bg-card); border: 1px solid var(--border); border-left: 4px solid var(--text-muted); border-radius: 8px; font-size: 13px; color: var(--text-muted);
+}
+.livro-situacao.enviado { border-left-color: var(--alerta); }
+.livro-situacao.validado { border-left-color: var(--ok); }
+.livro-situacao.devolvido { border-left-color: var(--danger); }
+.livro-situacao .linha-topo, .livro-recebido .linha-topo { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.livro-situacao .linha-topo strong { font-size: 15px; color: var(--text); }
+.livro-situacao span strong { color: var(--danger); }
+.livro-situacao button { margin-top: 6px; }
+.livro-recebido { display: flex; flex-direction: column; gap: 10px; border-left-color: var(--text-muted); }
+.livro-recebido.enviado { border-left-color: var(--alerta); }
+.livro-recebido.validado { border-left-color: var(--ok); }
+.livro-recebido.devolvido { border-left-color: var(--danger); }
+.livro-recebido h2 { margin: 0; }
+.livro-recebido .tramitacao span { display: block; font-size: 13px; color: var(--text-muted); }
+.livro-recebido summary { font-size: 14px; font-weight: 600; color: var(--accent); cursor: pointer; min-height: 32px; }
+.livro-recebido pre {
+    margin: 8px 0 0; padding: 10px; max-height: 320px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 12.5px; line-height: 1.45;
+}
+.livro-recebido .acoes-duplas .primario, .livro-recebido .acoes-duplas .secundario { min-height: 46px; font-size: 15px; }
+.livro-recebido .devolucao { display: flex; flex-direction: column; gap: 8px; }
+.livro-recebido .devolucao[hidden] { display: none; }
+textarea {
+    width: 100%; padding: 10px 14px; background: #fff; border: 1px solid var(--border); border-radius: 12px;
+    font-family: inherit; font-size: 16px; line-height: 1.4; color: var(--text); resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--anel); }
+textarea:disabled { background: var(--bg); color: var(--text-muted); }
+#livroObservacoesBloco[hidden] { display: none; }
+
 .acoes-duplas { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
 .acoes-duplas .secundario { min-height: 52px; }
 
