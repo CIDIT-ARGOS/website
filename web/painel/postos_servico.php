@@ -5,12 +5,14 @@
 // e às vezes no meio do serviço; cada troca fica no histórico.
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/servicos_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 // Quem faz chamada é quem precisa saber (e dizer) quem está de serviço.
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())) {

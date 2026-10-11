@@ -22,6 +22,8 @@
 
 require_once __DIR__ . '/../core/config.php';
 
+require_once __DIR__ . '/../core/fuso.php';
+
 header('Content-Type: application/json; charset=utf-8');
 // Respostas da API têm dado pessoal: nada de cache intermediário, nada de o
 // navegador "adivinhar" outro tipo de conteúdo, nada de vazar a URL em Referer.
@@ -42,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
 }
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 $GLOBALS['__api_chave_id'] = null;
 $GLOBALS['__api_escopo'] = null;

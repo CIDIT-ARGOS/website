@@ -112,6 +112,13 @@ checar('api/index.php responde', function () {
     exigir(($r['json']['servico'] ?? null) === 'Argos API', 'resposta não é da Argos API');
 });
 
+// Em UTC o "hoje" do sistema vira às 21h de Brasília, bem na hora do pernoite.
+checar('o servidor está no horário de Brasília', function () {
+    $hora = pegar('GET', '/api/index.php')['json']['hora_servidor'] ?? '';
+    $esperado = (new DateTimeImmutable('now', new DateTimeZone('America/Sao_Paulo')))->format('P');
+    exigir(substr($hora, -6) === $esperado, "hora_servidor deveria terminar em $esperado, veio: $hora");
+});
+
 checar('API recusa requisição sem chave (401)', function () {
     exigirStatus(pegar('GET', '/api/motivos.php'), 401);
 });

@@ -16,6 +16,10 @@ $apiKey = getenv('ARGOS_API_KEY') ?: 'd0cf67c0a3b8464aacb2ed36f01b1fbb2af8d7623d
 $apiKeyAdmin = 'chave-admin-dos-testes-do-argos';
 $raizProjeto = dirname(__DIR__);
 
+// O mesmo fuso do sistema (core/fuso.php): o "hoje" e o NOW() dos testes têm
+// que ser os mesmos do servidor, senão os testes de data quebram toda noite.
+date_default_timezone_set('America/Sao_Paulo');
+
 // qrcode_hash dos alunos de tests/fixtures/dados_teste.sql
 const QR_PRATA_1 = '1111111111111111111111111111111111111111111111111111111111111111';
 const QR_PRATA_2 = '2222222222222222222222222222222222222222222222222222222222222222';
@@ -140,6 +144,7 @@ function banco() {
             throw new RuntimeException('sem acesso ao banco de teste (DB_HOST/DB_PORTA/DB_ROOT_SENHA/DB_NOME): ' . mysqli_connect_error());
         }
         mysqli_set_charset($conexao, 'utf8mb4');
+        mysqli_query($conexao, "SET time_zone = '" . date('P') . "'");
     }
     return $conexao;
 }

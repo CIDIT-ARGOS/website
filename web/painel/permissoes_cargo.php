@@ -1,13 +1,15 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/cargos_core.php';
 require_once __DIR__ . '/../../core/cargo_permissoes_core.php';
 
 $usuarioId = idUsuarioPainel();
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'gerenciar_cargos', $usuarioId)) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_cargos'.");

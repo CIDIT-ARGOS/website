@@ -1,13 +1,15 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 require_once __DIR__ . '/../../core/grupos_core.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao();
 
 $agrupamentoTipo = $_GET['agrupamento_tipo'] ?? 'esquadrilha';

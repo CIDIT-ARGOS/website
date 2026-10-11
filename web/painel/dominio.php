@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/dominio_core.php';
@@ -10,7 +12,7 @@ if (!podeGerenciarDominio()) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_dominio'.");
 }
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $usuarioId = idUsuarioPainel();
 
 $entidades = dominioEntidades();

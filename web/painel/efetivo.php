@@ -1,11 +1,13 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 require_once __DIR__ . '/../../core/turmas_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao(); // null = CA inteiro, senão string do esquadrão
 
 $mensagem = null;

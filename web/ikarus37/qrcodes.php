@@ -5,11 +5,13 @@
 // administrador técnico, que enxerga todos os esquadrões.
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/qrcodes_tela.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 // Cadastrar QR é entregar a credencial do aluno: só administrador técnico avançado.
 if (!temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado')) {
