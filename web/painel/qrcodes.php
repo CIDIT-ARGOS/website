@@ -5,6 +5,8 @@
 // e o escopo de esquadrão de quem está operando.
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/qrcodes_tela.php';
@@ -14,7 +16,7 @@ if (!podeEditarEfetivo()) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'editar_efetivo'.");
 }
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao();
 $estado = processarControleQr($conexao, $escopo);
 

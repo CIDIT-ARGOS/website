@@ -1,10 +1,12 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/livro_fluxo_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $escopo = escopoEsquadrao();
 
 $data = $_GET['data'] ?? date('Y-m-d');

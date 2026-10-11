@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/login_seguranca_core.php';
 
 session_start();
@@ -16,7 +18,7 @@ if (isset($_GET['logout'])) {
 
 // ---------- LOGIN ----------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['senha'])) {
-    $conexao = conectarBanco();
+    $conexao = conectarBancoArgos();
 
     $ipRequisicao = $_SERVER['REMOTE_ADDR'] ?? '';
     $usuarioBruto = mb_substr(trim($_POST['usuario']), 0, 50);
@@ -65,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['usuario'], $_POST['se
 }
 
 $logado = !empty($_SESSION['admin_id']);
-$podeTecnicoAvancado = $logado && temPermissao(conectarBanco(), 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado');
+$podeTecnicoAvancado = $logado && temPermissao(conectarBancoArgos(), 'ikarus37', $_SESSION['admin_nivel'], 'acesso_tecnico_avancado');
 
 ?>
 <!DOCTYPE html>

@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/cargos_core.php';
 require_once __DIR__ . '/../../core/validacao_core.php';
@@ -9,7 +11,7 @@ require_once __DIR__ . '/../../core/validacao_core.php';
 const ADMIN_USUARIO_LIMITES_CAMPOS = ['nome' => 100, 'usuario' => 50, 'senha' => 200, 'nova_senha' => 200];
 const PAINEL_USUARIO_LIMITES_CAMPOS_LOCAL = ['nome' => 100, 'usuario' => 50, 'esquadrao' => 50, 'senha' => 200];
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 $meuId = (int)$_SESSION['admin_id'];
 $souSuperAdmin = temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'gerenciar_usuarios_admin');

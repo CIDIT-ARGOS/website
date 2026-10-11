@@ -1,9 +1,11 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/auth.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $podeGerenciar = temPermissao($conexao, 'ikarus37', $_SESSION['admin_nivel'], 'gerenciar_api');
 
 $mensagem = null;

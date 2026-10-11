@@ -1,13 +1,15 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/retiradas_core.php';
 require_once __DIR__ . '/../../core/alunos_core.php';
 require_once __DIR__ . '/../../core/grupos_core.php';
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 if (!temPermissao($conexao, 'painel', $_SESSION['painel_cargo'], 'registrar_retirada', idUsuarioPainel())) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'registrar_retirada'.");

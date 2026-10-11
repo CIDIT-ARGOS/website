@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/turmas_core.php';
@@ -9,7 +11,7 @@ if (!podeGerenciarTurmas()) {
     exibirAcessoNegado("Seu cargo não tem a permissão 'gerenciar_turmas'.");
 }
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 
 $mensagem = null;
 $erro = null;

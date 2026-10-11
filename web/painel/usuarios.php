@@ -1,6 +1,8 @@
 <?php
 
 require_once __DIR__ . '/../../core/config.php';
+
+require_once __DIR__ . '/../../core/fuso.php';
 require_once __DIR__ . '/../../core/acesso_negado.php';
 require_once __DIR__ . '/auth.php';
 require_once __DIR__ . '/../../core/painel_usuarios_core.php';
@@ -9,7 +11,7 @@ if (!podeGerenciarUsuarios()) {
     exibirAcessoNegado("Seu cargo não tem permissão para gerenciar usuários do painel.");
 }
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 $meuId = (int)$_SESSION['painel_id'];
 
 $mensagem = null;

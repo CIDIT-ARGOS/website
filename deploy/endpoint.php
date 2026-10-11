@@ -43,12 +43,13 @@ if (!is_string($hashEsperado) || strlen($hashEsperado) !== 64 || $tokenRecebido 
 // ---------- Banco ----------
 $raiz = dirname(__DIR__);
 require_once $raiz . '/core/config.php';
+require_once $raiz . '/core/fuso.php';
 
 set_time_limit(0);
 ignore_user_abort(true);
 mysqli_report(MYSQLI_REPORT_OFF);
 
-$conexao = conectarBanco();
+$conexao = conectarBancoArgos();
 mysqli_set_charset($conexao, 'utf8mb4');
 
 // As migrations sobem junto com este endpoint (_deploy/database/) — a pasta
