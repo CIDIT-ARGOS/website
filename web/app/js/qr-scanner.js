@@ -3,8 +3,8 @@
 //
 // Tudo local: o decodificador (jsQR, em ../vendor/jsQR.js) é servido pelo
 // próprio sistema, nada vem da internet — o Argos roda em intranet. Quando o
-// navegador tem BarcodeDetector nativo ele é usado primeiro, por ser mais
-// rápido; se ele falhar, cai no jsQR.
+// navegador tem BarcodeDetector nativo que lê QR ele é usado primeiro, por ser
+// mais rápido, e o jsQR confere em paralelo; se o nativo falhar, fica só o jsQR.
 //
 // A câmera fica aberta até alguém mandar parar. Quando um QR é lido o leitor
 // PAUSA (congela a imagem) e avisa quem chamou, que mostra o que foi lido e
@@ -20,6 +20,7 @@ const ArgosQrScanner = (() => {
     // página que o inclua (web/app/, web/painel/, web/ikarus37/).
     const URL_JSQR = new URL('../vendor/jsQR.js', document.currentScript.src).href;
     const FALHAS_ATE_DESISTIR_DO_NATIVO = 15;
+    const LADO_MAXIMO_JSQR = 1024;
 
     let stream = null;
     let video = null;
@@ -30,6 +31,7 @@ const ArgosQrScanner = (() => {
     let carregandoJsQr = null;
     let aoLer = null;
     let ignorarAte = 0;
+    let proximoJsQr = 0;
 
     function carregarJsQr() {
         if (window.jsQR) return Promise.resolve();
@@ -59,7 +61,7 @@ const ArgosQrScanner = (() => {
 
         try {
             stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: { ideal: 'environment' } },
+                video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
                 audio: false,
             });
         } catch (e) {
@@ -77,13 +79,20 @@ const ArgosQrScanner = (() => {
         detectorNativo = null;
         falhasDoNativo = 0;
         ignorarAte = 0;
+        proximoJsQr = 0;
         if ('BarcodeDetector' in window) {
+            // Tem navegador que expõe o BarcodeDetector mas não lê QR (ou não lê nada):
+            // só vale se ele disser que suporta.
             try {
-                detectorNativo = new window.BarcodeDetector({ formats: ['qr_code'] });
+                const formatos = await window.BarcodeDetector.getSupportedFormats();
+                if (formatos.includes('qr_code')) {
+                    detectorNativo = new window.BarcodeDetector({ formats: ['qr_code'] });
+                }
             } catch (e) {
                 detectorNativo = null;
             }
         }
+        if (!stream) return false; // fecharam a câmera enquanto isso
 
         // O jsQR é carregado sempre: é o plano B se o detector nativo não funcionar.
         try {
@@ -102,8 +111,11 @@ const ArgosQrScanner = (() => {
 
     function lerComJsQr() {
         if (!window.jsQR || !video.videoWidth) return null;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+        // Quadro inteiro de câmera de celular é pesado demais pro jsQR; reduzido
+        // ele lê do mesmo jeito e a imagem não trava.
+        const escala = Math.min(1, LADO_MAXIMO_JSQR / Math.max(video.videoWidth, video.videoHeight));
+        canvas.width = Math.round(video.videoWidth * escala);
+        canvas.height = Math.round(video.videoHeight * escala);
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imagem = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -124,7 +136,11 @@ const ArgosQrScanner = (() => {
                         const codigos = await detectorNativo.detect(video);
                         falhasDoNativo = 0;
                         if (codigos.length > 0) valor = codigos[0].rawValue;
-                    } else {
+                    }
+                    // Sem detector nativo o jsQR lê sozinho; com ele, o jsQR confere
+                    // de tempos em tempos, pro caso de o nativo não enxergar este QR.
+                    if (!valor && stream && performance.now() >= proximoJsQr) {
+                        proximoJsQr = performance.now() + (detectorNativo ? 400 : 80);
                         valor = lerComJsQr();
                     }
                 } catch (e) {
