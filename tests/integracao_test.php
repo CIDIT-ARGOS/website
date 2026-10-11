@@ -308,9 +308,13 @@ teste('manifest é JSON válido, com caminhos relativos e ícones existentes', f
 teste('todos os arquivos cacheados pelo service worker existem', function () {
     $r = requisicao('GET', '/web/app/sw.js');
     garantirStatus($r, 200);
-    garantir(preg_match('/const ARQUIVOS_SHELL = \[(.*?)\];/s', $r['corpo'], $m), 'ARQUIVOS_SHELL não encontrado no sw.js');
-    preg_match_all("/'([^']+)'/", $m[1], $arquivos);
-    garantir(count($arquivos[1]) > 0, 'ARQUIVOS_SHELL vazio');
+    $arquivos = [1 => ['index.html']];
+    foreach (['ARQUIVOS_VERSIONADOS', 'ARQUIVOS_FIXOS'] as $lista) {
+        garantir(preg_match('/const ' . $lista . ' = \[(.*?)\];/s', $r['corpo'], $m), "$lista não encontrado no sw.js");
+        preg_match_all("/'([^']+)'/", $m[1], $achados);
+        garantir(count($achados[1]) > 0, "$lista vazio");
+        $arquivos[1] = array_merge($arquivos[1], $achados[1]);
+    }
     foreach ($arquivos[1] as $arquivo) {
         garantirStatus(requisicao('GET', "/web/app/$arquivo"), 200);
     }

@@ -17,8 +17,10 @@
 
 const ArgosQrScanner = (() => {
     // Endereço do jsQR relativo a ESTE arquivo, pra funcionar de qualquer
-    // página que o inclua (web/app/, web/painel/, web/ikarus37/).
-    const URL_JSQR = new URL('../vendor/jsQR.js', document.currentScript.src).href;
+    // página que o inclua (web/app/, web/painel/, web/ikarus37/). Leva junto
+    // o ?v=… deste script, pra hospedagem não entregar um jsQR de outra versão.
+    const ESTE_SCRIPT = new URL(document.currentScript.src);
+    const URL_JSQR = new URL('../vendor/jsQR.js' + ESTE_SCRIPT.search, ESTE_SCRIPT).href;
     const FALHAS_ATE_DESISTIR_DO_NATIVO = 15;
     const LADO_MAXIMO_JSQR = 1024;
 

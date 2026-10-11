@@ -12,8 +12,9 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="../css/fontes.css">
-<link rel="stylesheet" href="css/app.css">
+<!-- ?v=: o deploy troca o marcador pela versão, pra hospedagem não entregar arquivo de release antiga. -->
+<link rel="stylesheet" href="../css/fontes.css?v=__VERSAO__">
+<link rel="stylesheet" href="css/app.css?v=__VERSAO__">
 </head>
 <body class="tela-login">
 
@@ -68,6 +69,15 @@
       <input type="text" id="qrColado" placeholder="conteúdo do QR" autocomplete="off" autocapitalize="off" spellcheck="false">
       <button type="submit" class="secundario">Entrar com o código</button>
     </form>
+
+    <!-- Instalar como app: some quando já está instalado. -->
+    <div class="instalar" id="instalarBloco" hidden>
+      <button type="button" class="secundario" id="btnInstalar">
+        <span class="i" style="--icon-url:url('../../images/icons/download.svg')"></span>
+        Instalar o app no celular
+      </button>
+      <div class="instalar-ajuda" id="instalarAjuda" hidden></div>
+    </div>
   </div>
   <footer class="creditos">
     <img src="../images/especialista.svg" alt="" width="26" height="26">
@@ -323,8 +333,8 @@
 </div>
 
 <script src="env.php"></script>
-<script src="js/qr-scanner.js"></script>
-<script src="js/livro.js"></script>
-<script src="js/app.js"></script>
+<script src="js/qr-scanner.js?v=__VERSAO__"></script>
+<script src="js/livro.js?v=__VERSAO__"></script>
+<script src="js/app.js?v=__VERSAO__"></script>
 </body>
 </html>

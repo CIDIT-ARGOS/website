@@ -9,6 +9,22 @@
 #
 # Testado com Apache real em subdiretório no CI (scripts/ci/testes-apache.sh).
 
+# CSS e JS: o navegador (e a CDN) pode guardar, mas tem que conferir com o
+# servidor antes de usar. O padrão da hospedagem era guardar por 7 dias sem
+# perguntar, e depois de um deploy muita gente continuava com o script antigo.
+# (Além disso, os endereços levam a versão: ?v=… — ver core/arquivos.php.)
+<IfModule mod_expires.c>
+    ExpiresByType text/css "access plus 0 seconds"
+    ExpiresByType application/javascript "access plus 0 seconds"
+    ExpiresByType application/x-javascript "access plus 0 seconds"
+    ExpiresByType text/javascript "access plus 0 seconds"
+</IfModule>
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|webmanifest)$">
+        Header set Cache-Control "no-cache"
+    </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
     RewriteEngine On
 

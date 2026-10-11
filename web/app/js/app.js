@@ -325,6 +325,46 @@ document.getElementById('formColar').addEventListener('submit', (evento) => {
     tentarLogin(valor, evento.submitter);
 });
 
+// ---------- Instalar como app ----------
+// No Android/Chrome o navegador entrega um pedido de instalação pronto
+// (beforeinstallprompt) e o botão só dispara. Onde isso não existe (iPhone,
+// Firefox), o botão mostra o caminho pelo menu do navegador.
+let pedidoDeInstalacao = null;
+const appJaInstalado = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+document.getElementById('instalarBloco').hidden = appJaInstalado;
+
+window.addEventListener('beforeinstallprompt', (evento) => {
+    evento.preventDefault();
+    pedidoDeInstalacao = evento;
+});
+window.addEventListener('appinstalled', () => {
+    pedidoDeInstalacao = null;
+    document.getElementById('instalarBloco').hidden = true;
+});
+
+function passosParaInstalar() {
+    const agente = navigator.userAgent;
+    if (/iphone|ipad|ipod/i.test(agente)) {
+        return ['Abra esta página no <strong>Safari</strong>.', 'Toque em <strong>Compartilhar</strong> (o quadrado com a seta pra cima).', 'Escolha <strong>Adicionar à Tela de Início</strong>.'];
+    }
+    if (/android/i.test(agente)) {
+        return ['Toque no menu do navegador (<strong>⋮</strong>).', 'Escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.', 'Confirme em <strong>Instalar</strong>.'];
+    }
+    return ['No Chrome ou no Edge, clique no ícone de <strong>instalar</strong> no fim da barra de endereço.', 'Ou abra o menu do navegador e escolha <strong>Instalar Argos</strong>.', 'No celular, abra este endereço no navegador do aparelho e toque neste botão.'];
+}
+
+document.getElementById('btnInstalar').addEventListener('click', async () => {
+    const ajuda = document.getElementById('instalarAjuda');
+    if (pedidoDeInstalacao) {
+        pedidoDeInstalacao.prompt();
+        const escolha = await pedidoDeInstalacao.userChoice;
+        pedidoDeInstalacao = null;
+        if (escolha.outcome === 'accepted') return;
+    }
+    ajuda.innerHTML = '<p>Pra deixar o Argos na tela inicial:</p><ol>' + passosParaInstalar().map((p) => `<li>${p}</li>`).join('') + '</ol>';
+    ajuda.hidden = false;
+});
+
 document.getElementById('btnSair').addEventListener('click', () => {
     limparSessao();
     mostrarView('view-login');
