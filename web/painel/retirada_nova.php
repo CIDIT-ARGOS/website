@@ -78,8 +78,9 @@ $grupos = listarGrupos($conexao);
     .responsavel .rotulo { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
     .i { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; background-color: currentColor; -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url); -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center; margin-right: 5px; }
 </style>
-<link rel="stylesheet" href="../css/argos-admin.css">
-<script src="../js/argos-admin.js" defer></script>
+<?php require_once __DIR__ . '/../../core/arquivos.php'; ?>
+<link rel="stylesheet" href="<?= urlVersionada('../css/argos-admin.css') ?>">
+<script src="<?= urlVersionada('../js/argos-admin.js') ?>" defer></script>
 <script>
     function alternarTipo() {
         const tipoAlto = document.getElementById('tipo_alto_nivel').value;

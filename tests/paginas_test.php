@@ -72,6 +72,7 @@ function conferirPagina($caminho, array &$cookies, $folhaDeEstilo) {
     semErroPhp($r);
     garantir(strpos($r['corpo'], 'Acesso negado') === false, 'a página respondeu "Acesso negado"');
     garantir(strpos($r['corpo'], $folhaDeEstilo) !== false, "a página não carrega $folhaDeEstilo");
+    garantir(preg_match('{' . preg_quote($folhaDeEstilo, '{') . '\?v=[\w.]+"}', $r['corpo']) === 1, "$folhaDeEstilo sem a versão no endereço");
     garantir(strpos($r['corpo'], 'class="argos-rodape"') !== false, 'a página não tem o rodapé com a versão e o crédito');
 }
 
@@ -147,6 +148,26 @@ teste('o leitor de QR usa o decodificador local', function () use ($raizProjeto)
     garantir(strpos($leitor, '../vendor/jsQR.js') !== false, 'qr-scanner.js não aponta pro vendor/jsQR.js local');
     garantir(strpos(file_get_contents("$raizProjeto/web/app/vendor/jsQR.js"), 'jsQR') !== false, 'vendor/jsQR.js não parece ser o jsQR');
     garantir(strpos(file_get_contents("$raizProjeto/web/app/sw.js"), "'vendor/jsQR.js'") !== false, 'o service worker não guarda o jsQR pra uso offline');
+});
+
+// A hospedagem guarda .js/.css por 7 dias. Se o endereço não levar a versão,
+// depois de um deploy o navegador segue com o script da release anterior —
+// foi assim que o leitor de QR "não funcionava" em produção.
+teste('os arquivos do app levam o marcador de versão, que o deploy troca pela tag', function () use ($raizProjeto) {
+    $pagina = file_get_contents("$raizProjeto/web/app/index.html");
+    foreach (['css/app.css', 'js/app.js', 'js/livro.js', 'js/qr-scanner.js'] as $arquivo) {
+        garantir(strpos($pagina, "$arquivo?v=__VERSAO__") !== false, "index.html pede $arquivo sem a versão");
+    }
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/sw.js"), "const VERSAO = '__VERSAO__'") !== false, 'sw.js sem o marcador de versão');
+    $pacote = file_get_contents("$raizProjeto/scripts/release/gerar-pacote.sh");
+    garantir(strpos($pacote, 'web/app/index.html web/app/sw.js web/index.html') !== false, 'gerar-pacote.sh não troca o marcador nesses arquivos');
+    $leitor = file_get_contents("$raizProjeto/web/app/js/qr-scanner.js");
+    garantir(strpos($leitor, 'ESTE_SCRIPT.search') !== false, 'o leitor não repassa a versão pro jsQR');
+});
+
+teste('o app tem o botão de instalar', function () use ($raizProjeto) {
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/index.html"), 'id="btnInstalar"') !== false, 'index.html sem o botão de instalar');
+    garantir(strpos(file_get_contents("$raizProjeto/web/app/js/app.js"), 'beforeinstallprompt') !== false, 'app.js não trata o pedido de instalação');
 });
 
 // O motivo da falta é escolhido num painel de botões, não mais numa lista suspensa.

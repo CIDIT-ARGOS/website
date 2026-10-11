@@ -105,8 +105,9 @@ $linhaDaTramitacao = function ($livro, $recuo = false) {
         .container { max-width: 100%; padding: 0; }
     }
 </style>
-<link rel="stylesheet" href="../css/argos-admin.css">
-<script src="../js/argos-admin.js" defer></script>
+<?php require_once __DIR__ . '/../../core/arquivos.php'; ?>
+<link rel="stylesheet" href="<?= urlVersionada('../css/argos-admin.css') ?>">
+<script src="<?= urlVersionada('../js/argos-admin.js') ?>" defer></script>
 </head>
 <body>
 
