@@ -547,6 +547,10 @@ a {
   text-decoration: underline;
 }
 
+.footer-github + .footer-github {
+  margin-left: 16px;
+}
+
 .footer-cidit {
   display: flex;
   gap: 14px;
