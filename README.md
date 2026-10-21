@@ -22,6 +22,8 @@ O nome vem da vigia constante do efetivo, como o gigante da mitologia grega que 
 
 ## Como funciona, em resumo
 
+Passo a passo de cada tela, com imagens, na **[Wiki do projeto](https://cosmos.simioni.dev.br/cidit/projeto-argos/wiki)**.
+
 - **Painel de Comando** — onde comandantes, encarregados e auxiliares abrem retiradas de falta, consultam o efetivo e tiram relatórios. Cada cargo vê só o que precisa (o comando de esquadrão vê seu esquadrão; o CA vê tudo).
 - **Grupos especiais** (como o próprio CIDIT) — para atividades que cruzam esquadrões, fora da chamada normal por esquadrilha.
 - **API** — para uso futuro por aplicativo, com chave de acesso própria.
