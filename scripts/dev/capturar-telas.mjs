@@ -478,6 +478,69 @@ async function telasDoIkarus(navegador) {
         await aba.ir(`/web/ikarus37/${pagina}`);
         await aba.foto(nome);
     }
+    await telasDaApi(aba);
+}
+
+// A página "API" da Wiki: gerar uma chave pela tela, usar e ver no log. A
+// chave de exemplo só existe no demo, aparece mascarada na imagem e é
+// excluída no fim. As respostas de verdade da API vão pra api-*.json, de
+// onde a Wiki tira os exemplos.
+async function telasDaApi(aba) {
+    const NOME = 'Planilha do Comando (exemplo)';
+    const rolarAte = (titulo) => aba.js(`(() => {
+        const alvo = [...document.querySelectorAll('h4')].find((h) => h.textContent.includes(${JSON.stringify(titulo)}));
+        alvo.closest('.card').scrollIntoView({ block: 'start' });
+        window.scrollBy(0, -16);
+        return true;
+    })()`);
+
+    await aba.ir('/web/ikarus37/api.php');
+    await aba.js(`(() => {
+        const form = document.querySelector('input[name=acao][value=criar]').form;
+        form.nome.value = ${JSON.stringify(NOME)};
+        form.escopo.value = 'admin';
+        form.scrollIntoView({ block: 'center' });
+        return true;
+    })()`);
+    await aba.foto('ikarus-08-gerar-chave');
+
+    await aba.navegandoCom(`document.querySelector('input[name=acao][value=criar]').form.submit(), true`);
+    const chave = await aba.js(`document.querySelector('.chave-nova').textContent.trim()`);
+    await aba.js(`(() => {
+        const mascara = 'a1b2c3d4… (a chave de verdade aparece aqui, uma única vez) …e5f6';
+        document.querySelector('.chave-nova').textContent = mascara;
+        const uso = [...document.querySelectorAll('code')].find((c) => c.textContent.includes(${JSON.stringify(chave)}));
+        if (uso) uso.textContent = 'X-API-Key: ' + mascara;
+        document.querySelector('.chave-nova').closest('.card').scrollIntoView({ block: 'center' });
+        return true;
+    })()`);
+    await aba.foto('ikarus-09-chave-gerada');
+
+    // Os exemplos da Wiki, com a chave recém-gerada.
+    const exemplos = {
+        'api-situacao': '/api/situacao.php?esquadrao=Esquadr%C3%A3o%20Prata&somente_ausentes',
+        'api-relatorios': '/api/relatorios.php?esquadrao=Esquadr%C3%A3o%20Prata',
+        'api-retiradas': '/api/retiradas.php?esquadrao=Esquadr%C3%A3o%20Prata&status=enviada',
+        'api-motivos-sem-sessao': '/api/motivos.php',
+    };
+    for (const [nome, caminho] of Object.entries(exemplos)) {
+        const resposta = await fetch(BASE + caminho, { headers: { 'X-API-Key': chave } });
+        writeFileSync(join(SAIDA, `${nome}.json`), JSON.stringify({ status: resposta.status, corpo: await resposta.json() }, null, 2));
+        console.log(`  ${nome}.json (${resposta.status})`);
+    }
+
+    await aba.ir('/web/ikarus37/api.php');
+    await rolarAte('Log de requisições');
+    await aba.foto('ikarus-10-log');
+    await rolarAte('Documentação dos endpoints');
+    await aba.foto('ikarus-11-documentacao');
+
+    // Sai a chave de exemplo.
+    await aba.js(`(() => {
+        const linha = [...document.querySelectorAll('tr')].find((tr) => tr.textContent.includes(${JSON.stringify(NOME)}));
+        const form = linha && linha.querySelector('input[name=acao][value=excluir]')?.form;
+        return form ? fetch('api.php', { method: 'POST', body: new FormData(form) }).then((r) => r.ok) : false;
+    })()`);
 }
 
 // ---------------------------------------------------------------- execução
