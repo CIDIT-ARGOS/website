@@ -7,7 +7,7 @@
 <p align="center"><strong>Controle eletrônico de faltas do Corpo de Alunos — EEAR</strong></p>
 
 <p align="center">
-  Projeto do <a href="https://github.com/CIDIT-ARGOS">CIDIT</a> · Esquadrão Prata
+  Projeto do <a href="https://cosmos.simioni.dev.br/cidit/projeto-argos">CIDIT</a> · Esquadrão Prata
 </p>
 
 ---
