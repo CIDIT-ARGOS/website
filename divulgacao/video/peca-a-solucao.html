@@ -19,8 +19,10 @@
 // no começo de um compasso.
 
 const DURACAO = 36;
+// ?escala=1.0833 acelera a peça inteira (130/120: casa os cortes com uma música de 130 BPM)
+const ESCALA = Number(new URLSearchParams(location.search).get('escala')) || 1;
 window.FPS = FPS;
-window.FRAMES = DURACAO * FPS;
+window.FRAMES = Math.round(DURACAO / ESCALA * FPS);
 
 const TELAS = '../../build/telas/';      // geradas por scripts/dev/capturar-telas.mjs
 const FOTOS = '../../.tmp/video/fotos/'; // fotos dos cadernos, já com nomes e milhões borrados (fora do git)
@@ -286,11 +288,11 @@ const CENAS = [
     { inicio: 34, fim: 36, desenhar: cenaFim },
 ];
 // cortes de cena e as trocas de tela dentro delas (todas no começo de um compasso)
-window.CUES = [4, 10, 16, 22, 24, 28, 32, 34];
+window.CUES = [4, 10, 16, 22, 24, 28, 32, 34].map(c => c / ESCALA);
 
 window.draw = function (quadro) {
     const ctx = document.querySelector('canvas').getContext('2d');
-    const t = quadro / FPS;
+    const t = quadro / FPS * ESCALA;
     const cena = CENAS.find(c => t < c.fim) || CENAS[CENAS.length - 1];
     ctx.save();
     cena.desenhar(ctx, t - cena.inicio, t);
@@ -352,18 +354,30 @@ window.SCORE = function (ac) {
             if (tc >= 10 && b % 2) somRuido(ac, seco, { t: tb, dur: 0.14, vol: 0.18, tipo: 'bandpass', freq: 1600, q: 1.2, semente: 200 + c });
         }
     }
+    efeitos(ac, seco, eco, s => t0 + s);
+};
+
+// Efeitos (sem música): rabiscos, a varrida, toques e avisos. Entram na trilha sintetizada
+// (SCORE) e, sozinhos, na versão com a música de verdade (EFEITOS, ver ferramentas/montar.mjs).
+// em(s) converte o tempo da peça em tempo do áudio.
+function efeitos(ac, seco, eco, em) {
     // caderno: rabiscos de caneta quando cada foto cai
-    [0.1, 0.7, 1.3, 1.9].forEach((s, i) => somRuido(ac, seco, { t: t0 + s, dur: 0.35, vol: 0.12, tipo: 'bandpass', freq: 2500 + i * 300, q: 2, ataque: 0.03, semente: 300 + i }));
+    [0.1, 0.7, 1.3, 1.9].forEach((s, i) => somRuido(ac, seco, { t: em(s), dur: 0.35, vol: 0.12, tipo: 'bandpass', freq: 2500 + i * 300, q: 2, ataque: 0.03, semente: 300 + i }));
     // a linha vermelha varrendo
-    const varre = somRuido(ac, seco, { t: t0 + 3.4, dur: 0.75, vol: 0.5, tipo: 'bandpass', freq: 500, q: 2, ataque: 0.55, semente: 400 });
-    varre.filtro.frequency.setValueAtTime(500, t0 + 3.4);
-    varre.filtro.frequency.exponentialRampToValueAtTime(7000, t0 + 4.0);
+    const varre = somRuido(ac, seco, { t: em(3.4), dur: 0.75, vol: 0.5, tipo: 'bandpass', freq: 500, q: 2, ataque: 0.55, semente: 400 });
+    varre.filtro.frequency.setValueAtTime(500, em(3.4));
+    varre.filtro.frequency.exponentialRampToValueAtTime(7000, em(4.0));
     // toques na tela
-    [4.7, 8.4, 11.2].forEach((s, i) => somNota(ac, seco, { t: t0 + s, freq: 1318.5, dur: 0.12, vol: 0.06 + i * 0 }));
+    [4.7, 8.4, 11.2].forEach(s => somNota(ac, seco, { t: em(s), freq: 1318.5, dur: 0.12, vol: 0.06 }));
     // leu o QR / enviou
-    [[6.4, 1567.98], [13.0, 1567.98]].forEach(([s, f]) => { somNota(ac, eco, { t: t0 + s, freq: f, dur: 0.4, vol: 0.07 }); somNota(ac, eco, { t: t0 + s + 0.09, freq: f * 1.5, dur: 0.5, vol: 0.06 }); });
+    [[6.4, 1567.98], [13.0, 1567.98]].forEach(([s, f]) => { somNota(ac, eco, { t: em(s), freq: f, dur: 0.4, vol: 0.07 }); somNota(ac, eco, { t: em(s + 0.09), freq: f * 1.5, dur: 0.5, vol: 0.06 }); });
     // fim: o olho pisca
-    somNota(ac, eco, { t: t0 + 34.9, freq: 880, dur: 1.2, vol: 0.06 });
+    somNota(ac, eco, { t: em(34.9), freq: 880, dur: 1.2, vol: 0.06 });
+}
+
+window.EFEITOS = function (ac) {
+    const { seco, eco } = mesaDeSom(ac);
+    efeitos(ac, seco, eco, s => ac.currentTime + s / ESCALA);
 };
 
 iniciarPrevia();

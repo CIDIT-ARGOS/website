@@ -6,7 +6,9 @@
 //   - o Chrome abre com --allow-file-access-from-files, pra página poder desenhar as capturas
 //     de tela (build/telas) e as fotos no canvas sem "contaminar" o canvas;
 //   - usa o Edge quando o Chrome não está instalado;
-//   - espera window.PRONTO (Promise das imagens e fontes) antes do primeiro quadro.
+//   - espera window.PRONTO (Promise das imagens e fontes) antes do primeiro quadro;
+//   - --query 'a=1&b=2' repassa parâmetros pra página (ex.: escala=1.0833 acelera a peça);
+//   - --som NOME grava o som de window[NOME] em vez de window.SCORE (ex.: --som EFEITOS).
 //
 //
 // The page must expose:  window.draw(frame)  window.FRAMES  window.FPS
@@ -54,12 +56,14 @@ for (const channel of ['chrome', 'msedge', undefined]) {
 const page = await browser.newPage();
 const errors = [];
 page.on('pageerror', e => errors.push(e.message));
-await page.goto('file://' + resolve(pagePath) + '?render');
+const query = opt('--query');
+const SOM = opt('--som') || 'SCORE';
+await page.goto('file://' + resolve(pagePath) + '?render' + (query && query !== true ? '&' + query : ''));
 await page.evaluate(() => window.PRONTO || null);
-const info = await page.evaluate(() => {
+const info = await page.evaluate(SOM => {
   const c = document.querySelector('canvas');
-  return { FRAMES: window.FRAMES, FPS: window.FPS, CUES: window.CUES, w: c?.width, h: c?.height, hasDraw: typeof window.draw === 'function', hasScore: typeof window.SCORE === 'function' };
-});
+  return { FRAMES: window.FRAMES, FPS: window.FPS, CUES: window.CUES, w: c?.width, h: c?.height, hasDraw: typeof window.draw === 'function', hasScore: typeof window[SOM] === 'function' };
+}, SOM);
 if (!info.hasDraw || !info.FRAMES || !info.FPS) { console.error('page must define window.draw(frame), window.FRAMES and window.FPS', errors); process.exit(1); }
 const stillsOrSheet = opt('--stills') || opt('--sheet');
 if (!stillsOrSheet && (info.w % 2 || info.h % 2)) { console.error(`canvas is ${info.w}x${info.h}: H.264 needs even width and height; change the <canvas> size`); await browser.close(); process.exit(1); }
@@ -115,9 +119,9 @@ if (opt('--stills')) {
   if (Array.isArray(info.CUES)) { writeFileSync(sidecar('.cues.json'), JSON.stringify(info.CUES)); console.log(`cues -> ${sidecar('.cues.json')}`); }
   if (info.hasScore) {
     // render the page's Web Audio score offline (deterministic, faster than real time) -> 16-bit WAV
-    const wav64 = await page.evaluate(async secs => {
+    const wav64 = await page.evaluate(async ([secs, SOM]) => {
       const SR = 48000, ac = new OfflineAudioContext(2, Math.ceil(SR * secs), SR);
-      window.SCORE(ac);
+      window[SOM](ac);
       const buf = await ac.startRendering(), n = buf.length, L = buf.getChannelData(0), R = buf.getChannelData(1);
       let peak = 1e-9; for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(L[i]), Math.abs(R[i]));
       const g = .89 / peak, dv = new DataView(new ArrayBuffer(44 + n * 4)), w = (o, s) => [...s].forEach((c, i) => dv.setUint8(o + i, c.charCodeAt(0)));
@@ -126,13 +130,13 @@ if (opt('--stills')) {
       for (let i = 0; i < n; i++) { dv.setInt16(44 + i * 4, Math.max(-1, Math.min(1, L[i] * g)) * 32767, true); dv.setInt16(46 + i * 4, Math.max(-1, Math.min(1, R[i] * g)) * 32767, true); }
       const bytes = new Uint8Array(dv.buffer); let bin = ''; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
       return btoa(bin);
-    }, info.FRAMES / info.FPS);
+    }, [info.FRAMES / info.FPS, SOM]);
     const wav = sidecar('.wav'), silent = sidecar('.silent.mp4');
     writeFileSync(wav, Buffer.from(wav64, 'base64'));
     renameSync(out, silent);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', silent, '-i', wav, '-c:v', 'copy', '-c:a', 'aac', '-b:a', '192k', '-shortest', out]);
     rmSync(silent);
-    console.log(`soundtrack (window.SCORE) -> ${wav}, muxed into ${out}`);
+    console.log(`soundtrack (window.${SOM}) -> ${wav}, muxed into ${out}`);
   }
 }
 if (errors.length) console.warn('page errors:', errors);

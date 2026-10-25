@@ -13,9 +13,9 @@
 <script src="comum.js"></script>
 <script>
 // Peça B (issue 60, parte 3 do roteiro): tela escura → o olho do Argos abre e pisca em
-// vermelho → o raio cai e estoura → ARGOS → logo do CIDIT. 8 s, 120 BPM (um tempo = 0,5 s).
+// vermelho → o raio cai e estoura → ARGOS → logo do CIDIT. 9,5 s, 120 BPM (um tempo = 0,5 s).
 
-const DURACAO = 8;
+const DURACAO = 9.5;
 window.FPS = FPS;
 window.FRAMES = DURACAO * FPS;
 
@@ -179,8 +179,24 @@ window.SCORE = function (ac) {
     zumbido.connect(filtro); filtro.connect(g); g.connect(seco);
     zumbido.start(t0); zumbido.stop(t0 + 2.8);
 
-    // o olho abre e pisca
     somNota(ac, eco, { t: t0 + 1.2, freq: 880, dur: 1.2, vol: 0.06, ataque: 0.3 });
+    efeitosDaVinheta(ac, seco, t0);
+
+    // ARGOS: um acorde que acende
+    const a = t0 + 3.5;
+    [220, 329.63, 440].forEach((f, i) => somNota(ac, eco, { t: a + i * 0.04, freq: f, dur: 1.4, tipo: 'triangle', vol: 0.07, ataque: 0.15, filtro: 2400 }));
+
+    // logo do CIDIT: acorde aberto e um sino
+    const l = t0 + LOGO;
+    [146.83, 220, 293.66, 369.99, 440].forEach(f => somNota(ac, seco, { t: l, freq: f, dur: 4.5, tipo: 'triangle', vol: 0.08, ataque: 0.02, filtro: 2200 }));
+    somNota(ac, eco, { t: l, freq: 1174.66, dur: 2.4, vol: 0.09 });
+    somNota(ac, eco, { t: l + 0.5, freq: 1760, dur: 2.0, vol: 0.05 });
+};
+
+// Efeitos (sem música): as piscadas, a carga e o BOOM. Entram na trilha sintetizada (SCORE)
+// e, sozinhos, na versão com a música de verdade (EFEITOS, ver ferramentas/montar.mjs).
+function efeitosDaVinheta(ac, seco, t0) {
+    // o olho abre e pisca
     somRuido(ac, seco, { t: t0 + 2.1, dur: 0.08, vol: 0.25, tipo: 'highpass', freq: 3000, semente: 2 });
     somRuido(ac, seco, { t: t0 + 2.55, dur: 0.08, vol: 0.25, tipo: 'highpass', freq: 3000, semente: 3 });
     // carga subindo (ruído com filtro varrendo)
@@ -194,16 +210,10 @@ window.SCORE = function (ac) {
     somBumbo(ac, seco, b + 7 / FPS, 1.0, 34);
     somNota(ac, seco, { t: b + 7 / FPS, freq: 41, dur: 1.8, vol: 0.6, ataque: 0.005 });
     somRuido(ac, seco, { t: b + 7 / FPS, dur: 2.6, vol: 0.75, tipo: 'lowpass', freq: 220, ataque: 0.02, semente: 6 });
+}
 
-    // ARGOS: um acorde que acende
-    const a = t0 + 3.5;
-    [220, 329.63, 440].forEach((f, i) => somNota(ac, eco, { t: a + i * 0.04, freq: f, dur: 1.4, tipo: 'triangle', vol: 0.07, ataque: 0.15, filtro: 2400 }));
-
-    // logo do CIDIT: acorde aberto e um sino
-    const l = t0 + LOGO;
-    [146.83, 220, 293.66, 369.99, 440].forEach(f => somNota(ac, seco, { t: l, freq: f, dur: 3.0, tipo: 'triangle', vol: 0.08, ataque: 0.02, filtro: 2200 }));
-    somNota(ac, eco, { t: l, freq: 1174.66, dur: 2.4, vol: 0.09 });
-    somNota(ac, eco, { t: l + 0.5, freq: 1760, dur: 2.0, vol: 0.05 });
+window.EFEITOS = function (ac) {
+    efeitosDaVinheta(ac, mesaDeSom(ac).seco, ac.currentTime);
 };
 
 iniciarPrevia();
