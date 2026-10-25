@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Argos — vídeo da solução</title>
+<style>
+  html, body { margin: 0; background: #000; }
+  canvas { display: block; width: 100vw; height: auto; max-height: 100vh; object-fit: contain; cursor: pointer; }
+</style>
+</head>
+<body>
+<canvas width="1920" height="1080"></canvas>
+<script src="comum.js"></script>
+<script>
+// Peça A (issue 60, parte 2 do roteiro): do caderno ao sistema. As telas reais do Argos
+// (ambiente de demonstração, dados fictícios) com os processos acontecendo, os gráficos do
+// Painel e as palavras tecnologia, eficiência, controle de informações, integração,
+// conectar os sistemas e inovação. 36 s, 120 BPM: cada compasso tem 2 s e todo corte cai
+// no começo de um compasso.
+
+const DURACAO = 36;
+window.FPS = FPS;
+window.FRAMES = DURACAO * FPS;
+
+const TELAS = '../../build/telas/';      // geradas por scripts/dev/capturar-telas.mjs
+const FOTOS = '../../.tmp/video/fotos/'; // fotos dos cadernos, já com nomes e milhões borrados (fora do git)
+const T = nome => imagem(TELAS + nome + '.png');
+const IMG = {
+    entrada: T('app-01-entrada'),
+    chamada: T('app-06-chamada'),
+    motivo: T('app-07-motivo-da-falta'),
+    retiradas: T('app-04-retiradas'),
+    livroEsquadrilha: T('app-10-livro-esquadrilha'),
+    livroEsquadrao: T('app-11-livro-esquadrao'),
+    livroCa: T('app-12-livro-ca'),
+    painelInicio: T('painel-02-inicio'),
+    painelGraficos: T('painel-07-graficos'),
+    painelLivro: T('painel-09-livro-do-dia'),
+    ikarus: T('ikarus-02-inicio'),
+    cadernos: [2, 7, 1, 4].map(n => imagem(FOTOS + `caderno-${n}.jpg`)),
+};
+
+// Ponto da tela do celular (em fração da captura) → ponto no vídeo.
+function pontoNoCelular(img, cx, cy, altura, fx, fy) {
+    const largura = altura * img.naturalWidth / img.naturalHeight;
+    return [cx - largura / 2 + fx * largura, cy - altura / 2 + fy * altura];
+}
+
+// ---------- cenas (t = tempo local, 0 no começo da cena) ----------
+
+// 1. Antes: os cadernos caem na mesa.
+function cenaCadernos(ctx, t) {
+    ctx.fillStyle = '#16120d';
+    ctx.fillRect(0, 0, LARGURA, ALTURA);
+    const lugares = [[400, 480, -0.07], [790, 500, 0.05], [1160, 470, -0.04], [1530, 500, 0.08]];
+    IMG.cadernos.forEach((img, i) => {
+        if (!imagemOk(img)) return;
+        const p = trecho(t, 0.1 + i * 0.6, 0.6 + i * 0.6);
+        if (p <= 0) return;
+        const [x, y, giro] = lugares[i];
+        const altura = 780;
+        const largura = altura * img.naturalWidth / img.naturalHeight;
+        ctx.save();
+        ctx.translate(x, y - 260 * (1 - saida(p)));
+        ctx.rotate(giro * (1 + 2 * (1 - saida(p))));
+        ctx.scale(1 + 0.25 * (1 - saida(p)), 1 + 0.25 * (1 - saida(p)));
+        ctx.globalAlpha = Math.min(1, p * 3);
+        ctx.shadowColor = 'rgba(0,0,0,0.7)';
+        ctx.shadowBlur = 40;
+        ctx.shadowOffsetY = 20;
+        ctx.drawImage(img, -largura / 2, -altura / 2, largura, altura);
+        ctx.restore();
+    });
+    // vinheta escura embaixo pro texto
+    const g = ctx.createLinearGradient(0, ALTURA - 330, 0, ALTURA);
+    g.addColorStop(0, 'rgba(0,0,0,0)');
+    g.addColorStop(1, 'rgba(0,0,0,0.85)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, ALTURA - 330, LARGURA, 330);
+    palavraChave(ctx, 'Anotado à mão', 120, 1010, 96, t, 0.3, 1.5);
+    palavraChave(ctx, 'Passado a limpo', 120, 1010, 96, t, 1.5, 2.5);
+    palavraChave(ctx, 'Repassado por mensagem', 120, 1010, 96, t, 2.5, 4.2);
+}
+
+// 2. Tecnologia: entra com o QR Code e a chamada já vem pronta.
+function cenaTecnologia(ctx, t, tg) {
+    desenharFundo(ctx, tg);
+    const [cx, cy, h] = [1330, 545, 960];
+    const troca = trecho(t, 2.9, 3.2);
+    desenharCelular(ctx, IMG.entrada, cx, cy, h, 1 - troca);
+    if (troca > 0) desenharCelular(ctx, IMG.chamada, cx, cy, h, troca);
+    // toque em "Escanear QR Code" e o leitor abrindo
+    desenharToque(ctx, ...pontoNoCelular(IMG.entrada, cx, cy, h, 0.5, 0.466), t - 0.7);
+    const leitor = trecho(t, 1.0, 1.2) * (1 - troca);
+    if (leitor > 0) {
+        const [x0, y0] = pontoNoCelular(IMG.entrada, cx, cy, h, 0.04, 0.03);
+        const [x1, y1] = pontoNoCelular(IMG.entrada, cx, cy, h, 0.96, 0.97);
+        ctx.save();
+        ctx.globalAlpha = leitor;
+        retanguloRedondo(ctx, x0, y0, x1 - x0, y1 - y0, 40);
+        ctx.fillStyle = 'rgba(3,11,24,0.92)';
+        ctx.fill();
+        const lado = 300;
+        const [qx, qy] = [cx - lado / 2, cy - lado / 2 - 40];
+        ctx.strokeStyle = COR.branco;
+        ctx.lineWidth = 6;
+        for (const [ax, ay, dx, dy] of [[qx, qy, 1, 1], [qx + lado, qy, -1, 1], [qx, qy + lado, 1, -1], [qx + lado, qy + lado, -1, -1]]) {
+            ctx.beginPath();
+            ctx.moveTo(ax + dx * 60, ay);
+            ctx.lineTo(ax, ay);
+            ctx.lineTo(ax, ay + dy * 60);
+            ctx.stroke();
+        }
+        const lido = t > 2.4;
+        if (!lido) {
+            const y = qy + lado * (0.5 + 0.5 * Math.sin((t - 1.2) * 5));
+            ctx.fillStyle = COR.vermelho;
+            ctx.shadowColor = COR.vermelho;
+            ctx.shadowBlur = 20;
+            ctx.fillRect(qx + 10, y - 2, lado - 20, 4);
+        } else {
+            ctx.strokeStyle = '#2bd17e';
+            ctx.lineWidth = 14;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(cx - 60, cy - 40);
+            ctx.lineTo(cx - 15, cy + 5);
+            ctx.lineTo(cx + 70, cy - 90);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+    // marca uma falta
+    desenharToque(ctx, ...pontoNoCelular(IMG.chamada, cx, cy, h, 0.82, 0.476), t - 4.4);
+    palavraChave(ctx, 'Tecnologia', 150, 520, 150, t, 0.2, 6.2);
+    legenda(ctx, 'Entra com o QR Code da identidade.', 155, 610, 42, t, 0.6, 3.0, 'left', COR.branco);
+    legenda(ctx, 'A chamada da esquadrilha já vem pronta.', 155, 610, 42, t, 3.2, 6.2, 'left', COR.branco);
+}
+
+// 3. Eficiência: um toque escolhe o motivo, enviou e tem protocolo.
+function cenaEficiencia(ctx, t, tg) {
+    desenharFundo(ctx, tg);
+    const [cx, cy, h] = [600, 545, 960];
+    const troca = trecho(t, 2.9, 3.2);
+    desenharCelular(ctx, IMG.motivo, cx, cy, h, 1 - troca);
+    if (troca > 0) desenharCelular(ctx, IMG.retiradas, cx, cy, h, troca);
+    desenharToque(ctx, ...pontoNoCelular(IMG.motivo, cx, cy, h, 0.5, 0.32), t - 1.2);
+    // destaca o protocolo da chamada enviada
+    const destaque = trecho(t, 3.6, 4.0);
+    if (destaque > 0) {
+        const [x0, y0] = pontoNoCelular(IMG.retiradas, cx, cy, h, 0.04, 0.445);
+        const [x1, y1] = pontoNoCelular(IMG.retiradas, cx, cy, h, 0.96, 0.545);
+        ctx.save();
+        ctx.globalAlpha = destaque * (0.75 + 0.25 * Math.sin(t * 6));
+        ctx.strokeStyle = COR.vermelho;
+        ctx.shadowColor = COR.vermelho;
+        ctx.shadowBlur = 24;
+        ctx.lineWidth = 5;
+        retanguloRedondo(ctx, x0, y0, x1 - x0, y1 - y0, 18);
+        ctx.stroke();
+        ctx.restore();
+    }
+    palavraChave(ctx, 'Eficiência', 1120, 520, 150, t, 0.2, 6.2);
+    legenda(ctx, 'Um toque escolhe o motivo da falta.', 1125, 610, 42, t, 0.6, 3.0, 'left', COR.branco);
+    legenda(ctx, 'Enviou: protocolo, data, hora e quem fez.', 1125, 610, 42, t, 3.2, 6.2, 'left', COR.branco);
+}
+
+// 4. Controle de informações: o livro sobe de nível, cada um valida o de baixo.
+function cenaControle(ctx, t, tg) {
+    desenharFundo(ctx, tg);
+    const degraus = [[430, 650, IMG.livroEsquadrilha, 'Esquadrilha'], [960, 610, IMG.livroEsquadrao, 'Esquadrão'], [1490, 570, IMG.livroCa, 'Corpo de Alunos']];
+    const h = 700;
+    degraus.forEach(([x, y, img, nome], i) => {
+        const p = saida(trecho(t, 0.3 + i * 1.3, 0.9 + i * 1.3));
+        desenharCelular(ctx, img, x, y + 80 * (1 - p), h, p);
+        // seta "valida" entre um degrau e o próximo
+        if (i > 0) {
+            const s = trecho(t, 0.9 + i * 1.3, 1.3 + i * 1.3);
+            if (s > 0) {
+                const [xa, ya] = [degraus[i - 1][0] + 160, degraus[i - 1][1] - 40];
+                const [xb, yb] = [x - 160, y - 40];
+                const xm = misturar(xa, xb, saida(s));
+                const ym = misturar(ya, yb, saida(s));
+                ctx.save();
+                ctx.strokeStyle = COR.vermelho;
+                ctx.fillStyle = COR.vermelho;
+                ctx.shadowColor = COR.vermelho;
+                ctx.shadowBlur = 18;
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(xa, ya);
+                ctx.lineTo(xm, ym);
+                ctx.stroke();
+                const ang = Math.atan2(yb - ya, xb - xa);
+                ctx.translate(xm, ym);
+                ctx.rotate(ang);
+                ctx.beginPath();
+                ctx.moveTo(14, 0);
+                ctx.lineTo(-18, -18);
+                ctx.lineTo(-18, 18);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+        legenda(ctx, nome, x, y + h / 2 + 50 + 80 * (1 - p), 36, t, 0.5 + i * 1.3, 6.2, 'center', COR.branco);
+    });
+    palavraChave(ctx, 'Controle de informações', LARGURA / 2, 130, 100, t, 0.1, 6.2, 'center');
+}
+
+// 5. Integração: o Painel de Comando vê tudo, na hora — e os gráficos.
+function cenaIntegracao(ctx, t, tg) {
+    desenharFundo(ctx, tg);
+    const graficos = trecho(t, 1.85, 2.15);
+    const zoom = entradaSaida(trecho(t, 2.6, 5.6));
+    desenharMonitor(ctx, IMG.painelInicio, 1150, 600, 1240, 1 - graficos);
+    if (graficos > 0) {
+        // vai da página inteira para os três gráficos
+        const recorte = [misturar(0, 0.035, zoom), misturar(0, 0.46, zoom), misturar(1, 0.93, zoom), misturar(1, 0.54, zoom)];
+        const r = recorte[2] / recorte[3] * (IMG.painelGraficos.naturalWidth / IMG.painelGraficos.naturalHeight || 1.6);
+        const largura = Math.min(1240, 775 * r);
+        desenharMonitor(ctx, IMG.painelGraficos, 1150, 600, largura, graficos, recorte);
+    }
+    palavraChave(ctx, 'Integração', 120, 150, 130, t, 0.2, 6.2);
+    legenda(ctx, 'O comando vê quem está em pane, na hora.', 125, 1058, 40, t, 0.6, 2.2, 'left', COR.branco);
+    legenda(ctx, 'Gráficos e relatórios prontos, sem planilha.', 125, 1058, 40, t, 2.3, 6.2, 'left', COR.branco);
+}
+
+// 6. Conectar os sistemas / inovação: tudo ligado ao olho do Argos.
+const NOS = [
+    ['app', 'retiradas', -0.0], ['monitor', 'painelInicio', 0.95], ['app', 'livroCa', 1.9],
+    ['monitor', 'painelGraficos', 3.14], ['app', 'chamada', 4.2], ['monitor', 'ikarus', 5.25],
+];
+function cenaConectar(ctx, t, tg) {
+    desenharFundo(ctx, tg);
+    const centro = [LARGURA / 2, 480];
+    const junta = entradaSaida(trecho(t, 5.2, 6.0));   // no fim, tudo vai pro olho
+    NOS.forEach(([tipo, nome, ang], i) => {
+        const p = saida(trecho(t, 0.2 + i * 0.25, 0.8 + i * 0.25));
+        const raio = misturar(1, 0, junta);
+        const x = centro[0] + Math.cos(ang - Math.PI / 2) * 650 * raio;
+        const y = centro[1] + Math.sin(ang - Math.PI / 2) * 290 * raio;
+        // linha até o olho, com um pulso andando
+        ctx.save();
+        ctx.globalAlpha = p * (1 - junta);
+        ctx.strokeStyle = 'rgba(47,111,237,0.6)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(centro[0], centro[1]);
+        ctx.stroke();
+        const k = ((t * 0.9 + i * 0.37) % 1);
+        ctx.fillStyle = COR.vermelho;
+        ctx.shadowColor = COR.vermelho;
+        ctx.shadowBlur = 16;
+        ctx.beginPath();
+        ctx.arc(misturar(x, centro[0], k), misturar(y, centro[1], k), 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        const escala = 1 - 0.9 * junta;
+        if (tipo === 'app') desenharCelular(ctx, IMG[nome], x, y, 300 * escala, p * (1 - junta));
+        else desenharMonitor(ctx, IMG[nome], x, y, 380 * escala, p * (1 - junta));
+    });
+    const brilho = 0.4 + 0.6 * junta;
+    desenharOlho(ctx, centro[0], centro[1], misturar(200, 340, junta), 1, brilho);
+    palavraChave(ctx, 'Conectar os sistemas', LARGURA / 2, 1010, 110, t, 0.3, 4.0, 'center');
+    palavraChave(ctx, 'Inovação', LARGURA / 2, 1010, 130, t, 4.0, 6.0, 'center');
+}
+
+// 7. Fim: o olho pisca em vermelho e apaga (quem apresenta segue daqui).
+function cenaFim(ctx, t, tg) {
+    desenharFundo(ctx, tg, 1 - trecho(t, 0, 1.2));
+    const piscada = Math.abs(t - 0.9) < 0.1 ? Math.pow(Math.abs(t - 0.9) / 0.1, 2) : 1;
+    ctx.globalAlpha = 1 - trecho(t, 1.4, 2.0);
+    desenharOlho(ctx, LARGURA / 2, 470, 340, piscada, 1);
+    ctx.globalAlpha = 1;
+}
+
+const CENAS = [
+    { inicio: 0, fim: 4, desenhar: cenaCadernos },
+    { inicio: 4, fim: 10, desenhar: cenaTecnologia },
+    { inicio: 10, fim: 16, desenhar: cenaEficiencia },
+    { inicio: 16, fim: 22, desenhar: cenaControle },
+    { inicio: 22, fim: 28, desenhar: cenaIntegracao },
+    { inicio: 28, fim: 34, desenhar: cenaConectar },
+    { inicio: 34, fim: 36, desenhar: cenaFim },
+];
+// cortes de cena e as trocas de tela dentro delas (todas no começo de um compasso)
+window.CUES = [4, 10, 16, 22, 24, 28, 32, 34];
+
+window.draw = function (quadro) {
+    const ctx = document.querySelector('canvas').getContext('2d');
+    const t = quadro / FPS;
+    const cena = CENAS.find(c => t < c.fim) || CENAS[CENAS.length - 1];
+    ctx.save();
+    cena.desenhar(ctx, t - cena.inicio, t);
+    ctx.restore();
+    // passagem do caderno pro sistema: uma linha vermelha varre a tela
+    if (t >= 3.5 && t < 4.4) {
+        const x = misturar(-40, LARGURA + 40, entradaSaida(trecho(t, 3.5, 4.0)));
+        if (t < 4) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(0, 0, x, ALTURA);
+            ctx.clip();
+            CENAS[1].desenhar(ctx, 0, 4);
+            ctx.restore();
+        }
+        ctx.save();
+        ctx.globalAlpha = 1 - trecho(t, 4.0, 4.4);
+        ctx.fillStyle = COR.vermelho;
+        ctx.shadowColor = COR.vermelho;
+        ctx.shadowBlur = 40;
+        ctx.fillRect(x - 4, 0, 8, ALTURA);
+        ctx.restore();
+    }
+    // entra do preto e, no fim, volta pro preto
+    const preto = Math.max(1 - trecho(t, 0, 0.3), trecho(t, DURACAO - 0.3, DURACAO));
+    if (preto > 0) { ctx.fillStyle = `rgba(0,0,0,${preto})`; ctx.fillRect(0, 0, LARGURA, ALTURA); }
+};
+
+// ---------- trilha: 120 BPM, lá menor, camadas entrando uma ou duas por compasso ----------
+window.SCORE = function (ac) {
+    const { seco, eco } = mesaDeSom(ac);
+    const t0 = ac.currentTime;
+    const BPM = 120, TEMPO = 60 / BPM, COMPASSO = TEMPO * 4;
+    const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+    // um acorde por compasso: Lá m, Fá, Dó, Sol
+    const ACORDES = [[57, 60, 64], [53, 57, 60], [48, 55, 60], [55, 59, 62]];
+    const FIM_DO_RITMO = 34;
+    for (let c = 0; c * COMPASSO < DURACAO; c++) {
+        const tc = c * COMPASSO;
+        const acorde = ACORDES[c % 4];
+        const fim = tc >= FIM_DO_RITMO;
+        // colchão: o tempo todo (no começo, mais fechado)
+        acorde.forEach(m => somNota(ac, seco, { t: t0 + tc, freq: hz(m), dur: COMPASSO * (fim ? 1.4 : 1.35), tipo: 'triangle', vol: 0.05, ataque: 0.02, filtro: 1800 }));
+        if (fim) continue;
+        for (let b = 0; b < 8; b++) {
+            const tb = t0 + tc + b * TEMPO / 2;
+            // chimbal: desde o começo
+            somRuido(ac, seco, { t: tb, dur: 0.05, vol: b % 2 ? 0.05 : 0.08, tipo: 'highpass', freq: 7000, semente: 100 + b });
+            // baixo pulsando em colcheias: desde o começo, mais fechado nos cadernos (o 1º corte não assusta)
+            somNota(ac, seco, { t: tb, freq: hz(acorde[0] - 24), dur: 0.22, tipo: 'sawtooth', vol: tc < 4 ? 0.09 : 0.11, filtro: tc < 4 ? 350 : 500 });
+            // arpejo: a partir de 16 s
+            if (tc >= 16) somNota(ac, eco, { t: tb, freq: hz(acorde[b % 3] + 12 + (b >= 4 ? 12 : 0)), dur: 0.25, vol: 0.035 });
+        }
+        for (let b = 0; b < 4; b++) {
+            const tb = t0 + tc + b * TEMPO;
+            // bumbo: a partir de 6 s (um compasso depois do baixo)
+            if (tc >= 6) somBumbo(ac, seco, tb, 0.55);
+            // palma no 2 e no 4: a partir de 10 s
+            if (tc >= 10 && b % 2) somRuido(ac, seco, { t: tb, dur: 0.14, vol: 0.18, tipo: 'bandpass', freq: 1600, q: 1.2, semente: 200 + c });
+        }
+    }
+    // caderno: rabiscos de caneta quando cada foto cai
+    [0.1, 0.7, 1.3, 1.9].forEach((s, i) => somRuido(ac, seco, { t: t0 + s, dur: 0.35, vol: 0.12, tipo: 'bandpass', freq: 2500 + i * 300, q: 2, ataque: 0.03, semente: 300 + i }));
+    // a linha vermelha varrendo
+    const varre = somRuido(ac, seco, { t: t0 + 3.4, dur: 0.75, vol: 0.5, tipo: 'bandpass', freq: 500, q: 2, ataque: 0.55, semente: 400 });
+    varre.filtro.frequency.setValueAtTime(500, t0 + 3.4);
+    varre.filtro.frequency.exponentialRampToValueAtTime(7000, t0 + 4.0);
+    // toques na tela
+    [4.7, 8.4, 11.2].forEach((s, i) => somNota(ac, seco, { t: t0 + s, freq: 1318.5, dur: 0.12, vol: 0.06 + i * 0 }));
+    // leu o QR / enviou
+    [[6.4, 1567.98], [13.0, 1567.98]].forEach(([s, f]) => { somNota(ac, eco, { t: t0 + s, freq: f, dur: 0.4, vol: 0.07 }); somNota(ac, eco, { t: t0 + s + 0.09, freq: f * 1.5, dur: 0.5, vol: 0.06 }); });
+    // fim: o olho pisca
+    somNota(ac, eco, { t: t0 + 34.9, freq: 880, dur: 1.2, vol: 0.06 });
+};
+
+iniciarPrevia();
+</script>
+</body>
+</html>
