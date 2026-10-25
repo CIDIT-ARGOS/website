@@ -9,7 +9,7 @@ Cada peça é uma página HTML com um `<canvas>` onde todo quadro é calculado e
 | **A — vídeo da solução** | `peca-a-solucao.html` | 36 s (33,2 s no vídeo completo) | Parte 2: como resolver |
 | **B — vinheta BOOM** | `peca-b-boom.html` | 9,5 s | Parte 3: o olho, o raio e o logo do CIDIT |
 
-**O vídeo da apresentação é um arquivo só:** a peça A e, emendada no fim dela, a vinheta B, com a música *Free Rock Intro music* (Nocturinii, sem direitos autorais), em `saida/argos-video-completo.mp4` (42,7 s).
+**O vídeo da apresentação é um arquivo só:** a peça A e, emendada no fim dela, a vinheta B, com a música *Free Rock Intro music* (Nocturinii, sem direitos autorais), em `saida/argos-video-completo.mp4` (40,9 s). Nele a vinheta **continua** a peça A: o olho do fim da A sobe e cresce até o lugar em que está na vinheta, e a vinheta entra já com esse olho aceso (pulando a própria abertura), sem apagar nem cortar.
 
 ## Renderizar
 
@@ -35,6 +35,7 @@ node ferramentas/sync-check.mjs saida/peca-a-solucao.mp4 --cues-file saida/peca-
 A música tem 130 BPM. A peça A foi feita a 120 BPM e, no vídeo completo, roda 130/120 mais rápida, então todo corte dela cai numa batida. Medidas da música, anotadas no script:
 
 - **A introdução baixinha** toca sob os cadernos. A primeira pancada forte (2,54 s da música) entra no corte do caderno para o sistema: o problema em silêncio, a solução com o rock.
+- **Na emenda**, a vinheta entra no ponto em que o BOOM fica 3 batidas depois.
 - **No respiro da vinheta**, a música para numa batida.
 - **Uma batida depois, no BOOM**, entra a última pancada da música (54,23 s), e o acorde final soa sobre o ARGOS e o logo do CIDIT.
 - **Os efeitos das páginas** (rabiscos, toques, piscadas, trovão) entram por cima. A trilha sintetizada fica só nas peças avulsas.

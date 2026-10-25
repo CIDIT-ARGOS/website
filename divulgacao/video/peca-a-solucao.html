@@ -20,7 +20,9 @@
 
 const DURACAO = 36;
 // ?escala=1.0833 acelera a peça inteira (130/120: casa os cortes com uma música de 130 BPM)
-const ESCALA = Number(new URLSearchParams(location.search).get('escala')) || 1;
+const ESCALA = Number(PARAMETROS.get('escala')) || 1;
+// ?continua: a peça termina no olho da vinheta, sem apagar (a vinheta continua dali)
+const CONTINUA = PARAMETROS.has('continua');
 window.FPS = FPS;
 window.FRAMES = Math.round(DURACAO / ESCALA * FPS);
 
@@ -271,10 +273,17 @@ function cenaConectar(ctx, t, tg) {
 
 // 7. Fim: o olho pisca em vermelho e apaga (quem apresenta segue daqui).
 function cenaFim(ctx, t, tg) {
+    if (CONTINUA) {
+        // o olho vai pro lugar e pro tamanho em que a vinheta começa, e fica aceso
+        desenharFundo(ctx, tg);
+        const p = entradaSaida(trecho(t, 0, 1.6));
+        desenharOlho(ctx, OLHO_DA_VINHETA.x, misturar(480, OLHO_DA_VINHETA.y, p), misturar(340, OLHO_DA_VINHETA.tamanho, p), 1, 1);
+        return;
+    }
     desenharFundo(ctx, tg, 1 - trecho(t, 0, 1.2));
     const piscada = Math.abs(t - 0.9) < 0.1 ? Math.pow(Math.abs(t - 0.9) / 0.1, 2) : 1;
     ctx.globalAlpha = 1 - trecho(t, 1.4, 2.0);
-    desenharOlho(ctx, LARGURA / 2, 470, 340, piscada, 1);
+    desenharOlho(ctx, LARGURA / 2, 480, 340, piscada, 1);
     ctx.globalAlpha = 1;
 }
 
@@ -317,7 +326,7 @@ window.draw = function (quadro) {
         ctx.restore();
     }
     // entra do preto e, no fim, volta pro preto
-    const preto = Math.max(1 - trecho(t, 0, 0.3), trecho(t, DURACAO - 0.3, DURACAO));
+    const preto = Math.max(1 - trecho(t, 0, 0.3), CONTINUA ? 0 : trecho(t, DURACAO - 0.3, DURACAO));
     if (preto > 0) { ctx.fillStyle = `rgba(0,0,0,${preto})`; ctx.fillRect(0, 0, LARGURA, ALTURA); }
 };
 

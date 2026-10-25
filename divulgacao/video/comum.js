@@ -19,6 +19,12 @@ const COR = {
     apagado: '#8a9bb8',
 };
 
+const PARAMETROS = new URLSearchParams(location.search);
+
+// Onde o olho do Argos está quando a vinheta começa: o fim da peça A termina com o olho
+// exatamente aqui, pra uma peça continuar a outra.
+const OLHO_DA_VINHETA = { x: LARGURA / 2, y: 430, tamanho: 380 };
+
 const FONTE_TITULO = '"Barlow Semi Condensed", system-ui, sans-serif';
 const FONTE_TEXTO = '"IBM Plex Sans", system-ui, sans-serif';
 

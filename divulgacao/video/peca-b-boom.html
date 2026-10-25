@@ -17,15 +17,19 @@
 
 const DURACAO = 9.5;
 window.FPS = FPS;
-window.FRAMES = DURACAO * FPS;
+// Emendada no fim da peça A: ?inicio=s pula o começo (o olho já está aberto e aceso, como a
+// peça A o deixou) e ?relogio=s continua a grade do fundo de onde a peça A parou.
+const INICIO = Number(PARAMETROS.get('inicio')) || 0;
+const RELOGIO = Number(PARAMETROS.get('relogio')) || 0;
+window.FRAMES = Math.round((DURACAO - INICIO) * FPS);
 
 const BOOM = 3.0;                    // o raio sai do olho
 const IMPACTO = BOOM + 7 / FPS;      // e chega no chão 7 quadros depois (como no app)
 const LOGO = 5.0;
-window.CUES = [IMPACTO, LOGO];   // o clarão do impacto é o ponto forte, não a saída do raio
+window.CUES = [IMPACTO, LOGO].map(c => c - INICIO);   // o clarão do impacto é o ponto forte, não a saída do raio
 
 const LOGO_CIDIT = imagem('../../web/images/logo-cidit.png');
-const OLHO = { x: LARGURA / 2, y: 430, tamanho: 380 };
+const OLHO = OLHO_DA_VINHETA;
 const RAIO = montarRaio(37, OLHO.x, OLHO.y + 60, OLHO.x + 70, ALTURA - 40);
 
 // Abertura do olho: abre, pisca duas vezes, fica aberto.
@@ -72,7 +76,7 @@ function desenharLogoCidit(ctx, cx, cy, raioCirculo, alfa, escala) {
 
 window.draw = function (quadro) {
     const ctx = document.querySelector('canvas').getContext('2d');
-    const t = quadro / FPS;
+    const t = quadro / FPS + INICIO;
     const desdeImpacto = t - IMPACTO;
 
     // tremor depois do impacto
@@ -82,7 +86,7 @@ window.draw = function (quadro) {
 
     // fundo: some no "respiro" antes do BOOM, volta depois
     const respiro = trecho(t, 2.75, 2.95) * (1 - trecho(t, IMPACTO, IMPACTO + 0.4));
-    desenharFundo(ctx, t, limitar(trecho(t, 0, 1.5) * (1 - respiro)));
+    desenharFundo(ctx, t + RELOGIO, limitar(trecho(t, 0, 1.5) * (1 - respiro)));
     if (respiro > 0) { ctx.fillStyle = `rgba(0,0,0,${0.7 * respiro})`; ctx.fillRect(-50, -50, LARGURA + 100, ALTURA + 100); }
 
     // o olho: entra, abre, pisca, vai pro letreiro
@@ -93,7 +97,7 @@ window.draw = function (quadro) {
     const oy = misturar(OLHO.y, L.olhoY, vai);
     const carga = 1 + 0.08 * suave(trecho(t, 2.6, BOOM)) * (1 - vai);
     const tam = misturar(OLHO.tamanho, L.tamanho * 1.12, vai) * carga;
-    const brilho = misturar(trecho(t, 1.3, 2.9), 0.75, vai);
+    const brilho = misturar(INICIO > 0 ? 1 : trecho(t, 1.3, 2.9), 0.75, vai);
     ctx.globalAlpha = trecho(t, 0.3, 1.1) * sai;
     desenharOlho(ctx, ox, oy, tam, t < 1.1 ? 0 : aberturaDoOlho(t), brilho);
     ctx.globalAlpha = 1;
@@ -180,7 +184,7 @@ window.SCORE = function (ac) {
     zumbido.start(t0); zumbido.stop(t0 + 2.8);
 
     somNota(ac, eco, { t: t0 + 1.2, freq: 880, dur: 1.2, vol: 0.06, ataque: 0.3 });
-    efeitosDaVinheta(ac, seco, t0);
+    efeitosDaVinheta(ac, seco, s => t0 + s);
 
     // ARGOS: um acorde que acende
     const a = t0 + 3.5;
@@ -195,17 +199,18 @@ window.SCORE = function (ac) {
 
 // Efeitos (sem música): as piscadas, a carga e o BOOM. Entram na trilha sintetizada (SCORE)
 // e, sozinhos, na versão com a música de verdade (EFEITOS, ver ferramentas/montar.mjs).
-function efeitosDaVinheta(ac, seco, t0) {
+// em(s): tempo da vinheta → tempo do áudio (o que ficaria antes do começo toca já no começo)
+function efeitosDaVinheta(ac, seco, em) {
     // o olho abre e pisca
-    somRuido(ac, seco, { t: t0 + 2.1, dur: 0.08, vol: 0.25, tipo: 'highpass', freq: 3000, semente: 2 });
-    somRuido(ac, seco, { t: t0 + 2.55, dur: 0.08, vol: 0.25, tipo: 'highpass', freq: 3000, semente: 3 });
+    somRuido(ac, seco, { t: em(2.1), dur: 0.08, vol: 0.25, tipo: 'highpass', freq: 3000, semente: 2 });
+    somRuido(ac, seco, { t: em(2.55), dur: 0.08, vol: 0.25, tipo: 'highpass', freq: 3000, semente: 3 });
     // carga subindo (ruído com filtro varrendo)
-    const carga = somRuido(ac, seco, { t: t0 + 1.8, dur: 0.98, vol: 0.22, tipo: 'bandpass', freq: 400, q: 4, ataque: 0.9, semente: 4 });
-    carga.filtro.frequency.setValueAtTime(400, t0 + 1.8);
-    carga.filtro.frequency.exponentialRampToValueAtTime(6000, t0 + 2.75);
+    const carga = somRuido(ac, seco, { t: em(1.8), dur: 0.98, vol: 0.22, tipo: 'bandpass', freq: 400, q: 4, ataque: 0.9, semente: 4 });
+    carga.filtro.frequency.setValueAtTime(400, em(1.8));
+    carga.filtro.frequency.exponentialRampToValueAtTime(6000, em(2.75));
 
     // BOOM: estalo, bumbo, trovão
-    const b = t0 + BOOM;
+    const b = em(BOOM);
     somRuido(ac, seco, { t: b, dur: 0.25, vol: 0.9, tipo: 'highpass', freq: 2500, semente: 5 });
     somBumbo(ac, seco, b + 7 / FPS, 1.0, 34);
     somNota(ac, seco, { t: b + 7 / FPS, freq: 41, dur: 1.8, vol: 0.6, ataque: 0.005 });
@@ -213,7 +218,8 @@ function efeitosDaVinheta(ac, seco, t0) {
 }
 
 window.EFEITOS = function (ac) {
-    efeitosDaVinheta(ac, mesaDeSom(ac).seco, ac.currentTime);
+    const t0 = ac.currentTime - INICIO;
+    efeitosDaVinheta(ac, mesaDeSom(ac).seco, s => Math.max(ac.currentTime, t0 + s));
 };
 
 iniciarPrevia();

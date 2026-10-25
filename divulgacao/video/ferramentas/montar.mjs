@@ -28,6 +28,9 @@ const DURACAO_A = 36;                   // no tempo da peça A
 const CORTES_A = [4, 10, 16, 22, 24, 28, 32, 34];
 const IMPACTO_B = 3 + 7 / FPS;          // o raio chega no chão (peca-b-boom.html)
 const RESPIRO_B = 2.7;                  // a tela começa a escurecer antes do BOOM
+// A vinheta continua a peça A: pula o começo dela (o olho abrindo) e entra com o olho já aceso,
+// no ponto em que o BOOM fica 3 batidas depois da emenda — assim ele cai numa batida.
+const INICIO_B = IMPACTO_B - 3 * BATIDA;
 const DURACAO_B = 9.5;
 
 if (!existsSync(MUSICA)) { console.error(`música não encontrada: ${MUSICA}`); process.exit(1); }
@@ -36,20 +39,21 @@ mkdirSync('saida', { recursive: true });
 const rodar = (cmd, args) => execFileSync(cmd, args, { stdio: 'inherit' });
 const render = (pagina, saida, query) => rodar('node', ['ferramentas/render.mjs', pagina, saida, '--som', 'EFEITOS', ...(query ? ['--query', query] : [])]);
 
-render('peca-a-solucao.html', 'saida/a-com-musica.mp4', `escala=${ESCALA}`);
-render('peca-b-boom.html', 'saida/b-com-musica.mp4');
+render('peca-a-solucao.html', 'saida/a-com-musica.mp4', `escala=${ESCALA}&continua`);
+render('peca-b-boom.html', 'saida/b-com-musica.mp4', `inicio=${INICIO_B}&relogio=${DURACAO_A - INICIO_B}`);
 
 const duracaoA = Math.round(DURACAO_A / ESCALA * FPS) / FPS;   // = FRAMES da página / FPS
-const total = duracaoA + DURACAO_B;
+const duracaoB = Math.round((DURACAO_B - INICIO_B) * FPS) / FPS;
+const total = duracaoA + duracaoB;
 const primeiroCorte = CORTES_A[0] / ESCALA;
 const atraso = primeiroCorte - ENTRADA;            // onde o 0 da música fica no vídeo
 if (atraso < 0) { console.error('a música começaria antes do vídeo'); process.exit(1); }
 // a música para na primeira batida depois que o respiro começa
 const batidas = k => primeiroCorte + k * BATIDA;
 let k = 0;
-while (batidas(k) < duracaoA + RESPIRO_B) k++;
+while (batidas(k) < duracaoA + RESPIRO_B - INICIO_B) k++;
 const silencio = batidas(k);
-const impacto = duracaoA + IMPACTO_B;
+const impacto = duracaoA + IMPACTO_B - INICIO_B;
 console.log(`peça A: ${duracaoA.toFixed(3)} s (escala ${ESCALA.toFixed(4)}); música entra em ${atraso.toFixed(3)} s`);
 console.log(`música para em ${silencio.toFixed(3)} s; BOOM em ${impacto.toFixed(3)} s (${((impacto - silencio) / BATIDA).toFixed(2)} batida depois)`);
 
