@@ -113,7 +113,7 @@ foreach ([
 }
 
 // O Argos roda em intranet: nenhuma página pode buscar script, estilo, fonte
-// ou imagem na internet. (Link que o usuário clica, tipo o do GitHub na
+// ou imagem na internet. (Link que o usuário clica, tipo o do Forgejo na
 // landing, não é carregamento — por isso <a href> não entra.)
 teste('nenhuma página carrega recurso da internet', function () use ($raizProjeto) {
     $padroes = [

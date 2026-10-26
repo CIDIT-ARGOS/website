@@ -26,3 +26,6 @@ docs/dev/qrcodes-seed.html text eol=lf
 /docs export-ignore
 /README.md export-ignore
 /CONTRIBUTING.md export-ignore
+/CHANGELOG.md export-ignore
+# Vídeo e banner de divulgação (Node, só roda na máquina de quem edita).
+/divulgacao export-ignore

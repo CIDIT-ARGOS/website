@@ -18,6 +18,9 @@ $versaoArgos = require __DIR__ . '/versao.php';
 }
 .argos-rodape strong { color: var(--text, #16202e); font-weight: 600; }
 .argos-rodape .instituicao { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.argos-rodape a.forgejo { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; font-weight: 600; }
+.argos-rodape a.forgejo:hover { color: var(--accent, #123c7a); text-decoration: underline; }
+.argos-rodape a.forgejo img { width: 16px; height: 16px; }
 .argos-rodape code { font-family: var(--fonte-mono, ui-monospace, Consolas, monospace); font-size: 11px; }
 @media print { .argos-rodape { display: none; } }
 </style>
@@ -29,4 +32,5 @@ $versaoArgos = require __DIR__ . '/versao.php';
         · <?= htmlspecialchars($versaoArgos['data']) ?>
     </div>
     <div>Desenvolvido pelos membros do <strong>CIDIT</strong> — Esquadrão Prata · Turma Ikarus 37</div>
+    <div><a class="forgejo" href="https://cosmos.simioni.dev.br/cidit/projeto-argos" target="_blank" rel="noopener"><img src="../images/forgejo.svg" alt="" width="16" height="16">Projeto no Forgejo</a></div>
 </footer>

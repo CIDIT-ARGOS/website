@@ -405,6 +405,8 @@ body.raio-impacto .nav-inferior, body.raio-impacto .topbar { animation: raio-tre
 .creditos { margin-top: auto; padding-top: 24px; font-size: 11.5px; line-height: 1.6; color: var(--text-muted); text-align: center; }
 .creditos img { display: block; width: 26px; height: 26px; margin: 0 auto 8px; }
 .creditos strong { color: var(--accent); }
+.creditos a.forgejo { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; color: var(--text-muted); font-weight: 600; text-decoration: none; }
+.creditos a.forgejo img { display: inline-block; width: 14px; height: 14px; margin: 0; }
 .creditos .versao-app { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
 
 /* ---------- Livro do Dia ---------- */
