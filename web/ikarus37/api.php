@@ -271,6 +271,21 @@ $totalChaves = mysqli_fetch_assoc(mysqli_query($conexao, "SELECT COUNT(*) as tot
             <span class="metodo-tag metodo-get">GET</span><code class="rota">motivos.php</code> — lista motivos de falta ativos (requer sessão)
         </div>
         <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><span class="metodo-tag metodo-put">PUT</span><code class="rota">servico.php</code> — onde o aluno está de serviço e a função dele (requer sessão)
+            <p style="color: var(--text-muted); font-size: 12px;">PUT <code>{ "esquadrao": "...", "esquadrilha": "...", "funcao": "esquadrilha|esquadrao|ca" }</code> — <code>funcao</code> é opcional. Tudo o que o app lê e lança passa a ser desse esquadrão.</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><code class="rota">postos_servico.php</code> — postos de serviço ativos, pra quando o motivo é Serviço (requer sessão)
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><span class="metodo-tag metodo-post">POST</span><code class="rota">dispensas.php</code> — dispensas médicas ativas do esquadrão de serviço / lança uma dispensa (requer sessão)
+            <p style="color: var(--text-muted); font-size: 12px;"><code>?tipos=1</code> lista os tipos de dispensa. O POST exige <code>medico_responsavel</code> (o Oficial Médico).</p>
+        </div>
+        <div class="endpoint">
+            <span class="metodo-tag metodo-get">GET</span><span class="metodo-tag metodo-put">PUT</span><span class="metodo-tag metodo-post">POST</span><code class="rota">livro.php?data=AAAA-MM-DD</code> — Livro do Dia da função do aluno (requer sessão)
+            <p style="color: var(--text-muted); font-size: 12px;">PUT <code>{ "observacoes": "..." }</code> grava as alterações; POST <code>{ "acao": "enviar" }</code> envia, <code>{ "acao": "validar"|"devolver", "esquadrilha" ou "esquadrao": "...", "motivo": "..." }</code> valida ou devolve um livro recebido, <code>{ "acao": "reabrir" }</code> (só o CA) reabre o livro enviado.</p>
+        </div>
+        <div class="endpoint">
             <span class="metodo-tag metodo-get">GET</span><code class="rota">retiradas.php</code> — lista retiradas
             <p style="color: var(--text-muted); font-size: 12px;">Filtros: <code>?esquadrao=</code>, <code>?status=</code>, <code>?tipo=</code>, <code>?id=</code></p>
         </div>

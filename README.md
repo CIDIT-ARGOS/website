@@ -7,7 +7,7 @@
 <p align="center"><strong>Controle eletrônico de faltas do Corpo de Alunos — EEAR</strong></p>
 
 <p align="center">
-  Projeto do <a href="https://github.com/CIDIT-ARGOS">CIDIT</a> · Esquadrão Prata
+  Projeto do <a href="https://cosmos.simioni.dev.br/cidit/projeto-argos">CIDIT</a> · Esquadrão Prata
 </p>
 
 ---
@@ -21,6 +21,8 @@ O Argos substitui a chamada de presença em papel por um sistema eletrônico sim
 O nome vem da vigia constante do efetivo, como o gigante da mitologia grega que nunca dormia — Argos Panoptes, "o que tudo vê", coberto de olhos que vigiavam sem descanso.
 
 ## Como funciona, em resumo
+
+Passo a passo de cada tela, com imagens, na **[Wiki do projeto](https://cosmos.simioni.dev.br/cidit/projeto-argos/wiki)**.
 
 - **Painel de Comando** — onde comandantes, encarregados e auxiliares abrem retiradas de falta, consultam o efetivo e tiram relatórios. Cada cargo vê só o que precisa (o comando de esquadrão vê seu esquadrão; o CA vê tudo).
 - **Grupos especiais** (como o próprio CIDIT) — para atividades que cruzam esquadrões, fora da chamada normal por esquadrilha.

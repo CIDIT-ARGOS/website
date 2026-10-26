@@ -175,11 +175,21 @@ jobs:
           {
             echo "Publicada em produção em $(TZ=America/Sao_Paulo date '+%d/%m/%Y %H:%M') (horário de Brasília)."
             echo
+            # O que mudou, escrito pra gente: a seção desta versão no CHANGELOG.md
+            # (do título "## [vX.Y.Z]" até o próximo "## ").
+            if [ -f CHANGELOG.md ]; then
+              awk -v v="## [$VERSAO]" 'index($0, v) == 1 { dentro = 1; next } dentro && /^## / { exit } dentro' CHANGELOG.md > changelog-versao.md
+              if grep -q '[^[:space:]]' changelog-versao.md; then
+                echo "## O que mudou"
+                cat changelog-versao.md
+                echo
+              fi
+            fi
             if [ -n "$ANTERIOR" ]; then
-              echo "## Mudanças desde $ANTERIOR"
+              echo "## Commits desde $ANTERIOR"
               git log --no-merges --format='- %s (%h)' "$ANTERIOR..$VERSAO"
             else
-              echo "## Mudanças"
+              echo "## Commits"
               git log --no-merges --format='- %s (%h)' -n 50 "$VERSAO"
             fi
           } > notas.md

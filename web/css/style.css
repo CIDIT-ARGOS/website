@@ -533,7 +533,7 @@ a {
   color: rgba(255, 255, 255, 0.55);
 }
 
-.footer-github {
+.footer-forgejo {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -543,9 +543,10 @@ a {
   text-decoration: none;
 }
 
-.footer-github:hover {
+.footer-forgejo:hover {
   text-decoration: underline;
 }
+
 
 .footer-cidit {
   display: flex;

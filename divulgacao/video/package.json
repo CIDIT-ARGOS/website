@@ -1,0 +1,17 @@
+{
+  "name": "argos-video",
+  "private": true,
+  "description": "Vídeo promocional do Argos (issue 60): páginas em canvas renderizadas quadro a quadro.",
+  "scripts": {
+    "montar": "node ferramentas/montar.mjs",
+    "render:a": "node ferramentas/render.mjs peca-a-solucao.html saida/peca-a-solucao.mp4",
+    "render:b": "node ferramentas/render.mjs peca-b-boom.html saida/peca-b-boom.mp4",
+    "juntar": "ffmpeg -y -loglevel error -i saida/peca-a-solucao.mp4 -i saida/peca-b-boom.mp4 -filter_complex \"[0:v][0:a][1:v][1:a]concat=n=2:v=1:a=1[v][a]\" -map \"[v]\" -map \"[a]\" -c:v libx264 -crf 18 -pix_fmt yuv420p -c:a aac -b:a 192k -movflags +faststart saida/argos-video-completo.mp4",
+    "render": "npm run render:a && npm run render:b && npm run juntar",
+    "folha:a": "node ferramentas/render.mjs peca-a-solucao.html saida/folha-a.jpg --sheet 1",
+    "folha:b": "node ferramentas/render.mjs peca-b-boom.html saida/folha-b.jpg --sheet 0.5"
+  },
+  "devDependencies": {
+    "playwright-core": "1.56.1"
+  }
+}
