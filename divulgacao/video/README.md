@@ -8,8 +8,11 @@ Cada peça é uma página HTML com um `<canvas>` onde todo quadro é calculado e
 |---|---|---|---|
 | **A — vídeo da solução** | `peca-a-solucao.html` | 36 s (33,2 s no vídeo completo) | Parte 2: como resolver |
 | **B — vinheta BOOM** | `peca-b-boom.html` | 9,5 s | Parte 3: o olho, o raio e o logo do CIDIT |
+| **Banner** | `banner.html` | 2,6 s de entrada + parado | Fica no telão enquanto o projeto é apresentado |
 
-**O vídeo da apresentação é um arquivo só:** a peça A e, emendada no fim dela, a vinheta B, com a música *Free Rock Intro music* (Nocturinii, sem direitos autorais), em `saida/argos-video-completo.mp4` (40,9 s). Nele a vinheta **continua** a peça A: o olho do fim da A sobe e cresce até o lugar em que está na vinheta, e a vinheta entra já com esse olho aceso (pulando a própria abertura), sem apagar nem cortar.
+**O vídeo da apresentação é um arquivo só:** a peça A e, emendada no fim dela, a vinheta B, com a música *Free Rock Intro music* (Nocturinii, sem direitos autorais), em `saida/argos-video-completo.mp4` (47,5 s). Nele a vinheta **continua** a peça A: o olho do fim da A sobe e cresce até o lugar em que está na vinheta, e a vinheta entra já com esse olho aceso (pulando a própria abertura), sem apagar nem cortar. No fim, o vídeo **vira o banner**: o logo do CIDIT vai pro canto, o fundo clareia pro azul e entram o ARGOS, a frase, os destaques e os prints do celular. O vídeo termina parado nele.
+
+O banner também sai em PNG, `saida/argos-banner.png` (1920×1080), pra deixar de fundo no telão ou usar nos slides.
 
 ## Renderizar
 
@@ -18,7 +21,7 @@ Precisa de Node 18+, ffmpeg no PATH e Chrome ou Edge instalado.
 ```bash
 cd divulgacao/video
 npm install
-npm run montar       # saida/argos-video-completo.mp4 — A + B com a música (o vídeo da apresentação)
+npm run montar       # saida/argos-video-completo.mp4 (A + B + banner, com a música) e saida/argos-banner.png
 npm run render:a     # saida/peca-a-solucao.mp4 (só a peça A, com a trilha sintetizada)
 npm run render:b     # saida/peca-b-boom.mp4
 npm run folha:a      # folha de contato (um quadro por segundo) pra revisar
@@ -84,6 +87,7 @@ O salto de volume no BOOM é proposital; a conferência de sincronia aponta esse
 |---|---|
 | `comum.js` | O que as duas peças usam: tempo e suavizações, o olho do Argos (o mesmo desenho de `web/images/argos-olho.svg`), o raio (o mesmo traçado do *easter egg* do app), molduras de celular e monitor, textos e blocos de som |
 | `peca-a-solucao.html`, `peca-b-boom.html` | As peças |
-| `ferramentas/montar.mjs` | Monta o vídeo completo: A + B + a música + os efeitos |
+| `banner.html` | O banner: fundo azul, ARGOS, a frase, os destaques, o logo do CIDIT e os prints do celular |
+| `ferramentas/montar.mjs` | Monta o vídeo completo (A + B + banner + a música + os efeitos) e o PNG do banner |
 | `ferramentas/render.mjs`, `ferramentas/sync-check.mjs` | Render e conferência de sincronia, adaptados das [skills de animação do iart-ai](https://github.com/iart-ai/javascript-animation-skills) (licença MIT) |
 | `saida/` | Vídeos gerados (fora do git) |

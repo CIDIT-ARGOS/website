@@ -21,6 +21,8 @@ window.FPS = FPS;
 // peça A o deixou) e ?relogio=s continua a grade do fundo de onde a peça A parou.
 const INICIO = Number(PARAMETROS.get('inicio')) || 0;
 const RELOGIO = Number(PARAMETROS.get('relogio')) || 0;
+// ?semfim: não escurece no fim (o banner continua dali)
+const SEM_FIM = PARAMETROS.has('semfim');
 window.FRAMES = Math.round((DURACAO - INICIO) * FPS);
 
 const BOOM = 3.0;                    // o raio sai do olho
@@ -53,25 +55,6 @@ function letreiro(ctx) {
     const base = 600;
     ctx.restore();
     return { tamanho, x0, arg, vao, base, olhoX: x0 + arg + vao / 2, olhoY: base - tamanho * 0.36 };
-}
-
-function desenharLogoCidit(ctx, cx, cy, raioCirculo, alfa, escala) {
-    if (!imagemOk(LOGO_CIDIT) || alfa <= 0) return;
-    ctx.save();
-    ctx.globalAlpha = alfa;
-    ctx.translate(cx, cy);
-    ctx.scale(escala, escala);
-    ctx.shadowColor = COR.vermelho;
-    ctx.shadowBlur = 70;
-    ctx.fillStyle = '#000';
-    ctx.beginPath();
-    ctx.arc(0, 0, raioCirculo, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.clip();
-    const lado = raioCirculo * 2 / 0.97;
-    ctx.drawImage(LOGO_CIDIT, -lado / 2, -lado / 2, lado, lado);
-    ctx.restore();
 }
 
 window.draw = function (quadro) {
@@ -146,7 +129,7 @@ window.draw = function (quadro) {
     // logo do CIDIT
     const entraLogo = trecho(t, LOGO + 0.1, LOGO + 0.9);
     if (entraLogo > 0) {
-        desenharLogoCidit(ctx, LARGURA / 2, 470, 300, saida(entraLogo), misturar(0.82, 1, mola(entraLogo)) + 0.04 * trecho(t, LOGO + 0.9, DURACAO));
+        desenharLogoCidit(ctx, LOGO_CIDIT, LARGURA / 2, 470, 300, saida(entraLogo), misturar(0.82, 1, mola(entraLogo)) + 0.04 * trecho(t, LOGO + 0.9, DURACAO));
         legenda(ctx, 'Um projeto do CIDIT · Corpo de Alunos da EEAR', LARGURA / 2, 880, 44, t, LOGO + 0.8, DURACAO + 1, 'center', COR.branco);
     }
 
@@ -159,7 +142,7 @@ window.draw = function (quadro) {
     ctx.restore();
 
     // fim: escurece
-    const fim = trecho(t, DURACAO - 0.6, DURACAO);
+    const fim = SEM_FIM ? 0 : trecho(t, DURACAO - 0.6, DURACAO);
     if (fim > 0) { ctx.fillStyle = `rgba(0,0,0,${fim})`; ctx.fillRect(0, 0, LARGURA, ALTURA); }
 };
 

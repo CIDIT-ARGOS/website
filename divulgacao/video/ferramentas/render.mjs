@@ -8,6 +8,7 @@
 //   - usa o Edge quando o Chrome não está instalado;
 //   - espera window.PRONTO (Promise das imagens e fontes) antes do primeiro quadro;
 //   - --query 'a=1&b=2' repassa parâmetros pra página (ex.: escala=1.0833 acelera a peça);
+//   - --png faz os quadros soltos (--stills) em PNG, sem perda (pro banner);
 //   - --som NOME grava o som de window[NOME] em vez de window.SCORE (ex.: --som EFEITOS).
 //
 //
@@ -71,7 +72,8 @@ if (!stillsOrSheet && (info.w % 2 || info.h % 2)) { console.error(`canvas is ${i
 const out = !stillsOrSheet && !parse(outArg).ext ? outArg + '.mp4' : outArg;
 const sidecar = ext => { const p = parse(out); return format({ dir: p.dir, name: p.ext ? p.name : p.base, ext }); };
 
-const grab = f => page.evaluate(f => { window.draw(f); return document.querySelector('canvas').toDataURL('image/jpeg', 0.93).split(',')[1]; }, f);
+const PNG = !!opt('--png');
+const grab = f => page.evaluate(([f, tipo]) => { window.draw(f); return document.querySelector('canvas').toDataURL(tipo, 0.93).split(',')[1]; }, [f, PNG && opt('--stills') ? 'image/png' : 'image/jpeg']);
 const jpg = async f => Buffer.from(await grab(f), 'base64');
 // for contact sheets: stamp the timestamp in the browser (ffmpeg drawtext is missing from many builds)
 const stamped = async (f, fps) => Buffer.from(await page.evaluate(([f, fps]) => {
@@ -85,7 +87,7 @@ const stamped = async (f, fps) => Buffer.from(await page.evaluate(([f, fps]) => 
 
 if (opt('--stills')) {
   for (const f of String(opt('--stills')).split(',').map(v => v.trim().endsWith('s') ? Math.round(parseFloat(v) * info.FPS) : Number(v))) {
-    const file = `${out}-${String(f).padStart(4, '0')}.jpg`; writeFileSync(file, await jpg(f)); console.log(file);
+    const file = `${out}-${String(f).padStart(4, '0')}.${PNG ? 'png' : 'jpg'}`; writeFileSync(file, await jpg(f)); console.log(file);
   }
 } else if (opt('--sheet')) {
   const every = opt('--sheet') === true ? 1 : Number(opt('--sheet'));

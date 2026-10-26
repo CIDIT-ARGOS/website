@@ -198,18 +198,20 @@ function desenharOlho(ctx, x, y, tamanho, abertura, brilho, cor = COR.branco) {
     ctx.restore();
 }
 
+// aceita '#rrggbb' ou 'rgb(r,g,b)'
 function misturarCor(c1, c2, p) {
-    const n = c => [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16));
+    const n = c => (c[0] === '#' ? [1, 3, 5].map(i => parseInt(c.slice(i, i + 2), 16)) : c.match(/\d+/g).slice(0, 3).map(Number));
     const [a, b] = [n(c1), n(c2)];
     return `rgb(${a.map((v, i) => Math.round(misturar(v, b[i], p))).join(',')})`;
 }
 
 // ---------- fundo ----------
 // Noite azul com uma grade que anda devagar (a "rede" da Escola).
-function desenharFundo(ctx, t, tom = 1) {
+// cores = [centro, borda]; o banner usa um azul mais claro.
+function desenharFundo(ctx, t, tom = 1, cores = [COR.azulEscuro, COR.noite]) {
     const g = ctx.createRadialGradient(LARGURA / 2, ALTURA * 0.45, 100, LARGURA / 2, ALTURA / 2, LARGURA * 0.75);
-    g.addColorStop(0, misturarCor(COR.noite, COR.azulEscuro, tom));
-    g.addColorStop(1, COR.noite);
+    g.addColorStop(0, misturarCor(COR.noite, cores[0], tom));
+    g.addColorStop(1, cores[1]);
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, LARGURA, ALTURA);
     const passo = 80;
@@ -267,6 +269,26 @@ function desenharMonitor(ctx, img, cx, cy, largura, alfa = 1, recorte = [0, 0, 1
 function retanguloRedondo(ctx, x, y, l, a, r) {
     ctx.beginPath();
     ctx.roundRect(x, y, l, a, r);
+}
+
+// O logo do CIDIT recortado no círculo (a imagem tem os cantos pretos), com brilho vermelho.
+function desenharLogoCidit(ctx, img, cx, cy, raioCirculo, alfa, escala) {
+    if (!imagemOk(img) || alfa <= 0) return;
+    ctx.save();
+    ctx.globalAlpha = alfa;
+    ctx.translate(cx, cy);
+    ctx.scale(escala, escala);
+    ctx.shadowColor = COR.vermelho;
+    ctx.shadowBlur = 70;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.arc(0, 0, raioCirculo, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.clip();
+    const lado = raioCirculo * 2 / 0.97;
+    ctx.drawImage(img, -lado / 2, -lado / 2, lado, lado);
+    ctx.restore();
 }
 
 // Toque do dedo: um círculo que aparece e se abre.
