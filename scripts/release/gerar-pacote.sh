@@ -54,7 +54,7 @@ if grep -rl '__VERSAO__' "$SAIDA" --include='*.html' --include='*.js' --include=
     exit 1
 fi
 
-for proibido in core/config.php database .forgejo tests docker deploy; do
+for proibido in core/config.php database .forgejo tests docker deploy divulgacao; do
     if [ -e "$SAIDA/$proibido" ]; then
         echo "::error::$proibido não deveria estar no pacote de produção."
         exit 1
